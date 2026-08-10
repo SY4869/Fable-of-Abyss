@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://sygames.net/sitemap.xml

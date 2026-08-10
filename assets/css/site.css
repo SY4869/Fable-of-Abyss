@@ -1,0 +1,169 @@
+/* =============================================================================
+   sygames.net ─ ゲーム以外のページ（遊び方・プライバシーポリシー・お問い合わせ）
+   -----------------------------------------------------------------------------
+   ゲーム本編と同じ色と書体を使い、同じ一冊の本の続きに見えるようにしている。
+   節の頭に置くローマ数字は、ゲーム中でステージを示している記号と同じもの。
+   ============================================================================= */
+:root{
+  --ink:#050409; --ink2:#0c0913; --vellum:#e8dcc8; --gold:#c9a24a; --blood:#b3283c;
+  --violet:#3a2450; --moon:#9fd8e6;
+  --dim:rgba(232,220,200,.52); --line:rgba(201,162,74,.22);
+  --mincho:"Hiragino Mincho ProN","Yu Mincho",YuMincho,"Noto Serif JP","Times New Roman",serif;
+  --mono:"Courier New",ui-monospace,monospace;
+  --col:min(680px,100% - 40px);
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%; scroll-behavior:smooth;}
+body{
+  margin:0; min-height:100%;
+  background:
+    radial-gradient(ellipse 120% 70% at 50% 0%,#170f22 0%,#080610 46%,#040308 100%) fixed,
+    var(--ink);
+  color:var(--vellum); font-family:var(--mincho);
+  -webkit-font-smoothing:antialiased;
+  font-size:15px; line-height:1.95; letter-spacing:.03em;
+}
+a{color:var(--gold);}
+a:focus-visible,button:focus-visible{outline:2px solid var(--moon); outline-offset:3px;}
+
+/* ---------- 見出しの帯 ---------- */
+.masthead{
+  position:sticky; top:0; z-index:10;
+  background:rgba(5,4,9,.9); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);
+}
+.masthead .inner{
+  width:var(--col); margin:0 auto; padding:13px 0;
+  display:flex; align-items:baseline; justify-content:space-between; gap:18px; flex-wrap:wrap;
+}
+.mark{text-decoration:none; color:var(--vellum); display:flex; align-items:baseline; gap:11px;}
+.mark strong{font-weight:400; font-size:15px; letter-spacing:.2em;}
+.mark span{font-family:var(--mono); font-size:9px; letter-spacing:.34em; color:var(--gold);}
+.topnav{display:flex; gap:17px; font-size:11.5px; letter-spacing:.14em;}
+.topnav a{color:rgba(232,220,200,.5); text-decoration:none; padding-bottom:2px;
+  border-bottom:1px solid transparent; transition:color .2s,border-color .2s;}
+.topnav a:hover{color:var(--gold);}
+.topnav a[aria-current="page"]{color:var(--vellum); border-bottom-color:var(--blood);}
+
+/* ---------- 本文 ---------- */
+.page{width:var(--col); margin:0 auto; padding:56px 0 26px;}
+.eyebrow{margin:0 0 10px; font-family:var(--mono); font-size:10px;
+  letter-spacing:.46em; color:var(--gold);}
+h1{margin:0 0 18px; font-size:29px; font-weight:400; letter-spacing:.16em; line-height:1.45;}
+.lede{margin:0 0 8px; color:rgba(232,220,200,.72); font-size:14.5px;}
+.stamp{margin:26px 0 0; font-family:var(--mono); font-size:10.5px;
+  letter-spacing:.22em; color:var(--dim);}
+
+.divider{height:1px; margin:38px 0 34px;
+  background:linear-gradient(90deg,var(--gold),rgba(201,162,74,0) 88%);}
+
+/* 節 ─ ゲームのステージ記号と同じ枠つきのローマ数字を頭に置く */
+.clause{margin:0 0 34px;}
+.clause h2{
+  display:flex; align-items:center; gap:14px;
+  margin:0 0 12px; font-size:17px; font-weight:400; letter-spacing:.16em; line-height:1.5;
+}
+.clause h2 .num{
+  flex:none; width:30px; height:30px; display:grid; place-items:center;
+  font-family:var(--mono); font-size:12px; color:var(--gold);
+  border:1px solid rgba(201,162,74,.4); background:rgba(201,162,74,.07);
+}
+.clause p{margin:0 0 12px; color:rgba(232,220,200,.8);}
+.clause p:last-child{margin-bottom:0;}
+.clause ul{margin:0 0 12px; padding-left:1.2em; color:rgba(232,220,200,.8);}
+.clause li{margin-bottom:5px;}
+.clause li::marker{color:var(--gold);}
+
+/* 補足の囲み */
+.aside{
+  border-left:2px solid rgba(201,162,74,.45); background:rgba(201,162,74,.045);
+  padding:14px 18px; margin:0 0 12px; font-size:13.5px; color:rgba(232,220,200,.74);
+}
+.aside p{margin:0 0 8px;} .aside p:last-child{margin:0;}
+
+/* 用語の対応表・仕様の表 */
+.spec{width:100%; border-collapse:collapse; margin:0 0 14px; font-size:13.5px;}
+.spec th,.spec td{border-top:1px solid var(--line); padding:11px 10px; text-align:left;
+  vertical-align:top; color:rgba(232,220,200,.8);}
+.spec th{width:9.5em; font-weight:400; letter-spacing:.14em; color:var(--vellum); white-space:nowrap;}
+.spec .lat{display:block; font-family:var(--mono); font-size:9.5px;
+  letter-spacing:.24em; color:var(--gold); margin-top:2px;}
+
+/* 押しボタン風のリンク */
+.cta{
+  display:inline-block; margin:6px 0 0; padding:13px 30px;
+  border:1px solid var(--gold); color:var(--vellum); text-decoration:none;
+  font-size:13.5px; letter-spacing:.2em; transition:background .18s,color .18s;
+}
+.cta:hover{background:var(--gold); color:#0a0710;}
+.cta.quiet{border-color:var(--line); color:var(--dim);}
+.cta.quiet:hover{background:transparent; border-color:var(--gold); color:var(--gold);}
+
+kbd{font-family:var(--mono); font-size:11px; border:1px solid var(--line);
+  padding:2px 7px; margin-right:3px; color:var(--vellum); white-space:nowrap;}
+
+/* ---------- 奥付 ---------- */
+.colophon{
+  border-top:1px solid var(--line); margin-top:44px;
+  padding:26px 0 46px; font-size:11.5px; color:var(--dim);
+}
+.colophon .inner{width:var(--col); margin:0 auto;
+  display:flex; justify-content:space-between; gap:18px; flex-wrap:wrap;}
+.colophon nav{display:flex; gap:17px; flex-wrap:wrap;}
+.colophon a{color:rgba(232,220,200,.5); text-decoration:none;}
+.colophon a:hover{color:var(--gold);}
+.colophon .sig{font-family:var(--mono); letter-spacing:.2em;}
+
+/* ---------- 広告枠（ads.js が有効なときだけ現れる） ---------- */
+#ad-inline{display:none; width:var(--col); margin:34px auto 0;
+  padding:5px; border:1px solid rgba(201,162,74,.14); background:rgba(10,7,18,.34);}
+body.ads-on #ad-inline{display:block;}
+.adlabel{font-family:var(--mono); font-size:9px; letter-spacing:.36em;
+  color:rgba(232,220,200,.26); text-align:center; padding:2px 0 4px;
+  user-select:none; -webkit-user-select:none;}
+.adslot{display:block; margin:0 auto; overflow:hidden; width:100%; min-height:100px;}
+
+@media (max-width:640px){
+  body{font-size:14.5px; line-height:1.9;}
+  .page{padding:36px 0 20px;}
+  h1{font-size:23px;}
+  .masthead .inner{padding:11px 0; gap:8px;}
+  .topnav{gap:14px; font-size:11px;}
+  .clause h2{font-size:15.5px; gap:11px;}
+  .clause h2 .num{width:26px; height:26px; font-size:11px;}
+  .spec th{width:auto; display:block; border-top:1px solid var(--line); padding-bottom:0;}
+  .spec td{display:block; border-top:0; padding-top:4px;}
+}
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto;}
+  *{transition:none!important; animation:none!important;}
+}
+
+/* ---------- 埋め込みフォーム ---------- */
+.formframe{
+  border:1px solid var(--line); background:rgba(10,7,18,.4);
+  margin:0 0 14px; padding:4px;
+}
+.formframe iframe{
+  display:block; width:100%; height:1180px; border:0;
+  background:#fff; color:#333;
+}
+@media (max-width:640px){ .formframe iframe{height:1320px;} }
+
+/* ---------- 表紙の一枚絵 ---------- */
+.plateart{
+  margin:0 0 30px; border:1px solid var(--line); background:rgba(10,7,18,.4); padding:5px;
+}
+.plateart img{display:block; width:100%; height:auto;}
+.plateart figcaption{
+  font-family:var(--mono); font-size:9.5px; letter-spacing:.3em;
+  color:rgba(232,220,200,.3); text-align:center; padding:7px 0 3px;
+}
+
+/* ---------- 目次 ---------- */
+.toc{margin:0 0 8px; padding:0; list-style:none; column-count:2; column-gap:26px;}
+.toc li{margin-bottom:6px; font-size:13px;}
+.toc a{color:rgba(232,220,200,.6); text-decoration:none;}
+.toc a:hover{color:var(--gold);}
+.toc .n{font-family:var(--mono); font-size:10px; color:var(--gold); margin-right:9px;}
+@media (max-width:640px){ .toc{column-count:1;} }
