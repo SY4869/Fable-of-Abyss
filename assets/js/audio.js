@@ -79,10 +79,28 @@
     slots = [makeSlot(), makeSlot()];
   }
 
-  /* 音量制御の手段を決める。最初の解錠時に一度だけ走る */
+  /* 音量制御の手段を決める。最初の解錠時に一度だけ走る
+
+     順番が重要。まず素の volume を試し、効かない端末だけ Web Audio へ回す。
+     Web Audio を先に使うと、file:// で開いたときに音声ファイルが別オリジン
+     扱いになり、MediaElementSource から先が無音になってしまう
+     （サーバーに置けば鳴るが、手元で開くと聞こえない、という状態になる）。 */
   function pickMode() {
     if (mode || !slots.length) return mode;
-    var a = getCtx();
+
+    /* volume に実際に書き込めるかを測る */
+    var el = slots[0].el, before = el.volume, ok = false;
+    try {
+      el.volume = 0.345;
+      ok = Math.abs(el.volume - 0.345) < 0.02;
+      el.volume = before;
+    } catch (e) { ok = false; }
+    if (ok) { mode = 'volume'; return mode; }
+
+    /* ここから先は volume が読み取り専用の端末（iOS Safari など）。
+       GainNode なら音量を変えられるので、そちらへ音を通す。
+       ただし file:// では上記の理由で無音になるため使わない */
+    var a = (location.protocol !== 'file:') ? getCtx() : null;
     if (a && a.createMediaElementSource) {
       try {
         for (var i = 0; i < slots.length; i++) {
@@ -100,16 +118,11 @@
         }
         mode = 'gain';
         return mode;
-      } catch (e) { /* 失敗したら下の判定へ落ちる */ }
+      } catch (e) { /* 失敗したら下へ落ちる */ }
     }
-    /* volume に書き込めるかを実測する */
-    var el = slots[0].el, before = el.volume, ok = false;
-    try {
-      el.volume = 0.345;
-      ok = Math.abs(el.volume - 0.345) < 0.02;
-      el.volume = before;
-    } catch (e) { ok = false; }
-    mode = ok ? 'volume' : 'cut';
+
+    /* 音量をまったく変えられない環境。再生と停止だけで曲を切り替える */
+    mode = 'cut';
     return mode;
   }
 

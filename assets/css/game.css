@@ -89,7 +89,7 @@ button:focus-visible{outline:2px solid var(--moon); outline-offset:3px;}
 #scr-title::after{content:""; position:absolute; left:0; right:0; bottom:0; height:38%;
   background:linear-gradient(0deg,rgba(4,3,9,.94) 8%,rgba(4,3,9,.62) 46%,rgba(4,3,9,0) 100%);
   pointer-events:none;}
-#scr-title .sheet{position:relative; z-index:1; margin:auto auto 0; padding:0 20px 6.5%;}
+#scr-title .sheet{position:relative; z-index:1; margin:auto auto 0; padding:0 20px 4.5%;}
 #scr-title .btnrow button{min-width:150px; backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);
   background:rgba(8,5,14,.42);}
 #scr-title .btnrow button:hover:not(:disabled){background:var(--gold);}
@@ -165,7 +165,7 @@ body.compact{padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px)
   #plate{margin:0;}
   #plate::before{inset:-3px;}
   #plate::after{display:none;}
-  #scr-title .sheet{padding:0 14px 7%;}
+  #scr-title .sheet{padding:0 14px 5%;}
   #scr-title .btnrow{gap:10px;}
   #scr-title .btnrow button{min-width:124px; padding:11px 16px; font-size:12px;}
   .wgrid,.dgrid{grid-template-columns:1fr;}
@@ -311,19 +311,23 @@ body.ads-on.compact #ad-top{display:block;}
 
 /* =============================================================================
    サイト内の案内リンク
-   タイトル画面・中断画面・PCの脇のパネルから、
-   遊び方 / プライバシーポリシー / お問い合わせへ辿れるようにする
+   -----------------------------------------------------------------------------
+   置き場所はタイトル画面の一か所だけ。脇のパネルにも同じものを並べると、
+   タイトル画面では半透明の幕越しに二重に見えてしまうため、そちらには置かない。
+   ページを開いた直後の画面なので、検索エンジンからも読み取れる。
    ============================================================================= */
 .sitenav{
-  display:flex; gap:14px; justify-content:center; flex-wrap:wrap;
-  margin:18px 0 0; font-size:11px; letter-spacing:.16em;
+  display:flex; gap:16px; justify-content:center; flex-wrap:wrap;
+  margin:15px 0 0; font-size:11px; letter-spacing:.14em; line-height:1.6;
 }
 .sitenav a{
-  color:rgba(232,220,200,.46); text-decoration:none;
-  border-bottom:1px solid transparent; padding-bottom:2px; transition:color .2s,border-color .2s;
+  color:rgba(232,220,200,.5); text-decoration:none;
+  border-bottom:1px solid transparent; padding-bottom:2px;
+  text-shadow:0 2px 12px rgba(4,3,9,.95);
+  transition:color .2s,border-color .2s;
 }
 .sitenav a:hover,.sitenav a:focus-visible{color:var(--gold); border-bottom-color:rgba(201,162,74,.5);}
-#panel .sitenav{justify-content:flex-start; margin:12px 0 0; font-size:10px; gap:12px;}
-#scr-title .sitenav{margin-top:16px; text-shadow:0 2px 12px rgba(4,3,9,.95);}
 #scr-pause .mute-btn{margin-top:18px;}
 .screen .mute-btn{align-self:center;}
+/* パネルの中身が下枠を越えないようにする保険 */
+#panel{overflow:hidden;}
