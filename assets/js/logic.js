@@ -346,7 +346,7 @@ function updatePlayer(){
     if(P.weapon==='laser'){ P.laserOn=true; laserTick(M); }
     else if(P.weapon==='spread'){
       if(P.cd<=0){ P.cd=5; var spr=P.focus?0.07:0.18;
-        for(var i=-2;i<=2;i++) pbul(P.x,P.y-12,-Math.PI/2+i*spr,13,{r:5.5,dmg:5.6*M,type:'spread'});
+        for(var i=-2;i<=2;i++) pbul(P.x,P.y-12,-Math.PI/2+i*spr,13,{r:5.5,dmg:5.9*M,type:'spread'});
         if((shotSfxCount++)%2===0) sfx('shot'); }
     } else {
       if(P.cd<=0){ P.cd=7;
@@ -357,7 +357,7 @@ function updatePlayer(){
   }
 }
 function laserTick(M){
-  var w=P.focus?9:15, dmg=(P.focus?4.7:3.6)*M;
+  var w=P.focus?9:15, dmg=(P.focus?5.5:4.2)*M;
   var b=G.boss;
   if(b&&b.state==='active'){
     var us=bossUnits(b);
