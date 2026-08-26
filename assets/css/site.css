@@ -39,7 +39,7 @@ a:focus-visible,button:focus-visible{outline:2px solid var(--moon); outline-offs
 .mark{text-decoration:none; color:var(--vellum); display:flex; align-items:baseline; gap:11px;}
 .mark strong{font-weight:400; font-size:15px; letter-spacing:.2em;}
 .mark span{font-family:var(--mono); font-size:9px; letter-spacing:.34em; color:var(--gold);}
-.topnav{display:flex; gap:17px; font-size:11.5px; letter-spacing:.14em;}
+.topnav{display:flex; flex-wrap:wrap; gap:9px 17px; font-size:11.5px; letter-spacing:.14em;}
 .topnav a{color:rgba(232,220,200,.5); text-decoration:none; padding-bottom:2px;
   border-bottom:1px solid transparent; transition:color .2s,border-color .2s;}
 .topnav a:hover{color:var(--gold);}
@@ -167,3 +167,45 @@ body.ads-on #ad-inline{display:block;}
 .toc a:hover{color:var(--gold);}
 .toc .n{font-family:var(--mono); font-size:10px; color:var(--gold); margin-right:9px;}
 @media (max-width:640px){ .toc{column-count:1;} }
+
+/* ---------- ゲーム一覧（トップページ） ----------
+   一本ぶんを一枚の札として置く。左に表紙、右に紹介文。
+   ゲームが増えたら .gamecard を並べていく */
+.gamecard{
+  display:flex; gap:22px; align-items:flex-start; margin:24px 0 0;
+  border:1px solid var(--line); background:rgba(10,7,18,.34); padding:18px;
+}
+.gamecard-art{
+  flex:none; width:184px; display:block; padding:4px;
+  border:1px solid var(--line); background:rgba(5,4,9,.5);
+}
+.gamecard-art img{display:block; width:100%; height:auto;}
+.gamecard-body{min-width:0;}
+.gamecard-kicker{
+  margin:0 0 9px; font-family:var(--mono); font-size:9.5px;
+  letter-spacing:.3em; color:var(--gold);
+}
+.gamecard h3{margin:0 0 4px; font-size:20px; font-weight:400; letter-spacing:.14em; line-height:1.5;}
+.gamecard h3 a{color:var(--vellum); text-decoration:none;}
+.gamecard h3 a:hover{color:var(--gold);}
+.gamecard-lat{
+  margin:0 0 13px; font-family:var(--mono); font-size:10px;
+  letter-spacing:.28em; color:rgba(232,220,200,.3);
+}
+.gamecard p{margin:0 0 12px; color:rgba(232,220,200,.8); font-size:14px;}
+.gamecard p:last-child{margin-bottom:0;}
+.gamecard p.gamecard-cta{margin:18px 0 0; display:flex; gap:10px; flex-wrap:wrap;}
+.gamecard-cta .cta{margin:0;}
+
+/* 特徴の札 */
+.tags{list-style:none; margin:0 0 15px; padding:0; display:flex; flex-wrap:wrap; gap:7px;}
+.tags li{
+  font-family:var(--mono); font-size:10px; letter-spacing:.16em;
+  color:rgba(232,220,200,.6); border:1px solid var(--line); padding:3px 9px;
+}
+
+@media (max-width:640px){
+  .gamecard{flex-direction:column; gap:16px; padding:14px;}
+  .gamecard-art{width:min(184px,60%); align-self:center;}
+  .gamecard h3{font-size:18px;}
+}

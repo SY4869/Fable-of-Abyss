@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050409">
+<title>このサイトについて｜SY GAMES</title>
+<meta name="description" content="SY GAMES の運営者情報と、ブラウザゲーム『フェイブル・オブ・アビス』の制作について。使っている技術、設計で考えたこと、素材の扱いをまとめています。">
+<link rel="canonical" href="https://sygames.net/about.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="SY GAMES">
+<meta property="og:title" content="このサイトについて｜SY GAMES">
+<meta property="og:description" content="SY GAMES の運営者情報と、ブラウザゲーム制作の記録。">
+<meta property="og:url" content="https://sygames.net/about.html">
+<meta property="og:image" content="https://sygames.net/assets/images/scene/st.webp">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/css/site.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6058664157090890"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="inner">
+    <a class="mark" href="index.html"><strong>SY GAMES</strong><span>SYGAMES.NET</span></a>
+    <nav class="topnav">
+      <a href="index.html">トップ</a>
+      <a href="fable.html">ゲームを遊ぶ</a>
+      <a href="howto.html">遊び方</a>
+      <a href="about.html" aria-current="page">このサイトについて</a>
+      <a href="contact.html">お問い合わせ</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+<p class="eyebrow">ABOUT</p>
+<h1>このサイトについて</h1>
+<p class="lede">SY GAMES は、SY4869 が個人で制作したブラウザゲームを公開している場所です。<br>ここでは、運営者のことと、どうやって作っているかを書いています。</p>
+
+<div class="divider"></div>
+
+<section class="clause">
+  <h2><span class="num">Ⅰ</span>運営者</h2>
+  <table class="spec">
+    <tr><th>運営者<span class="lat">AUTHOR</span></th><td>SY4869（個人）</td></tr>
+    <tr><th>サイト名<span class="lat">SITE</span></th><td>SY GAMES</td></tr>
+    <tr><th>ウェブサイト<span class="lat">URL</span></th><td><a href="https://sygames.net">https://sygames.net</a></td></tr>
+    <tr><th>公開<span class="lat">SINCE</span></th><td>2026年8月</td></tr>
+    <tr><th>連絡先<span class="lat">CONTACT</span></th><td><a href="contact.html">お問い合わせフォーム</a>（Google フォーム）</td></tr>
+    <tr><th>取り扱い<span class="lat">PRIVACY</span></th><td><a href="privacy.html">プライバシーポリシー</a></td></tr>
+  </table>
+  <p>企業やチームではなく、一人で企画・プログラム・文章・画面設計を担当しています。<br>そのため返信までに時間をいただくことがあります。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅱ</span>何を作っているか</h2>
+  <p>ブラウザだけで完結する、短く終われるゲームを作っています。何かを入手させたり、アカウントを作らせたりせず、開いたその場で始められること。そして、腕前が理由で結末に届かない作りにしないこと。この二つを軸にしています。</p>
+  <p>一作目の『フェイブル・オブ・アビス』は、童話の少女たちと戦う縦スクロールの弾幕シューティングです。全五話、ボスは五体、通しで 15 分ほどで終わります。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅲ</span>どうやって作っているか</h2>
+  <p>ゲーム本体は素の JavaScript だけで書いています。ゲームエンジンも、描画ライブラリも、ビルドツールも使っていません。描画は Canvas 2D、音は Web Audio API。480×640 の画面を 60fps の固定タイムステップで動かしています。</p>
+  <p>ライブラリを避けているのは主義の問題ではなく、単に<b>読み込みを速くしたかった</b>からです。ページを開いてから遊び始めるまでに待ち時間があると、それだけで人は帰ってしまいます。フレームワークを一つ入れるとその分だけ起動が遅れるので、必要なものを自分で書くほうが目的に合っていました。</p>
+  <p>最初の版は、画像も音楽もすべて Base64 で HTML に直接書き込んだ<b>一枚の巨大なファイル</b>でした。どこにでも置けて確実に動く反面、18MB という極端な大きさになり、開くたびに全曲を読み込む形になってしまいます。現在は素材をファイルへ切り出し、必要になった時点で取りに行くよう作り直しました。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅳ</span>設計で考えたこと</h2>
+  <p>弾幕シューティングとして、いくつか意識的に選んだ作りがあります。</p>
+  <ul>
+    <li><b>当たり判定を極端に小さくした</b>　自機に当たり判定があるのは中心の赤い点、半径 2.6 ピクセルだけです。見た目の機体より遥かに小さいので、画面が弾で埋まっていても実際にはかなり抜けられます。避けている実感を出すための作りです。</li>
+    <li><b>技名から弾幕を起こした</b>　先に技名を決めて、その名前が示すものを弾の動きに翻訳しています。「始めはなかった赤い頭巾」は何もない空間に弾が後から現れ、「消えた実母」は明滅して消えている間だけ通り抜けられます。弾の種類を増やすのではなく、共通の弾に振る舞いを足す形で作りました。</li>
+    <li><b>会話を弾幕の合間に置いた</b>　弾を避けながら文章を読ませないという方針です。技がひとつ終わるたびに時間が完全に止まり、読み終えてから次が始まります。初めは戦闘と会話を同時に行う方針でしたがそれだとどちらにも集中できなかったため、現在の形に落ち着きました。</li>
+    <li><b>腕前で詰まないようにした</b>　力尽きても、その話の頭から何度でもやり直せます。ボスの弾幕には制限時間もあり、倒せなくても避け切れば次へ進みます。ただし実際に遊んでみると、耐え続けるより削り切るほうが速く、事故も少ないことが分かりました。制限時間は保険として残していますが、狙って使うものではありません。</li>
+  </ul>
+  <p>画面に同時に存在できる弾は最大 1400 発です。上限を決めておかないと、条件次第でフレーム落ちが起きて、避けられるはずの弾に当たってしまいます。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅴ</span>動作の確認について</h2>
+  <p>弾幕を一つ調整すると、一見関係のない場所の難易度が変わることがあります。そのため、ゲームを自動で動かして仕組みを検査するテストを 78 項目書き、リリース前に通すようにしていました。技名が正しいか、難易度の係数が実際の弾に効いているか、ボムが五種類とも仕様どおり働くか、といった項目です。</p>
+  <p>さらに、<b>わざと壊した版を作ってテストが赤くなるか</b>も確かめました。これは有効で、実際に「盾を無効にしてもテストが通ってしまう」抜けが見つかっています。自機の弾は別の場所で止まっていたため、ボムだけが盾を貫通する状態を見逃していました。</p>
+  <p>ただし自動化できるのはここまでです。実際の見た目、音の自然さ、そして「その弾幕が理不尽かどうか」は数値で測れないので、最後は自分で遊んで判断しています。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅵ</span>素材と権利について</h2>
+  <p>当サイトで公開しているゲームのプログラム、文章、画像、音声等の権利は、運営者または各権利者に帰属します。</p>
+  <p>外部の素材を使用する場合は、利用規約等においてゲームへの組み込みおよび商用利用が許可されたものを、各提供者の定めるライセンスに従って使用しています。詳細は<a href="privacy.html">プライバシーポリシー</a>の著作権の項をご覧ください。</p>
+  <p>登場する童話（赤ずきん、ヘンゼルとグレーテル、白雪姫、シンデレラ）は、いずれも著作権の保護期間が終了した民間伝承をもとにした独自の解釈による創作です。特定の映像作品や出版物とは関係ありません。</p>
+</section>
+
+<div class="divider"></div>
+<p><a class="cta" href="fable.html">ゲームを始める</a>　<a class="cta quiet" href="contact.html">お問い合わせ</a></p>
+
+</main>
+
+<div id="ad-inline"></div>
+
+<footer class="colophon">
+  <div class="inner">
+    <nav>
+      <a href="index.html">トップ</a>
+      <a href="fable.html">ゲームを遊ぶ</a>
+      <a href="howto.html">遊び方</a>
+      <a href="about.html">このサイトについて</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+      <a href="contact.html">お問い合わせ</a>
+    </nav>
+    <p class="sig">SY4869 &middot; SYGAMES.NET</p>
+  </div>
+</footer>
+
+<script src="assets/js/ads.js"></script>
+</body>
+</html>

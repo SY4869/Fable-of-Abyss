@@ -147,7 +147,7 @@ var DIFFS=[
   {k:'hard',n:'ハード',lat:'HARD',bs:1.00,bhp:1.00,ehp:1.00,eden:1.00,ex:0,bomb:2,inv:115,
    d:'避ける腕と、振り分けの設計と、ボムを切る度胸が同時に要る。'},
   {k:'extra',n:'エクストラ',lat:'EXTRA',bs:1.13,bhp:1.16,ehp:1.22,eden:0.84,ex:1,bomb:1,inv:96,
-   d:'弾速も体力も増し、ボスはどのゲージにも追撃を重ねてくる。ボムは一つきり。'}
+   d:'弾速も体力も増し、ボスはどのゲージにも追撃を重ねてくる。ボムは一つきり。現在調整中のため非推奨。'}
 ];
 var DF=DIFFS[1];
 function setDiff(k){ for(var i=0;i<DIFFS.length;i++) if(DIFFS[i].k===k) DF=DIFFS[i]; }
