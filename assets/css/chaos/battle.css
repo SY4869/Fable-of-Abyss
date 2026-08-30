@@ -1,0 +1,693 @@
+/* ChaosSwordGarden - 戦闘画面
+   当初の画面イメージの構図に準拠：
+     一人称視点。敵を正面に見据え、上下に装飾HPバー、
+     左列に円形スキルアイコン、右下に自分の武器を構える。 */
+
+#battle { position: relative; }
+
+#round-indicator {
+  margin-bottom: 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+#round-indicator b { color: var(--accent); }
+
+#field {
+  background: linear-gradient(180deg, var(--panel-raised), var(--panel));
+  border: 1px solid var(--border);
+  border-top: 1px solid var(--border-gold);
+  border-radius: 4px;
+  padding: 12px;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+}
+
+#stage {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  width: 100%;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #05060a;
+  font-family: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "MS Mincho", serif;
+  transition: filter 0.3s;
+}
+
+/* 背景は暗く沈ませて、キャラクターとHUDを浮かび上がらせる */
+/* 背景画像は対戦相手ごとに ui.js が差し替える（ここでの指定は初期値） */
+.stage-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url('../../images/chaos/sougen_Background.webp');
+  background-position: center 55%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: brightness(0.42) saturate(0.85) contrast(1.05);
+  /* 自分の横移動に合わせて少し流し、カメラが動いた感じを出す */
+  transform: translateX(0);
+  transition: transform 0.18s ease-out;
+}
+
+/* 四隅を落として中央（敵）へ視線を集める */
+.stage-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 62% 58% at 50% 52%, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.72) 100%),
+    linear-gradient(180deg, rgba(3, 4, 8, 0.92) 0%, rgba(3, 4, 8, 0) 26%, rgba(3, 4, 8, 0) 66%, rgba(3, 4, 8, 0.95) 100%);
+}
+
+/* 心眼(プレイヤー使用時)の視界妨害演出。
+   妨害されるのは「戦場の見え方」なので、背景・敵・足元のマスだけを霞ませる。
+   自分のHP/状態やスキルアイコンは手元の情報なので、はっきり見えるままにする。 */
+#stage.blinded .stage-bg,
+#stage.blinded .actor.enemy,
+#stage.blinded .hud.enemy,
+#stage.blinded #lane-field {
+  filter: blur(3px) brightness(0.5);
+}
+
+/* =========================================================
+ * HUD（名前 / 装飾HPバー / HP数値 / バフ）
+ * =======================================================*/
+
+/* 敵が踏み込みで大きくなるとHUDに重なるため、HUD自身にも暗幕を敷いて可読性を確保する */
+.hud {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  padding: 0 11%;
+  text-align: center;
+  z-index: 6;
+}
+
+.hud.enemy {
+  top: 0;
+  padding-top: 12px;
+  padding-bottom: 26px;
+  background: linear-gradient(180deg, rgba(4, 4, 9, 0.9) 0%, rgba(4, 4, 9, 0.66) 62%, rgba(4, 4, 9, 0) 100%);
+}
+
+.hud.player {
+  bottom: 0;
+  padding-top: 20px;
+  padding-bottom: 10px;
+  background: linear-gradient(0deg, rgba(4, 4, 9, 0.9) 0%, rgba(4, 4, 9, 0.66) 62%, rgba(4, 4, 9, 0) 100%);
+}
+
+/* 一人称視点なので自分の名前は出さない。足元のマス目と重なるのを避ける */
+.hud.player .fighter-name { display: none; }
+
+/* 名前・HP数値・バフを1行に並べる。
+   縦に積むとキャストバーが下がって敵キャラに被るため、横に展開して高さを稼ぐ。 */
+.hud-line {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 5px;
+  min-height: 30px;
+}
+
+.fighter-name {
+  font-size: 19px;
+  letter-spacing: 0.08em;
+  color: #efe6cf;
+  text-shadow: 0 2px 6px #000, 0 0 14px rgba(0, 0, 0, 0.9);
+  white-space: nowrap;
+}
+
+.hp-text {
+  font-size: 15px;
+  color: #e4dcc6;
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 6px #000;
+  white-space: nowrap;
+}
+
+/* 装飾付きバー：両端に菱形の金具を置く */
+.ornate-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bar-cap {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  transform: rotate(45deg);
+  background: linear-gradient(135deg, #e2cd8c, #8a6f2c 55%, #4e3d15);
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+}
+
+.hp-bar {
+  flex: 1;
+  height: 15px;
+  background: linear-gradient(180deg, #1a0d10, #0b0609);
+  border: 1px solid #6e5a28;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.85), inset 0 0 6px rgba(0, 0, 0, 0.9);
+  overflow: hidden;
+}
+
+.hp-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(180deg, #ff5b5b 0%, #c8282d 48%, #7d1418 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  transition: width 0.14s linear;
+}
+
+.hp-fill.low { background: linear-gradient(180deg, #ffb347 0%, #d97b16 48%, #8a4a08 100%); }
+
+/* --- バフ/デバフアイコン（HPバー付近 + 残り時間ゲージ） --- */
+
+/* 名前行に並べるので、縦の余白は持たせない */
+.buff-row {
+  display: flex;
+  gap: 4px;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+}
+
+.buff-icon {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  background: rgba(10, 8, 6, 0.92);
+  border: 1px solid var(--buff);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+}
+
+.buff-icon.detrimental { border-color: var(--debuff); }
+
+.buff-label {
+  font-size: 11px;
+  line-height: 1;
+  padding-bottom: 3px;
+}
+
+.buff-gauge {
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  bottom: 1px;
+  height: 3px;
+  background: #000;
+}
+
+.buff-gauge-fill {
+  height: 100%;
+  background: var(--buff);
+  transition: width 0.08s linear;
+}
+
+.buff-icon.detrimental .buff-gauge-fill { background: var(--debuff); }
+.buff-icon.permanent .buff-gauge-fill { opacity: 0.35; }
+
+.state-text {
+  min-height: 18px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6fd3d3;
+  font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+  text-shadow: 0 1px 4px #000, 0 0 8px #000;
+}
+
+/* =========================================================
+ * レーン表示（足元のマス目）
+ *   一人称視点なので、奥に敵の3マス・手前に自分の3マスを
+ *   パースを付けて並べ、どの横位置に立っているかを示す。
+ * =======================================================*/
+
+/* 敵の足元(bottom:20%)を上端付近に収め、敵が奥のマスに立って見えるようにする。
+   HUDより奥(z-index:5 < 6)に置き、下部HUDの文字は読めるままにする。 */
+#lane-field {
+  position: absolute;
+  left: 50%;
+  /* 下部HUDを避けつつ、敵の足元(20%)に奥の行が重なる高さ */
+  bottom: 21%;
+  /* 1マスの幅を ui.js の ENEMY_LANE_OFFSET_PX(190px) に合わせ、
+     敵の立ち位置とマスの位置が一致するようにしている */
+  width: 570px;
+  max-width: 68%;
+  transform: translateX(-50%);
+  transition: transform 0.18s ease-out;
+  perspective: 380px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.lane-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  transform-origin: center bottom;
+}
+
+/* 奥（敵側）は小さく、手前（自分側）は大きく見せて奥行きを出す */
+.enemy-lanes {
+  transform: rotateX(62deg) scale(0.62);
+  margin-bottom: 2px;
+  opacity: 0.85;
+}
+
+.player-lanes {
+  transform: rotateX(62deg);
+}
+
+.lane-cell {
+  height: 28px;
+  border: 2px solid rgba(212, 175, 55, 0.28);
+  background: linear-gradient(180deg, rgba(120, 100, 150, 0.18), rgba(30, 20, 45, 0.36));
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.5);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+/* 自分が立っているマス（浅葱） */
+.player-lanes .lane-cell.occupied {
+  border-color: #6fd3d3;
+  background: linear-gradient(180deg, rgba(111, 211, 211, 0.42), rgba(20, 90, 100, 0.45));
+  box-shadow: inset 0 0 16px rgba(111, 211, 211, 0.45), 0 0 14px rgba(111, 211, 211, 0.32);
+}
+
+/* 敵が立っているマス */
+.enemy-lanes .lane-cell.occupied {
+  border-color: #ff8f8f;
+  background: linear-gradient(180deg, rgba(255, 120, 120, 0.5), rgba(150, 30, 30, 0.45));
+  box-shadow: inset 0 0 16px rgba(255, 120, 120, 0.5), 0 0 14px rgba(255, 120, 120, 0.35);
+}
+
+/* 攻撃が当たる並び（同じレーン）になっている時の警告表示 */
+.lane-cell.aligned {
+  border-color: var(--startup);
+  animation: laneAlign 0.7s ease-in-out infinite alternate;
+}
+
+@keyframes laneAlign {
+  from { box-shadow: inset 0 0 16px rgba(224, 168, 60, 0.35); }
+  to   { box-shadow: inset 0 0 22px rgba(224, 168, 60, 0.75), 0 0 16px rgba(224, 168, 60, 0.5); }
+}
+
+/* =========================================================
+ * 敵キャラクター（中央）
+ *   溜め/後隙のモーションは transform を JS が毎フレーム更新する。
+ *   発生時間はスキルごとに違う（0.15s〜1.10s）ため、固定尺の
+ *   CSSアニメーションでは実際の判定タイミングとズレてしまう。
+ * =======================================================*/
+
+/* 立ち絵は縦横比がまちまちなので、高さを基準に揃えて身長感を統一する。
+   JSのモーションは .actor-sprite の transform を使うため、
+   中央寄せの translateX(-50%) は親の .actor 側に置いて競合を避ける。 */
+.actor.enemy {
+  position: absolute;
+  left: 50%;
+  bottom: 20%;   /* 足元が下部HUDの文字に被らない高さ */
+  height: 59%;
+  transform: translateX(-50%);
+  /* 横位置はレーン差から ui.js が決める。移動の発生時間に合わせて滑らかに動かす */
+  transition: transform 0.18s ease-out;
+  z-index: 3;
+}
+
+.actor-sprite {
+  position: relative;
+  height: 100%;
+  transform-origin: 50% 100%; /* 足元を軸に前後・沈み込みする */
+  will-change: transform;
+}
+
+.actor-sprite .portrait {
+  height: 100%;
+  width: auto;
+  display: block;
+  filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.85)) brightness(0.88) saturate(0.9) contrast(1.05);
+  transition: filter 0.1s ease-out;
+}
+
+/* --- エンチャント発動中のオーラ（キャラを包む） ---
+   .actor-sprite の中に置くことで、溜め・後隙のモーションに追従する。 */
+.actor-sprite .aura {
+  position: absolute;
+  left: 50%;
+  bottom: -4%;
+  height: 108%;
+  width: auto;
+  transform: translateX(-50%);
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: screen; /* 発光として重ねる */
+  transition: opacity 0.25s ease-out;
+}
+
+/* 立ち絵が読めなくならない濃さに留める */
+.actor-sprite .aura.visible {
+  opacity: 0.7;
+  animation: auraPulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes auraPulse {
+  from { transform: translateX(-50%) scale(1); opacity: 0.55; }
+  to   { transform: translateX(-50%) scale(1.05); opacity: 0.78; }
+}
+
+/* --- プレイヤーのオーラ（一人称なので画面のフチを染める） --- */
+
+#player-aura {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  opacity: 0;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  /* オーラ素材は中央が空いた構図なので、画面より大きく引き伸ばして
+     炎（氷・雷）の柱が画面の左右のフチに来るようにする */
+  background-size: 142% 112%;
+  mix-blend-mode: screen;
+  transition: opacity 0.3s ease-out;
+}
+
+#player-aura.visible {
+  opacity: 0.42;
+  animation: playerAuraPulse 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes playerAuraPulse {
+  from { opacity: 0.28; }
+  to   { opacity: 0.46; }
+}
+
+/* 接地感を出す影 */
+.actor-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -10px;
+  width: 78%;
+  height: 20px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0) 72%);
+  pointer-events: none;
+}
+
+/* 溜め中：紅く燃え上がる */
+.actor[data-state="startup"] .actor-sprite .portrait {
+  filter: drop-shadow(0 0 12px var(--startup)) drop-shadow(0 10px 18px rgba(0, 0, 0, 0.85)) brightness(1.15) contrast(1.1);
+}
+
+/* 後隙中：暗く沈む（無防備） */
+.actor[data-state="recovery"] .actor-sprite .portrait {
+  filter: drop-shadow(0 0 10px var(--recovery)) brightness(0.42) saturate(0.3);
+}
+
+/* ひるみ中：技を潰された状態。後隙より強く白飛びさせて「弾かれた」感を出す */
+.actor[data-state="flinch"] .actor-sprite .portrait {
+  filter: drop-shadow(0 0 14px #fff) brightness(1.5) saturate(0.4) contrast(0.95);
+}
+
+.actor[data-state="guard"] .actor-sprite .portrait {
+  filter: drop-shadow(0 0 12px var(--accent)) brightness(0.7);
+}
+
+.actor.dodging .actor-sprite { opacity: 0.5; }
+.actor[data-state="down"] .actor-sprite { opacity: 0.22; }
+
+/* 被弾フラッシュ（のけぞりはJSのモーション側で付ける） */
+.actor.hit .actor-sprite .portrait { animation: hitFlash 0.26s ease-out; }
+
+@keyframes hitFlash {
+  0%   { filter: brightness(7) saturate(0); }
+  40%  { filter: brightness(7) saturate(0); }
+  100% { filter: none; }
+}
+
+/* --- キャストバー（発生 = 着弾まで / 後隙 = 反撃できる残り時間） --- */
+
+.cast-bar {
+  width: 58%;
+  margin: 6px auto 0;
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.cast-bar.visible { opacity: 1; }
+
+.cast-name {
+  display: block;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+  color: var(--startup);
+  text-shadow: 0 2px 6px #000, 0 0 12px #000;
+}
+
+.cast-track {
+  height: 10px;
+  background: rgba(6, 5, 8, 0.9);
+  border: 1px solid #6e5a28;
+  overflow: hidden;
+}
+
+.cast-fill {
+  height: 100%;
+  width: 0;
+  background: linear-gradient(180deg, #ffd27a, var(--startup) 55%, #a35c05);
+}
+
+.cast-bar.recovery .cast-name { color: var(--recovery); }
+.cast-bar.recovery .cast-fill { background: linear-gradient(180deg, #ff8f8f, var(--recovery) 55%, #7d1418); }
+
+/* --- 「スキ！」バッジ（後隙 中・大 = 確定反撃を取れる時間） --- */
+
+.punish-badge {
+  position: absolute;
+  top: 28%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(180deg, #ff6b6b, #b31d22);
+  border: 1px solid #ffd27a;
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 0.05em;
+  padding: 6px 16px;
+  white-space: nowrap;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.85);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 7;
+}
+
+.actor.punishable .punish-badge {
+  animation: punishPop 0.5s ease-in-out infinite alternate;
+  opacity: 1;
+}
+
+@keyframes punishPop {
+  from { transform: translate(-50%, -50%) scale(1); }
+  to   { transform: translate(-50%, -50%) scale(1.13); }
+}
+
+/* --- ダメージ数値のポップアップ --- */
+
+.popups {
+  position: absolute;
+  top: 24%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  z-index: 8;
+}
+
+#player-popups { top: 60%; }
+
+.popup {
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 34px;
+  font-weight: 800;
+  white-space: nowrap;
+  font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+  text-shadow: 0 2px 6px #000, 0 0 16px #000;
+  animation: popupFloat 0.9s ease-out forwards;
+}
+
+.popup.to-player { color: #ff6b6b; }
+.popup.to-enemy { color: #ffe066; }
+.popup.dodge { color: #6fd3d3; font-size: 24px; }
+.popup.flinch { color: #fff2a8; font-size: 24px; }
+
+@keyframes popupFloat {
+  0%   { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), 16px) scale(0.6); }
+  18%  { opacity: 1; transform: translate(calc(-50% + var(--dx, 0px)), 0) scale(1.2); }
+  35%  { transform: translate(calc(-50% + var(--dx, 0px)), -10px) scale(1); }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx, 0px)), -74px) scale(1); }
+}
+
+/* --- 自分の被弾（一人称なので画面全体を赤く縁取る） --- */
+
+#hit-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 9;
+  background: radial-gradient(ellipse 74% 70% at 50% 50%, rgba(255, 0, 0, 0) 45%, rgba(190, 0, 0, 0.75) 100%);
+}
+
+#hit-vignette.flash { animation: vignetteFlash 0.45s ease-out; }
+
+@keyframes vignetteFlash {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* --- プレイヤーの武器（一人称視点。自分の状態はこの剣の動きで伝える） --- */
+
+#player-weapon {
+  position: absolute;
+  right: 5%;
+  bottom: -16%;
+  width: 23%;
+  z-index: 5;
+  transform-origin: 50% 90%; /* 柄のあたりを軸に振る */
+  will-change: transform;
+  pointer-events: none;
+  /* 主役は中央の敵なので、自分の剣は少し落として馴染ませる */
+  filter: drop-shadow(-10px 6px 16px rgba(0, 0, 0, 0.9)) brightness(0.82);
+}
+
+#player-weapon svg { width: 100%; display: block; }
+
+/* =========================================================
+ * スキルアイコン（左列・円形 / CTスイープ + 残り秒数）
+ * =======================================================*/
+
+#skill-bar {
+  position: absolute;
+  left: 2.4%;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 6;
+}
+
+.skill-icon {
+  width: 66px;
+  text-align: center;
+  font-family: "Yu Mincho", "Hiragino Mincho ProN", serif;
+}
+
+.icon-circle {
+  position: relative;
+  width: 66px;
+  height: 66px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid #6e5a28;
+  background: radial-gradient(circle at 34% 30%, var(--icon-light), var(--icon-dark) 72%);
+  box-shadow: 0 0 14px rgba(0, 0, 0, 0.85), inset 0 0 16px rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-glyph {
+  font-size: 29px;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 0 10px var(--icon-light), 0 2px 5px #000;
+}
+
+/* CT中の暗転スイープ（円形アイコンなので扇形で残量を表す） */
+.ct-sweep {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(rgba(0, 0, 0, 0.82) 0 var(--sweep, 0deg), rgba(0, 0, 0, 0) var(--sweep, 0deg) 360deg);
+  pointer-events: none;
+}
+
+.ct-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 21px;
+  font-weight: 700;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  font-family: "Segoe UI", sans-serif;
+  text-shadow: 0 2px 5px #000;
+  pointer-events: none;
+}
+
+.slot-key {
+  position: absolute;
+  top: 1px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 700;
+  color: #ffd27a;
+  font-family: "Segoe UI", sans-serif;
+  text-shadow: 0 1px 3px #000;
+  z-index: 2;
+}
+
+.icon-name {
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* 長いスキル名は2行で打ち切る（全文はtitle属性で見せる） */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-top: 3px;
+  font-size: 12px;
+  color: #e4dcc6;
+  letter-spacing: 0.02em;
+  text-shadow: 0 2px 5px #000, 0 0 10px #000;
+  line-height: 1.25;
+}
+
+.skill-icon.ready .icon-circle {
+  border-color: #ffd27a;
+  box-shadow: 0 0 16px rgba(255, 210, 122, 0.45), inset 0 0 16px rgba(0, 0, 0, 0.5);
+}
+
+.skill-icon.passive .icon-circle { filter: saturate(0.45); }
+.skill-icon.passive .ct-text { font-size: 12px; color: #b9b2a0; }
+.skill-icon.locked .icon-circle { filter: grayscale(0.85) brightness(0.55); }
+.skill-icon.locked .ct-text { font-size: 12px; color: var(--hp-low); }
+
+#key-guide {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--muted);
+}
+
+#key-guide b {
+  color: var(--accent);
+  margin-right: 3px;
+}
+
+/* 空振り表示 */
+.popup.miss { color: #d8d2c4; font-size: 24px; letter-spacing: 0.08em; }

@@ -1,0 +1,1213 @@
+/* ChaosSwordGarden プロトタイプ - 戦闘UI
+   要件定義.md 7章:
+     ・スキルアイコン = CT残数のオーバーレイゲージ(暗転) + 数値(秒)
+     ・バフ/デバフアイコン = HPバー下部 + 残り時間カウントダウンゲージ  */
+
+/* 配色は Start.webp のタイトルアートに合わせた和風ダーク。
+   紫がかった闇を背景に、金（装飾）と深紅（血・炎）を差し色にする。 */
+:root {
+  --bg: #0b0710;
+  --bg-deep: #05030a;
+  --panel: #16101f;
+  --panel-raised: #1e1629;
+  --border: #3b2b47;
+  --border-gold: #6e5a28;
+  --text: #ede8e0;
+  --muted: #9c8fa8;
+
+  --accent: #d4af37;        /* 金：見出し・ボタン・キー表示 */
+  --accent-bright: #f0dfa0;
+  --crimson: #c8283c;       /* 深紅：タイトルロゴの赤 */
+  --violet: #8b4fd0;        /* 紫：背景の雷 */
+
+  --hp: #56b45a;
+  --hp-low: #e0a83c;
+  --hp-enemy: #c8283c;
+  --startup: #e0a83c;
+  --recovery: #d9354a;
+  --buff: #56b45a;
+  --debuff: #d9354a;
+
+  --serif: "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", "MS Mincho", serif;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  padding: 20px;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(139, 79, 208, 0.12), rgba(0, 0, 0, 0) 70%),
+    var(--bg);
+  background-attachment: fixed;
+  color: var(--text);
+  font-family: "Segoe UI", "Yu Gothic UI", "Hiragino Sans", sans-serif;
+  font-size: 14px;
+}
+
+h1 {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 600;
+  /* 本文パネルと左端を揃えるため、同じ最大幅で中央寄せする */
+  max-width: 880px;
+  margin: 0 auto 16px;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  text-shadow: 0 2px 10px rgba(212, 175, 55, 0.25);
+}
+
+h1 .subtitle {
+  font-size: 13px;
+  font-weight: normal;
+  font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+  color: var(--muted);
+  margin-left: 8px;
+  letter-spacing: 0;
+}
+
+#mute-button {
+  margin-left: 14px;
+  padding: 3px 12px;
+  font-size: 12px;
+  vertical-align: middle;
+  background: var(--panel-raised);
+  color: var(--accent);
+  border: 1px solid var(--border-gold);
+}
+
+#mute-button.muted { color: var(--muted); border-color: var(--border); }
+
+/* タイトル画面は絵だけを見せたいので、ヘッダーの中身をすべて隠す */
+#app-header.on-title { color: transparent; text-shadow: none; }
+#app-header.on-title .subtitle { visibility: hidden; }
+#app-header.on-title #mute-button { display: none; }
+
+/* ===== スタート画面 ===== */
+
+#title-screen {
+  position: relative;
+  border: 1px solid var(--border-gold);
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(212, 175, 55, 0.12) inset;
+}
+
+#title-art {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* タイトル絵の下端を暗く落として、ボタンを載せる余白を作る */
+#title-menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 40px 0 26px;
+  text-align: center;
+  background: linear-gradient(0deg, rgba(4, 2, 8, 0.95) 30%, rgba(4, 2, 8, 0) 100%);
+}
+
+#title-note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--muted);
+  text-shadow: 0 2px 6px #000;
+}
+
+/* 金の縁取りボタン。タイトルの装飾に合わせた見た目 */
+.ornate-button {
+  position: relative;
+  padding: 12px 46px;
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: #1a1206;
+  background: linear-gradient(180deg, var(--accent-bright), var(--accent) 45%, #9a7d1e);
+  border: 1px solid #f3e6b0;
+  border-radius: 2px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.8), 0 0 22px rgba(212, 175, 55, 0.3);
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+
+.ornate-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.85), 0 0 30px rgba(212, 175, 55, 0.5);
+}
+
+.ornate-button:active { transform: translateY(1px); }
+
+/* 見出しは明朝＋金で、左に朱の罫を添える */
+h2 {
+  font-family: var(--serif);
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 10px;
+  padding-left: 10px;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  border-left: 3px solid var(--crimson);
+  line-height: 1.4;
+}
+
+h2 .hint {
+  font-weight: normal;
+  font-size: 11px;
+  margin-left: 4px;
+}
+
+/* 画面全体を中央に置く */
+.panel {
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.hidden { display: none !important; }
+
+/* 「決定」と「戻る」を横に並べる行 */
+.button-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* ===== 遊び方 ===== */
+
+#howto-block h3 {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 14px 0 6px;
+  font-weight: 600;
+}
+
+.howto-lead {
+  margin: 0;
+  line-height: 1.8;
+}
+
+.key-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.key-table td {
+  padding: 3px 0;
+  vertical-align: top;
+}
+
+.key-table td:first-child {
+  width: 4.5em;
+}
+
+.key-table td:nth-child(2) {
+  width: 6em;
+}
+
+.key-table b {
+  display: inline-block;
+  min-width: 3.4em;
+  padding: 1px 6px;
+  text-align: center;
+  background: #100a16;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--accent);
+  font-size: 12px;
+}
+
+.key-note {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.howto-list {
+  margin: 0;
+  padding-left: 1.2em;
+  line-height: 1.9;
+}
+
+.c-startup { color: var(--startup); }
+.c-recovery { color: var(--recovery); }
+
+/* ===== キー設定 ===== */
+
+#key-config {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px 14px;
+}
+
+/* ラベルと割り当てボタンを隣接させて、対応関係が一目で分かるようにする */
+.key-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.key-row .key-action {
+  width: 5.5em;
+  flex: none;
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.key-row .key-bind { flex: 1; }
+
+/* キー割り当てボタン。押下待ちの間は強調して、次の入力を待っていることを示す */
+.key-bind {
+  min-width: 7.5em;
+  padding: 5px 10px;
+  background: #100a16;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: center;
+}
+
+.key-bind:hover { border-color: var(--accent); }
+
+.key-bind.listening {
+  border-color: var(--accent);
+  background: #2a1c38;
+  color: var(--accent);
+  animation: keyListening 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes keyListening {
+  from { opacity: 0.55; }
+  to   { opacity: 1; }
+}
+
+.keyconfig-note {
+  margin: 10px 0 8px;
+  min-height: 1.2em;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.keyconfig-note.error { color: var(--debuff); }
+
+.sub-button {
+  background: var(--panel-raised);
+  color: var(--text);
+  border: 1px solid var(--border);
+  font-size: 12px;
+  padding: 5px 14px;
+}
+
+/* ===== セットアップ画面 ===== */
+
+#setup {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.setup-block {
+  background: linear-gradient(180deg, var(--panel-raised), var(--panel));
+  border: 1px solid var(--border);
+  border-top: 1px solid var(--border-gold);
+  border-radius: 4px;
+  padding: 16px 18px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+}
+
+.stat-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.stat-row label {
+  width: 10em;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stat-preview {
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+input[type="number"], select {
+  background: #100a16;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 5px 7px;
+  font-size: 13px;
+}
+
+input[type="number"]:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+input[type="number"] { width: 4.5em; }
+
+.remaining {
+  margin: 8px 0 0;
+  color: var(--muted);
+}
+
+.remaining.over { color: var(--debuff); }
+
+.skill-selects {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.skill-selects label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.skill-selects select { flex: 1; min-width: 0; }
+
+.enemy-info {
+  color: var(--muted);
+  margin: 8px 0;
+  line-height: 1.6;
+  white-space: pre-line; /* 敵情報は改行区切りで組み立てている */
+}
+
+button {
+  background: linear-gradient(180deg, var(--accent-bright), var(--accent) 50%, #9a7d1e);
+  color: #1a1206;
+  border: 1px solid #f3e6b0;
+  border-radius: 3px;
+  padding: 8px 22px;
+  font-family: var(--serif);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+}
+
+button:hover { filter: brightness(1.08); }
+button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.6); }
+
+.error {
+  color: var(--debuff);
+  margin: 8px 0 0;
+  min-height: 1.2em;
+}
+
+.mode-option {
+  display: block;
+  margin-bottom: 6px;
+  cursor: pointer;
+}
+
+.mode-option .hint {
+  color: var(--muted);
+  font-size: 11px;
+  margin-left: 8px;
+}
+
+/* ===== インターバル画面 ===== */
+
+#interval { display: flex; flex-direction: column; gap: 20px; }
+
+#school-choices {
+  display: flex;
+  gap: 8px;
+}
+
+.school-choice {
+  flex: 1;
+  background: #150e1d;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 10px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text);
+  font-weight: normal;
+}
+
+.school-choice:hover { border-color: var(--accent); }
+
+.school-choice.selected {
+  border-color: var(--accent);
+  background: #2a1c38;
+}
+
+.school-choice .school-name {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.school-choice .school-skills {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.swap-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.swap-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.swap-row select { min-width: 16em; }
+
+.reward-desc {
+  color: var(--muted);
+  margin: 10px 0 0;
+  min-height: 1.4em;
+  line-height: 1.6;
+  white-space: pre-line; /* 効果説明と発生/後隙/CTを改行で分けている */
+}
+
+/* ===== マッチ結果 ===== */
+
+#match-result-title { font-size: 18px; color: var(--text); }
+
+.history-row {
+  display: flex;
+  gap: 12px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.history-row .round { width: 5em; color: var(--muted); }
+.history-row .opponent { flex: 1; }
+.history-row .outcome { width: 3em; }
+.history-row .damage { color: var(--muted); white-space: nowrap; }
+.history-row .outcome.win { color: var(--hp); }
+.history-row .outcome.lose { color: var(--hp-enemy); }
+
+/* --- ログ --- */
+
+#log {
+  height: 120px;
+  overflow-y: auto;
+  background: #0a0610;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  margin: 8px 0 12px;
+  font-size: 12px;
+  line-height: 1.6;
+  font-variant-numeric: tabular-nums;
+}
+
+.log-line.damage-player { color: var(--debuff); }
+.log-line.damage-enemy { color: var(--hp); }
+.log-line.dodge { color: var(--accent); }
+.log-line.flinch { color: #ffe066; }
+.log-line.system { color: var(--muted); }
+
+/* --- 決着オーバーレイ --- */
+
+#result-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 14, 0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  /* ステージ内のHUD(z-index:6)やヴィネット(z-index:9)より必ず前面に置く。
+     #stage はスタッキングコンテキストを作らないため、指定しないと
+     HUDがこのオーバーレイを覆い、決着後のボタンが押せなくなる。 */
+  z-index: 50;
+}
+
+.result-box { text-align: center; }
+
+#result-text {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+#result-note {
+  color: var(--muted);
+  margin: 0 0 16px;
+  min-height: 1.2em;
+}
+
+/* ===== タイトルのサブメニュー ===== */
+
+.title-sub-menu {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.title-sub-menu .sub-button {
+  font-family: var(--serif);
+  font-size: 13px;
+  padding: 6px 20px;
+  letter-spacing: 0.08em;
+}
+
+/* スタート画面の足元に置くサイト内リンク（サイトの他ページへ戻る導線） */
+.sitenav {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 16px 0 0;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  line-height: 1.6;
+}
+
+.sitenav a {
+  color: rgba(237, 232, 224, 0.5);
+  text-decoration: none;
+  padding-bottom: 2px;
+  border-bottom: 1px solid transparent;
+  text-shadow: 0 2px 12px rgba(4, 2, 8, 0.95);
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.sitenav a:hover,
+.sitenav a:focus-visible {
+  color: var(--accent);
+  border-bottom-color: rgba(212, 175, 55, 0.5);
+}
+
+/* ===== オプション：音量 ===== */
+
+#options, #skill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.volume-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.volume-row label {
+  width: 5em;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.volume-row input[type="range"] {
+  flex: 1;
+  max-width: 320px;
+  accent-color: var(--accent);
+}
+
+.volume-value {
+  width: 3.5em;
+  text-align: right;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== スキル一覧 ===== */
+
+#skill-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.filter-chip {
+  padding: 5px 16px;
+  font-size: 12px;
+  font-family: var(--serif);
+  background: #100a16;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.filter-chip.active {
+  color: #1a1206;
+  background: linear-gradient(180deg, var(--accent-bright), var(--accent) 50%, #9a7d1e);
+  border-color: #f3e6b0;
+}
+
+.skill-entry {
+  display: grid;
+  grid-template-columns: 12em 5.5em 5.5em 5em 1fr;
+  gap: 10px;
+  align-items: baseline;
+  padding: 9px 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.skill-entry.head {
+  color: var(--muted);
+  font-size: 11px;
+  border-bottom: 1px solid var(--border-gold);
+  position: sticky;
+  top: 0;
+  background: var(--panel);
+}
+
+.skill-entry .s-name {
+  font-family: var(--serif);
+  font-size: 14px;
+  color: var(--text);
+}
+
+.skill-entry .s-school {
+  font-size: 11px;
+  padding: 1px 8px;
+  border-radius: 2px;
+  border: 1px solid currentColor;
+  justify-self: start;
+}
+
+.skill-entry .s-tier,
+.skill-entry .s-ct { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.skill-entry .s-desc { color: #cfc6c0; line-height: 1.6; }
+
+.skill-entry .s-passive { color: var(--accent); }
+
+/* ===== スコア表示 ===== */
+
+#result-score { margin: 4px 0 10px; }
+
+.score-total {
+  font-family: var(--serif);
+  color: var(--accent);
+  text-shadow: 0 0 18px rgba(212, 175, 55, 0.45);
+}
+
+#score-value { font-size: 40px; font-weight: 700; letter-spacing: 0.04em; }
+.score-unit { font-size: 15px; margin-left: 4px; }
+
+#score-breakdown {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+#score-breakdown .plus { color: #8fd88f; }
+#score-breakdown .minus { color: #e08b8b; }
+
+.result-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+#match-total-score {
+  margin: 0 0 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-gold);
+  font-family: var(--serif);
+}
+
+#match-total-score .label {
+  font-size: 13px;
+  color: var(--muted);
+  margin-right: 12px;
+}
+
+#match-score-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--accent);
+  text-shadow: 0 0 16px rgba(212, 175, 55, 0.4);
+}
+
+#match-continue-note {
+  margin-left: 14px;
+  font-size: 12px;
+  color: var(--hp-low);
+  font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+}
+
+.history-row .score { width: 5em; text-align: right; color: var(--accent); font-variant-numeric: tabular-nums; }
+
+/* ===== 名前入力 ===== */
+
+#player-name {
+  width: 16em;
+  padding: 7px 10px;
+  font-family: var(--serif);
+  font-size: 16px;
+  letter-spacing: 0.06em;
+  background: #100a16;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+
+#player-name:focus { outline: none; border-color: var(--accent); }
+
+/* ===== ランキング ===== */
+
+#ranking { display: flex; flex-direction: column; gap: 20px; }
+
+.rank-row {
+  display: grid;
+  grid-template-columns: 3.2em 1fr 7em 6.5em;
+  gap: 10px;
+  align-items: center;
+  padding: 9px 8px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.rank-row:hover { background: rgba(212, 175, 55, 0.07); }
+
+.rank-row.head {
+  color: var(--muted);
+  font-size: 11px;
+  border-bottom: 1px solid var(--border-gold);
+  cursor: default;
+}
+
+.rank-row.head:hover { background: none; }
+
+/* 今回の記録を目立たせる */
+.rank-row.current {
+  background: rgba(212, 175, 55, 0.14);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.rank-row.selected { background: rgba(212, 175, 55, 0.2); }
+
+.rank-no {
+  font-family: var(--serif);
+  font-size: 17px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.rank-row.top1 .rank-no { color: #ffd700; font-size: 20px; }
+.rank-row.top2 .rank-no { color: #d8d8e0; font-size: 19px; }
+.rank-row.top3 .rank-no { color: #d2924f; font-size: 19px; }
+
+.rank-name {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rank-name .rank-tag {
+  margin-left: 8px;
+  font-size: 11px;
+  font-family: "Segoe UI", sans-serif;
+  color: var(--muted);
+}
+
+.rank-name .rank-tag.cleared { color: var(--accent); }
+
+.rank-score {
+  text-align: right;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  font-size: 15px;
+}
+
+.rank-reach { color: var(--muted); text-align: right; font-size: 12px; }
+
+/* --- 選択した記録の詳細 --- */
+
+#ranking-detail:not(:empty) {
+  margin-top: 16px;
+  padding: 14px 16px;
+  background: rgba(10, 6, 16, 0.6);
+  border: 1px solid var(--border-gold);
+  border-radius: 3px;
+}
+
+.detail-title {
+  font-family: var(--serif);
+  font-size: 16px;
+  color: var(--accent);
+  margin-bottom: 10px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 6em 1fr;
+  gap: 6px 12px;
+  font-size: 13px;
+}
+
+.detail-grid dt { color: var(--muted); }
+.detail-grid dd { margin: 0; }
+
+.detail-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.detail-skill {
+  padding: 2px 10px;
+  font-size: 12px;
+  background: #100a16;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+}
+
+/* --- 結果画面に出す順位 --- */
+
+#match-rank-result {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border-gold);
+}
+
+#match-rank-message {
+  margin: 0 0 12px;
+  font-family: var(--serif);
+  font-size: 17px;
+  color: var(--accent);
+}
+
+#match-rank-message.out { color: var(--muted); }
+
+/* ===== セットアップのステップ表示 ===== */
+
+#setup-steps {
+  display: flex;
+  gap: 10px;
+  list-style: none;
+  margin: 0 0 4px;
+  padding: 0;
+}
+
+#setup-steps li {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  font-family: var(--serif);
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+}
+
+#setup-steps li.active {
+  color: var(--accent);
+  border-color: var(--border-gold);
+  background: linear-gradient(180deg, var(--panel-raised), var(--panel));
+  box-shadow: 0 0 14px rgba(212, 175, 55, 0.18);
+}
+
+#setup-steps li.done { color: #9db98f; }
+
+.step-no {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: 50%;
+  border: 1px solid currentColor;
+  font-size: 12px;
+}
+
+#setup-steps li.active .step-no {
+  background: var(--accent);
+  color: #1a1206;
+  border-color: var(--accent);
+}
+
+.setup-step {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ステータス割り振りのスライダー */
+.stat-slider {
+  flex: 1;
+  max-width: 260px;
+  accent-color: var(--accent);
+}
+
+/* ===== スキル装備 ===== */
+
+#equip-slots {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.equip-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 10px 12px;
+  text-align: left;
+  background: #100a16;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: pointer;
+  box-shadow: none;
+  font-family: inherit;
+}
+
+.equip-slot:hover { border-color: var(--accent); }
+
+/* 装備先として選ばれている枠 */
+.equip-slot.selected {
+  border-color: var(--accent);
+  background: #241a30;
+  box-shadow: 0 0 14px rgba(212, 175, 55, 0.25);
+}
+
+.slot-index {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.slot-key-hint {
+  padding: 0 5px;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--accent);
+}
+
+.slot-skill {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--text);
+}
+
+.slot-spec {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+#equip-filter {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+#equip-picker {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 10px;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* 一覧のスキルカード。選ぶ前に性能と効果が読めるようにする */
+.skill-card {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 11px 13px;
+  text-align: left;
+  background: #100a16;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: pointer;
+  box-shadow: none;
+  font-family: inherit;
+  font-weight: normal;
+}
+
+.skill-card:hover { border-color: var(--accent); background: #1a1024; }
+
+/* 別の枠に装備済み */
+.skill-card.equipped { border-color: var(--border-gold); opacity: 0.75; }
+
+/* いま選んでいる枠に装備中 */
+.skill-card.current {
+  border-color: var(--accent);
+  background: #241a30;
+  box-shadow: inset 0 0 16px rgba(212, 175, 55, 0.14);
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.card-name {
+  font-family: var(--serif);
+  font-size: 15px;
+  color: var(--accent);
+}
+
+.equip-badge {
+  font-size: 10px;
+  padding: 1px 7px;
+  color: #1a1206;
+  background: var(--accent);
+  border-radius: 2px;
+}
+
+.card-spec { font-size: 11px; color: var(--muted); }
+.card-desc { font-size: 12px; color: #cfc6c0; line-height: 1.55; }
+
+/* ===== ゲームタイトルのロゴ表記 =====
+   Start.webp のロゴに寄せて、Chaos=深紅 / Sword=白 / Garden=金 の3色に分け、
+   筆致のある字体＋斜体で力強さを出す。
+   （Webフォントは外部読み込みになるため、環境にある筆記体系を優先指定する） */
+
+.game-title {
+  font-family: 'Brush Script MT', 'Segoe Script', 'HGP行書体', var(--serif);
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.game-title .t-chaos {
+  color: #d82b3f;
+  text-shadow: 0 0 14px rgba(200, 40, 60, 0.55), 0 2px 4px #000;
+}
+
+.game-title .t-sword {
+  color: #f7f4ec;
+  text-shadow: 0 0 14px rgba(255, 255, 255, 0.5), 0 2px 4px #000;
+}
+
+.game-title .t-garden {
+  color: var(--accent);
+  text-shadow: 0 0 16px rgba(212, 175, 55, 0.6), 0 2px 4px #000;
+}
+
+/* ヘッダーではロゴ自体が色を持つので、h1の色指定は効かせない */
+#app-header .game-title { font-size: 26px; }
+#app-header.on-title .game-title { visibility: hidden; }
+
+/* ===== エンドロール ===== */
+
+#ending-scene {
+  position: relative;
+  aspect-ratio: 3 / 2;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--border-gold);
+  border-radius: 6px;
+  background: #05030a;
+  cursor: pointer;
+}
+
+.ending-bg {
+  position: absolute;
+  inset: 0;
+  background: url('../../images/chaos/Ending.webp') center 30% / cover no-repeat;
+  filter: brightness(0.72) saturate(1.05);
+}
+
+/* 文字を読ませるため、中央を軽く暗く落とす */
+.ending-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(4, 3, 10, 0.75) 0%, rgba(4, 3, 10, 0.35) 30%,
+                    rgba(4, 3, 10, 0.35) 70%, rgba(4, 3, 10, 0.8) 100%);
+}
+
+/* 下から上へゆっくり流す */
+#ending-roll {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 100%;
+  text-align: center;
+  font-family: var(--serif);
+  animation: endingScroll 42s linear forwards;
+}
+
+@keyframes endingScroll {
+  from { transform: translateY(0); }
+  to   { transform: translateY(calc(-100% - 60vh)); }
+}
+
+.roll-text {
+  margin: 0 0 14px;
+  font-size: 17px;
+  line-height: 2;
+  letter-spacing: 0.08em;
+  color: #f2ede3;
+  text-shadow: 0 2px 10px #000, 0 0 20px rgba(0, 0, 0, 0.9);
+}
+
+.roll-space { height: 46px; }
+
+.roll-grand {
+  margin: 0 0 14px;
+  font-size: 30px;
+  letter-spacing: 0.22em;
+  color: var(--accent);
+  text-shadow: 0 0 24px rgba(212, 175, 55, 0.5), 0 2px 8px #000;
+}
+
+/* エンドロール中のタイトルロゴは特に大きく見せる */
+.roll-title .game-title {
+  font-size: 46px;
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.95));
+}
+
+#ending-hint {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
+  font-family: "Segoe UI", "Yu Gothic UI", sans-serif;
+  text-shadow: 0 1px 4px #000;
+  animation: storyHintBlink 1.6s ease-in-out infinite alternate;
+}

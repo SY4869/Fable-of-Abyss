@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050409">
+<title>カオスソードガーデン｜一対一の剣戟バトルRPG</title>
+<meta name="description" content="ステータスとスキルを組み立てて挑む、一対一のリアルタイム剣戟バトル。全五戦の勝ち抜きと、条件を満たすと現れる裏ボス。ブラウザだけで遊べる無料ゲームです。">
+<link rel="canonical" href="https://sygames.net/chaos.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SY GAMES">
+<meta property="og:title" content="カオスソードガーデン">
+<meta property="og:description" content="ステータスとスキルを組み立てて挑む、一対一のリアルタイム剣戟バトル。">
+<meta property="og:url" content="https://sygames.net/chaos.html">
+<meta property="og:image" content="https://sygames.net/assets/images/chaos/thumb.webp">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/css/chaos/style.css">
+<link rel="stylesheet" href="assets/css/chaos/battle.css">
+<link rel="stylesheet" href="assets/css/chaos/story.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoGame",
+  "name": "カオスソードガーデン",
+  "alternateName": "ChaosSwordGarden",
+  "url": "https://sygames.net/chaos.html",
+  "image": "https://sygames.net/assets/images/chaos/thumb.webp",
+  "description": "ステータスとスキルを組み立てて挑む、一対一のリアルタイム剣戟バトル。全五戦の勝ち抜きと、条件を満たすと現れる裏ボス。",
+  "genre": ["アクション", "RPG"],
+  "gamePlatform": "Web browser",
+  "applicationCategory": "Game",
+  "operatingSystem": "Any",
+  "inLanguage": "ja",
+  "playMode": "SinglePlayer",
+  "author": { "@type": "Person", "name": "SY4869" },
+  "publisher": { "@type": "Organization", "name": "SY GAMES", "url": "https://sygames.net/" },
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" }
+}
+</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6058664157090890"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+
+<h1 id="app-header">
+  <span class="game-title"><span class="t-chaos">Chaos</span><span class="t-sword">Sword</span><span class="t-garden">Garden</span></span>
+  <button id="mute-button" type="button" title="BGM/SEのON・OFF">♪ ON</button>
+</h1>
+
+<!-- ===== スタート画面 ===== -->
+<section id="title" class="panel">
+  <div id="title-screen">
+    <img id="title-art" src="assets/images/chaos/Start.webp" alt="ChaosSwordGarden">
+    <div id="title-menu">
+      <button id="title-start" class="ornate-button">ゲームを始める</button>
+      <div class="title-sub-menu">
+        <button id="title-ranking" class="sub-button">ランキング</button>
+        <button id="title-skills" class="sub-button">スキル一覧</button>
+        <button id="title-options" class="sub-button">オプション</button>
+      </div>
+      <nav class="sitenav">
+        <a href="index.html">SY GAMES</a>
+        <a href="credits.html">クレジット</a>
+        <a href="about.html">このサイトについて</a>
+        <a href="privacy.html">プライバシーポリシー</a>
+        <a href="contact.html">お問い合わせ</a>
+      </nav>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 戦闘前セットアップ（要件定義.md 3.1 ポイント割り振り / 2章 スキル4枠） ===== -->
+<section id="setup" class="panel hidden">
+  <!-- 進行状況（ステップ表示） -->
+  <ol id="setup-steps">
+    <li data-step="1"><span class="step-no">1</span>遊び方・モード</li>
+    <li data-step="2"><span class="step-no">2</span>名前・ステータス</li>
+    <li data-step="3"><span class="step-no">3</span>スキル装備</li>
+  </ol>
+
+  <!-- ===== STEP 1: 遊び方 & モード選択 ===== -->
+  <div class="setup-step" data-step="1">
+    <div class="setup-block">
+      <h2>遊び方</h2>
+      <p class="howto-lead">
+        1対1のリアルタイム対戦です。全5戦を勝ち抜きましょう。<br>
+        勝つたびにスキルを1枠だけ入れ替えられます。1戦目に勝つと流派を選択でき、以降の対戦相手と報酬が決まります。
+      </p>
+
+      <h3>読み合いのポイント</h3>
+      <ul class="howto-list">
+        <li>敵が<b class="c-startup">オレンジに光ったら攻撃の予兆</b>です。頭上のゲージが満タンになる瞬間に当たります。ガードか回避を合わせましょう。</li>
+        <li>敵が<b class="c-recovery">暗くなって「スキ！」と出たら反撃のチャンス</b>。技を空振った直後は無防備です。</li>
+        <li><b>左右キーで移動</b>できます。相手とレーンがずれていれば攻撃は当たりません。</li>
+        <li>大きな攻撃を受けると、出しかけた技が<b class="c-recovery">中断（ひるみ）</b>されます。これは自分も敵も同じです。強い技ほど発生が遅いので、撃つ隙を作ってから狙いましょう。</li>
+      </ul>
+    </div>
+
+    <div class="setup-block">
+      <h2>モード</h2>
+      <label class="mode-option">
+        <input type="radio" name="mode" value="match" checked>
+        勝ち抜き（全5戦）<span class="hint">1戦目勝利後に流派を選択。スコアはランキングに記録されます</span>
+      </label>
+      <label class="mode-option">
+        <input type="radio" name="mode" value="free">
+        自由対戦<span class="hint">任意の相手と1戦だけ戦う（動作確認用・記録に残りません）</span>
+      </label>
+
+      <div id="free-enemy-block" class="hidden">
+        <select id="enemy-select"></select>
+        <p class="enemy-info" id="enemy-info"></p>
+      </div>
+    </div>
+
+    <div class="setup-block">
+      <div class="button-row">
+        <button id="step1-next">次へ：名前・ステータス</button>
+        <button id="setup-back" class="sub-button">タイトルに戻る</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== STEP 2: 名前 & ステータス割り振り ===== -->
+  <div class="setup-step hidden" data-step="2">
+    <div class="setup-block" id="name-block">
+      <h2>挑戦者の名前<span class="hint">（ランキングに記録されます）</span></h2>
+      <input type="text" id="player-name" maxlength="12" placeholder="名無し">
+    </div>
+
+    <div class="setup-block">
+      <h2>ステータス割り振り<span class="hint">（合計30pt）</span></h2>
+      <div class="stat-row">
+        <label>HP <input type="number" id="pt-hp" min="0" max="30" value="12"></label>
+        <input type="range" class="stat-slider" id="slider-hp" min="0" max="30" value="12">
+        <span class="stat-preview" id="preview-hp">-</span>
+      </div>
+      <div class="stat-row">
+        <label>攻撃力 <input type="number" id="pt-atk" min="0" max="30" value="10"></label>
+        <input type="range" class="stat-slider" id="slider-atk" min="0" max="30" value="10">
+        <span class="stat-preview" id="preview-atk">-</span>
+      </div>
+      <div class="stat-row">
+        <label>スピード <input type="number" id="pt-spd" min="0" max="30" value="8"></label>
+        <input type="range" class="stat-slider" id="slider-spd" min="0" max="30" value="8">
+        <span class="stat-preview" id="preview-spd">-</span>
+      </div>
+      <p class="remaining" id="pt-remaining">残り 0 pt</p>
+    </div>
+
+    <div class="setup-block">
+      <div class="button-row">
+        <button id="step2-next">次へ：スキル装備</button>
+        <button id="step2-back" class="sub-button">戻る</button>
+      </div>
+      <p class="error" id="step2-error"></p>
+    </div>
+  </div>
+
+  <!-- ===== STEP 3: スキル装備 ===== -->
+  <div class="setup-step hidden" data-step="3">
+    <div class="setup-block">
+      <h2>装備スキル<span class="hint">（4枠・枠を選んでから一覧のスキルをクリック）</span></h2>
+      <div id="equip-slots"></div>
+      <p class="error" id="setup-error"></p>
+    </div>
+
+    <div class="setup-block">
+      <h2>スキルを選ぶ<span class="hint">（クリックで選択中の枠に装備）</span></h2>
+      <div id="equip-filter"></div>
+      <div id="equip-picker"></div>
+    </div>
+
+    <div class="setup-block">
+      <div class="button-row">
+        <button id="start-button">この装備で開始</button>
+        <button id="step3-back" class="sub-button">戻る</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== インターバル（要件定義.md 2章: 各勝利後に流派選択 / スキル1枠交換） ===== -->
+<section id="interval" class="panel hidden">
+  <div class="setup-block" id="school-block">
+    <h2>流派を選択<span class="hint">（2〜3戦目の対戦相手と、以降の報酬スキルが決まります）</span></h2>
+    <div id="school-choices"></div>
+  </div>
+
+  <div class="setup-block">
+    <h2>スキル交換<span class="hint">（1枠まで・交換しなくても可）</span></h2>
+    <div class="swap-row">
+      <label>交換する枠
+        <select id="swap-slot-select"></select>
+      </label>
+      <label>入れ替えるスキル
+        <select id="reward-select"></select>
+      </label>
+    </div>
+    <p class="reward-desc" id="reward-desc"></p>
+  </div>
+
+  <div class="setup-block">
+    <h2>次の対戦相手</h2>
+    <p class="enemy-info" id="next-enemy-info"></p>
+    <div class="button-row">
+      <button id="next-battle-button">次の戦闘へ</button>
+      <button id="interval-back" class="sub-button">タイトルに戻る（進行は失われます）</button>
+    </div>
+    <p class="error" id="interval-error"></p>
+  </div>
+</section>
+
+<!-- ===== オプション（キー設定 / 音量） ===== -->
+<section id="options" class="panel hidden">
+  <div class="setup-block">
+    <h2>キー設定<span class="hint">（枠をクリックしてから、割り当てたいキーを押してください）</span></h2>
+    <div id="key-config"></div>
+    <p class="keyconfig-note" id="keyconfig-note"></p>
+    <button id="keyconfig-reset" class="sub-button">既定のキーに戻す</button>
+  </div>
+
+  <div class="setup-block">
+    <h2>音量</h2>
+    <div class="volume-row">
+      <label for="bgm-volume">BGM</label>
+      <input type="range" id="bgm-volume" min="0" max="100" step="5">
+      <span class="volume-value" id="bgm-volume-value"></span>
+    </div>
+    <div class="volume-row">
+      <label for="se-volume">効果音</label>
+      <input type="range" id="se-volume" min="0" max="100" step="5">
+      <span class="volume-value" id="se-volume-value"></span>
+      <button id="se-test" class="sub-button">試聴</button>
+    </div>
+  </div>
+
+  <div class="setup-block">
+    <button id="options-back" class="ornate-button">タイトルに戻る</button>
+  </div>
+</section>
+
+<!-- ===== エンドロール（裏ボス撃破後） ===== -->
+<section id="ending" class="panel hidden">
+  <div id="ending-scene">
+    <div class="ending-bg"></div>
+    <div class="ending-vignette"></div>
+    <div id="ending-roll"></div>
+    <div id="ending-hint">クリック または Esc でスキップ</div>
+  </div>
+</section>
+
+<!-- ===== ランキング（トップ10） ===== -->
+<section id="ranking" class="panel hidden">
+  <div class="setup-block">
+    <h2>ランキング<span class="hint">（スコア上位10件）</span></h2>
+    <div id="ranking-list"></div>
+    <p id="ranking-empty" class="hidden">まだ記録がありません。勝ち抜きモードに挑戦してみましょう。</p>
+    <div id="ranking-detail"></div>
+  </div>
+
+  <div class="setup-block">
+    <div class="button-row">
+      <button id="ranking-back" class="ornate-button">タイトルに戻る</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== スキル一覧 ===== -->
+<section id="skill-list" class="panel hidden">
+  <div class="setup-block">
+    <h2>スキル一覧<span class="hint">（全<span id="skill-count"></span>種）</span></h2>
+    <div id="skill-filter"></div>
+    <div id="skill-table"></div>
+  </div>
+
+  <div class="setup-block">
+    <button id="skills-back" class="ornate-button">タイトルに戻る</button>
+  </div>
+</section>
+
+<!-- ===== ストーリー（戦闘前後のセリフ / ストーリー.md 準拠） ===== -->
+<section id="story" class="panel hidden">
+  <div id="story-scene">
+    <div class="story-bg"></div>
+    <div class="story-vignette"></div>
+    <img id="story-portrait" alt="">
+
+    <div id="story-header">
+      <span id="story-subtitle"></span>
+      <span id="story-place"></span>
+    </div>
+
+    <div id="story-window">
+      <div id="story-speaker"></div>
+      <p id="story-text"></p>
+      <div id="story-hint">クリック / Enter で次へ　（Escでスキップ）</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== マッチ結果 ===== -->
+<section id="match-result" class="panel hidden">
+  <div class="setup-block">
+    <h2 id="match-result-title"></h2>
+    <div id="match-total-score">
+      <span class="label">合計スコア</span>
+      <span id="match-score-value">0</span><span class="score-unit">点</span>
+      <span id="match-continue-note"></span>
+    </div>
+    <div id="match-history"></div>
+
+    <div id="match-rank-result" class="hidden">
+      <p id="match-rank-message"></p>
+      <div id="match-ranking-list"></div>
+    </div>
+
+    <div class="button-row">
+      <button id="restart-button">最初からやり直す</button>
+      <button id="result-to-title" class="sub-button">タイトルに戻る</button>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 戦闘画面 ===== -->
+<section id="battle" class="panel hidden">
+  <div id="round-indicator"></div>
+  <div id="field">
+
+    <!-- ===== 戦闘ステージ（一人称視点：敵を正面に見据える構図） ===== -->
+    <div id="stage">
+      <div class="stage-bg"></div>
+      <div class="stage-vignette"></div>
+
+      <!-- 敵の状態表示（画面上部：名前 → HPバー → HP数値 → バフ → キャストバー） -->
+      <div class="hud enemy" id="enemy-panel">
+        <!-- 名前・HP数値・バフを1行にまとめ、キャストバーが敵に被らないよう縦を詰める -->
+        <div class="hud-line">
+          <span class="fighter-name" data-role="name"></span>
+          <span class="hp-text" data-role="hp-text"></span>
+          <div class="buff-row" data-role="buffs"></div>
+        </div>
+        <div class="ornate-bar">
+          <span class="bar-cap"></span>
+          <div class="hp-bar"><div class="hp-fill" data-role="hp-fill"></div></div>
+          <span class="bar-cap"></span>
+        </div>
+        <div class="cast-bar">
+          <span class="cast-name"></span>
+          <div class="cast-track"><div class="cast-fill"></div></div>
+        </div>
+        <div class="state-text" data-role="state"></div>
+      </div>
+
+      <!-- 足元のレーン表示（自分と敵がどの横位置にいるか） -->
+      <div id="lane-field">
+        <div class="lane-row enemy-lanes" data-role="enemy-lanes">
+          <div class="lane-cell"></div><div class="lane-cell"></div><div class="lane-cell"></div>
+        </div>
+        <div class="lane-row player-lanes" data-role="player-lanes">
+          <div class="lane-cell"></div><div class="lane-cell"></div><div class="lane-cell"></div>
+        </div>
+      </div>
+
+      <!-- 敵キャラクター（中央・こちらを向いて立つ） -->
+      <div class="actor enemy" id="enemy-actor" data-state="idle">
+        <div class="actor-shadow"></div>
+        <div class="actor-sprite">
+          <img class="portrait" alt="">
+          <img class="aura" alt="">
+        </div>
+        <div class="punish-badge">スキ！ 反撃チャンス</div>
+        <div class="popups"></div>
+      </div>
+
+      <!-- プレイヤーの武器（一人称視点：右下に構える） -->
+      <div id="player-weapon" data-state="idle">
+        <svg viewBox="0 0 220 460" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="bladeGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#6d7484"/>
+              <stop offset="42%" stop-color="#eef1f7"/>
+              <stop offset="58%" stop-color="#c3c9d6"/>
+              <stop offset="100%" stop-color="#565c69"/>
+            </linearGradient>
+            <linearGradient id="hiltGrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#6b5824"/>
+              <stop offset="45%" stop-color="#d8bd6a"/>
+              <stop offset="100%" stop-color="#5a4a1c"/>
+            </linearGradient>
+          </defs>
+          <!-- 刀身 -->
+          <polygon points="110,8 122,44 122,300 98,300 98,44" fill="url(#bladeGrad)"/>
+          <polygon points="110,8 110,300 98,300 98,44" fill="#ffffff" opacity="0.18"/>
+          <!-- 鍔 -->
+          <rect x="46" y="300" width="128" height="17" rx="5" fill="url(#hiltGrad)"/>
+          <polygon points="46,308 24,317 46,317" fill="#8d762f"/>
+          <polygon points="174,308 196,317 174,317" fill="#8d762f"/>
+          <!-- 柄 -->
+          <rect x="99" y="317" width="22" height="96" rx="7" fill="#2b2320"/>
+          <rect x="99" y="331" width="22" height="5" fill="#4a3c2e"/>
+          <rect x="99" y="349" width="22" height="5" fill="#4a3c2e"/>
+          <rect x="99" y="367" width="22" height="5" fill="#4a3c2e"/>
+          <!-- 柄頭 -->
+          <circle cx="110" cy="424" r="17" fill="url(#hiltGrad)"/>
+        </svg>
+      </div>
+
+      <!-- スキルアイコン（左列・円形／CTスイープ + 数値） -->
+      <div id="skill-bar"></div>
+
+      <!-- プレイヤーの状態表示（画面下部） -->
+      <div class="hud player" id="player-panel">
+        <div class="state-text" data-role="state"></div>
+        <div class="hud-line">
+          <span class="fighter-name" data-role="name"></span>
+          <span class="hp-text" data-role="hp-text"></span>
+          <div class="buff-row" data-role="buffs"></div>
+        </div>
+        <div class="ornate-bar">
+          <span class="bar-cap"></span>
+          <div class="hp-bar"><div class="hp-fill" data-role="hp-fill"></div></div>
+          <span class="bar-cap"></span>
+        </div>
+      </div>
+
+      <!-- 一人称視点なので、自分のエンチャントは画面のフチにオーラを出して伝える -->
+      <div id="player-aura"></div>
+
+      <!-- 一人称視点なので、自分の被弾は画面全体の赤フラッシュで伝える -->
+      <div id="hit-vignette"></div>
+      <div class="popups" id="player-popups"></div>
+    </div>
+
+    <!-- キー設定に追従させるため main.js が生成する -->
+    <div id="key-guide"></div>
+
+    <div id="log"></div>
+  </div>
+
+  <!-- 決着オーバーレイ -->
+  <div id="result-overlay" class="hidden">
+    <div class="result-box">
+      <p id="result-text"></p>
+      <div id="result-score" class="hidden">
+        <div class="score-total"><span id="score-value">0</span><span class="score-unit">点</span></div>
+        <div id="score-breakdown"></div>
+      </div>
+      <p id="result-note"></p>
+      <div class="result-buttons">
+        <button id="continue-button" class="sub-button hidden">コンテニュー（スコア0で再挑戦）</button>
+        <button id="retry-button"></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script type="module" src="assets/js/chaos/main.js"></script>
+<script src="assets/js/ads.js"></script>
+</body>
+</html>
