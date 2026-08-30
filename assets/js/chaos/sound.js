@@ -3,7 +3,7 @@
 // assets/audio/chaos/ 配下の素材:
 //   battle1.mp3       … 1〜4戦目のBGM
 //   battle_boss.mp3   … 5戦目(ボス)のBGM
-//   battle_secret.wav … 6戦目(裏ボス)のBGM
+//   battle_secret.mp3 … 6戦目(裏ボス)のBGM
 //   se_hit.wav        … 攻撃が命中した時
 //   se_guard.wav      … ガードで攻撃を弾いた時
 //   se_dodge.mp3      … 回避が成功した時
@@ -28,11 +28,11 @@ const BGM_DEFS = Object.freeze({
   title: { file: 'title.mp3', volume: 0.30 },
   menu: { file: 'menu.mp3', volume: 0.28 },   // ステータス割り振り・インターバル等
   dialogue: { file: 'dialogue.mp3', volume: 0.30 },  // 戦闘前後の会話（1〜5戦目）
-  dialogue6: { file: 'dialogue6.wav', volume: 0.30 },   // 裏ボス戦の会話
+  dialogue6: { file: 'dialogue6.mp3', volume: 0.30 },   // 裏ボス戦の会話
   normal: { file: 'battle1.mp3', volume: 0.32 },
   rare: { file: 'battle_rare.mp3', volume: 0.32 }, // レアエネミー戦
   boss: { file: 'battle_boss.mp3', volume: 0.32 },
-  secretBoss: { file: 'battle_secret.wav', volume: 0.32 },
+  secretBoss: { file: 'battle_secret.mp3', volume: 0.32 },
   ending: { file: 'ending.mp3', volume: 0.30 },
 });
 
