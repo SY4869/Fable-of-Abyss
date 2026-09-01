@@ -334,8 +334,10 @@ function initStoryUI() {
  * =======================================================*/
 
 function initSetupScreen() {
+  // 名前だけを出す。timing は「4戦目低確率(10%)」「6戦目(特殊条件)」のように
+  // どこで誰が出るかを明かしてしまうため、自由対戦の選択肢には載せない。
   dom.enemySelect.innerHTML = Object.values(CHARACTERS)
-    .map((c) => `<option value="${c.name}">${c.name}（${c.timing}）</option>`)
+    .map((c) => `<option value="${c.name}">${c.name}</option>`)
     .join('');
   dom.enemySelect.addEventListener('change', renderEnemyInfo);
 
@@ -917,12 +919,18 @@ function validateSetup() {
   return error === '';
 }
 
+/**
+ * 自由対戦で選んだ相手の情報。
+ *
+ * data.note は出さない。裏ボスの補足には解禁条件がそのまま書いてあり
+ *（「ボスをノーダメで倒すと…」）、レアエネミーの出現率も読み取れてしまう。
+ * 補足を見せたくなったときは、note とは別に「見せてよい説明」を持たせること。
+ */
 function describeCharacter(name) {
   const data = CHARACTERS[name];
   const { maxHp, attack, speed } = data.baseStats;
   return `${data.name}\n最大HP ${maxHp} / 攻撃力 ${attack} / スピード ${speed}　戦力 ${data.power}\n`
-    + `スキル: ${data.skillNames.join('、')}`
-    + (data.note ? `\n${data.note}` : '');
+    + `スキル: ${data.skillNames.join('、')}`;
 }
 
 function renderEnemyInfo() {
