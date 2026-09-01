@@ -186,12 +186,13 @@ export function onUseSkill(user, opponent, skillInstance) {
     if (neo && neo.definition.effect.gate) neo.openGate(neo.definition.effect.gate.windowSeconds);
   }
 
-  if (effect.kind !== 'buff') return;
-  if (effect.target === 'self') {
-    applySelfBuff(user, def, effect);
-  }
-  // target: 'enemy' な効果（ペネトレイト・必中・フリージングロック等）は
-  // onJudgmentSkill() 側で「発生が完了した瞬間」に適用する。
+  // バフ・デバフはここでは付けない。
+  //
+  // ここは「発動を宣言した瞬間」であって、まだ発生（溜め）が終わっていない。
+  // 以前は自己バフだけこの時点で付けていたため、発生中にひるんで技が中断されても
+  // 効果だけが残っていた（例: 瞬歩を潰したのに、その後の縦振りが別レーンに当たる）。
+  // ひるみは「出しかけた技を潰す」仕組みなので、効果は自分・相手どちらに向くものも
+  // onJudgmentSkill() 側の「発生が完了した瞬間」に揃える。
 }
 
 function applySelfBuff(fighter, def, effect) {
@@ -240,11 +241,14 @@ export function onJudgmentSkill(user, opponent, skillInstance) {
     return { flatDamage: opponent === user ? 0 : user.lastGuardDamageTaken, damageMultiplier: effect.multiplier, hits: 1, ignoresGuard: false, ignoresNitoryuPenalty: false };
   }
 
+  if (effect.kind === 'buff' && effect.target === 'self') {
+    applySelfBuff(user, def, effect);
+  }
   if (effect.kind === 'buff' && effect.target === 'enemy') {
     applyEnemyDebuff(opponent, def, effect);
   }
   if (effect.kind === 'buff' && effect.extra) {
-    // 瞬歩: 自己バフ(既にonUseで付与済み) + 相手デバフ
+    // 自己バフに加えて相手にもデバフを乗せる技
     applyEnemyDebuff(opponent, def, { ...effect.extra, magnitude: effect.magnitude });
   }
   return { damageMultiplier: null };
