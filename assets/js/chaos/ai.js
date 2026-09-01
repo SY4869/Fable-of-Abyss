@@ -1,6 +1,9 @@
 // ChaosSwordGarden - 敵CPU思考ロジック（要件定義.md 6章）
 //   1〜2戦目: ランダムトリガー
 //   3〜5戦目: ルールベース（反撃優先 / HP50%以下で特定スキル優先）
+//
+// ガードは「行動」ではなく「状態」なので、行動選択とは別の周期で扱う。
+// 判断が0.25秒ごとだと発生の速い攻撃に間に合わないため、構え直しは毎フレーム見る。
 // 難易度は単一（固定データ）で、Fighterのステータス・スキルは
 // data.js の CHARACTERS で戦ごとに固定されている。
 
@@ -31,6 +34,18 @@ export class AIController {
   /** @param {import('./battle-engine.js').BattleRound} battleRound */
   update(battleRound, dt, rng = Math.random) {
     this._sinceLastDecision += dt;
+
+    // ガードの構え直しは毎フレーム。相手の攻撃は0.15秒で出ることもあり、
+    // 行動選択と同じ0.25秒周期では間に合わない。
+    if (this.fighter.isIdle) {
+      const opponent = battleRound.opponentOf(this.fighter);
+      const guard = this.strategy.shouldGuard(this.fighter, opponent, rng);
+      battleRound.declareGuard(this.fighter, guard);
+      // 構えている間は攻撃に移らない。
+      // ここで _sinceLastDecision は進めたままにして、解除された瞬間に動けるようにする
+      if (guard) return;
+    }
+
     if (this._sinceLastDecision < this.decisionIntervalSec) return;
     this._sinceLastDecision = 0;
     if (!this.fighter.isIdle) return;
@@ -100,6 +115,45 @@ class BaseAIStrategy {
     return battleRound.declareMove(fighter, pick);
   }
 
+  /**
+   * 相手の攻撃をガードで受けるか。
+   *
+   * 判断は「攻撃1回につき一度だけ」行い、その攻撃が終わるまで結果を保つ。
+   * 毎フレーム抽選し直すと構えが小刻みに点滅し、当たるかどうかが運任せになるため。
+   *
+   * @returns {boolean} ガードを構えるべきか
+   */
+  shouldGuard(fighter, opponent, rng) {
+    const action = opponent.currentAction;
+
+    // 攻撃が来ていないなら構えない（構えっぱなしだと何もしない敵になる）
+    if (!this.isAttackIncoming(opponent)) {
+      this._guardTarget = null;
+      return false;
+    }
+    // レーンがずれていればそもそも当たらない
+    if (fighter.lane !== opponent.lane) {
+      this._guardTarget = null;
+      return false;
+    }
+    // 防御不可（ペネトレイトを受けている）なら構えても意味がない
+    if (fighter.hasFlag('guardDisabled')) {
+      this._guardTarget = null;
+      return false;
+    }
+
+    // 同じ攻撃に対しては最初の判断を使い回す
+    if (this._guardTarget?.action !== action) {
+      this._guardTarget = { action, guard: rng() < this.guardChance(fighter, opponent) };
+    }
+    return this._guardTarget.guard;
+  }
+
+  /** その状況でガードを選ぶ確率。戦略ごとに上書きする */
+  guardChance() {
+    return 0;
+  }
+
   /** スキル優先/通常攻撃のどちらかをランダムに実行する共通処理 */
   actRandomly(fighter, battleRound, rng, candidateSkills) {
     if (candidateSkills.length > 0 && rng() < 0.6) {
@@ -118,6 +172,14 @@ class BaseAIStrategy {
  * =======================================================*/
 
 export class RandomAIStrategy extends BaseAIStrategy {
+  /**
+   * 1〜2戦目はチュートリアル寄りなので、たまに受ける程度に留める。
+   * 数値は要件定義.md 未定義のプロトタイプ暫定値（要調整）。
+   */
+  guardChance() {
+    return 0.25;
+  }
+
   decide(fighter, battleRound, rng) {
     const opponent = battleRound.opponentOf(fighter);
 
@@ -134,6 +196,33 @@ export class RandomAIStrategy extends BaseAIStrategy {
  * =======================================================*/
 
 export class RuleBasedAIStrategy extends BaseAIStrategy {
+  /**
+   * 3戦目以降は状況を見て受ける。
+   *   ・避けられない攻撃（もう横に動く余裕がない）ほど受ける
+   *   ・重い技ほど受ける
+   *   ・HPが減っているほど慎重になる
+   * 数値は要件定義.md 未定義のプロトタイプ暫定値（要調整）。
+   */
+  guardChance(fighter, opponent) {
+    const action = opponent.currentAction;
+    let chance = 0.35;
+
+    // 横に逃げる余裕がなければ、受けるしかない
+    const remaining = action.startupSeconds - action.elapsed;
+    const canSidestep = remaining >= MOVE_STARTUP_SEC
+      && [-1, 1].some((d) => fighter.canMoveTo(fighter.lane + d));
+    if (!canSidestep) chance += 0.35;
+
+    // 後隙の大きい技＝重い一撃なので、通すと痛い。
+    // スピードで秒数が伸び縮みするため、補正前の値で判断する
+    if ((action.baseRecoverySeconds ?? action.recoverySeconds) >= RECOVERY_TIME['大']) chance += 0.15;
+
+    // 半分を切ったら守りを固める
+    if (fighter.currentHp <= fighter.baseStats.maxHp * 0.5) chance += 0.15;
+
+    return Math.min(0.9, chance);
+  }
+
   decide(fighter, battleRound, rng) {
     const opponent = battleRound.opponentOf(fighter);
     const candidates = this.availableSkills(fighter);
@@ -176,7 +265,9 @@ export class RuleBasedAIStrategy extends BaseAIStrategy {
 
   _opponentIsPunishable(opponent) {
     if (opponent.actionState !== ActionState.RECOVERY || !opponent.currentAction) return false;
-    return opponent.currentAction.recoverySeconds >= RECOVERY_TIME['中'];
+    // 実際の秒数はスピードで縮むので、元の後隙（中以上か）で判断する
+    const base = opponent.currentAction.baseRecoverySeconds ?? opponent.currentAction.recoverySeconds;
+    return base >= RECOVERY_TIME['中'];
   }
 
   /** 底力(パッシブ)は対象外。回復(不死再生は発動不可のパッシブなので実質対象外)・高倍率の大技を優先候補とする */

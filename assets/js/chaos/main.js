@@ -17,6 +17,7 @@ import { InputHandler, KeyConfig, ACTIONS, SKILL_ACTION_IDS, keyLabel, isReserve
 import { BattleUI } from './ui.js';
 import { SoundManager, bgmKeyForBattle, bgmKeyForDialogue } from './sound.js';
 import { Ranking } from './ranking.js';
+import { RemoteRanking, buildSubmission } from './ranking-remote.js';
 import {
   getOpeningLines, getDefeatLines, getSceneHeader,
   SECRET_BOSS_UNLOCK_SCENE, ENDING_ROLL, isInnerVoice,
@@ -91,6 +92,8 @@ const dom = {
   endingRoll: el('ending-roll'),
 
   rankingScreen: el('ranking'),
+  rankingTabs: el('ranking-tabs'),
+  rankingStatus: el('ranking-status'),
   rankingList: el('ranking-list'),
   rankingEmpty: el('ranking-empty'),
   rankingDetail: el('ranking-detail'),
@@ -98,6 +101,7 @@ const dom = {
 
   matchRankResult: el('match-rank-result'),
   matchRankMessage: el('match-rank-message'),
+  matchGlobalMessage: el('match-global-message'),
   matchRankingList: el('match-ranking-list'),
   resultToTitle: el('result-to-title'),
 
@@ -156,6 +160,12 @@ const ui = new BattleUI({
 
 const keyConfig = new KeyConfig();
 const ranking = new Ranking();
+
+/** 全プレイヤー共通のランキング（サーバー連携）。取得結果はキャッシュされる */
+const remoteRanking = new RemoteRanking();
+
+/** ランキング画面でいま表示している側 'global' | 'local' */
+let rankingSource = 'global';
 const input = new InputHandler(keyConfig);
 const sound = new SoundManager();
 
@@ -521,24 +531,65 @@ function initOptionsUI() {
 
 function initRankingUI() {
   dom.rankingBack.addEventListener('click', () => showScreen('title'));
+
+  dom.rankingTabs.addEventListener('click', (e) => {
+    const tab = e.target.closest('.rank-tab');
+    if (!tab || tab.dataset.source === rankingSource) return;
+    rankingSource = tab.dataset.source;
+    refreshRankingView();
+  });
 }
 
 function showRanking() {
-  renderRanking(dom.rankingList, { selectable: true });
-  // 最上位の記録を最初から開いておく
-  const entries = ranking.getAll();
+  showScreen('ranking');
+  refreshRankingView();
+}
+
+/** 読み込み中・エラーの一行メッセージ */
+function setRankingStatus(text) {
+  dom.rankingStatus.textContent = text ?? '';
+  dom.rankingStatus.classList.toggle('hidden', !text);
+}
+
+/**
+ * いま選ばれている側の順位表を描く。
+ * 「全体」を選んでいるときはサーバーから取り直すため非同期になる。
+ * 取得に失敗しても画面は保ち、この端末の記録に切り替えられる状態を残す。
+ */
+async function refreshRankingView() {
+  for (const tab of dom.rankingTabs.querySelectorAll('.rank-tab')) {
+    tab.classList.toggle('selected', tab.dataset.source === rankingSource);
+  }
+
+  const isGlobal = rankingSource === 'global';
+  if (isGlobal) {
+    setRankingStatus('読み込み中…');
+    dom.rankingList.innerHTML = '';
+    dom.rankingDetail.innerHTML = '';
+    dom.rankingEmpty?.classList.add('hidden');
+
+    await remoteRanking.refresh();
+    if (remoteRanking.state === 'error') {
+      setRankingStatus('共通ランキングを取得できませんでした。「この端末」の記録は表示できます。');
+      return;
+    }
+  }
+
+  setRankingStatus(null);
+  const entries = isGlobal ? remoteRanking.getAll() : ranking.getAll();
+  renderRanking(dom.rankingList, { selectable: true, entries });
   dom.rankingDetail.innerHTML = entries.length > 0 ? buildRankingDetail(entries[0]) : '';
   if (entries.length > 0) dom.rankingList.querySelector('.rank-row:not(.head)')?.classList.add('selected');
-  showScreen('ranking');
 }
 
 /**
  * 順位表を描画する。
  * @param {HTMLElement} container
- * @param {{selectable?: boolean, highlightIndex?: number}} options
+ * @param {{selectable?: boolean, highlightIndex?: number, entries?: object[]}} options
+ *   entries を渡さなければ、この端末に残っている記録を表示する。
  */
-function renderRanking(container, { selectable = false, highlightIndex = -1 } = {}) {
-  const entries = ranking.getAll();
+function renderRanking(container, { selectable = false, highlightIndex = -1, entries: given = null } = {}) {
+  const entries = given ?? ranking.getAll();
   dom.rankingEmpty?.classList.toggle('hidden', entries.length > 0 || container !== dom.rankingList);
 
   if (entries.length === 0) {
@@ -1077,7 +1128,9 @@ function handleBattleEvent(type, data) {
     case 'damage': {
       const kind = data.defender === 'player' ? 'damage-player' : 'damage-enemy';
       const attacker = data.attacker === 'player' ? 'プレイヤー' : '敵';
-      ui.appendLog(`${attacker}の${data.action} → ${data.amount} ダメージ`, kind);
+      // ガードで受け止められたことが分かるようにする（敵もガードしてくるため）
+      const guardNote = data.guarded ? '（ガード）' : '';
+      ui.appendLog(`${attacker}の${data.action} → ${data.amount} ダメージ${guardNote}`, kind);
       ui.notifyDamage(data.defender, data.amount);
       // ガードで受け止めた時は「弾く」音に差し替える
       sound.playSe(data.guarded ? 'guard' : 'hit');
@@ -1386,6 +1439,7 @@ function showMatchResult() {
     usedContinue: match.usedContinue,
   });
   renderMatchRankResult(rank);
+  submitToGlobalRanking();
   dom.matchResultTitle.textContent = won
     ? (match.secretBossUnlocked ? '裏ボス撃破！ 完全制覇' : '全5戦 勝ち抜き達成！')
     : `第${match.roundNumber}戦で敗北`;
@@ -1420,6 +1474,33 @@ function renderMatchRankResult(rank) {
   renderRanking(dom.matchRankingList, { highlightIndex: rank !== null ? rank - 1 : -1 });
 }
 
+/**
+ * 共通ランキングへ結果を送る。
+ * 送信の成否で進行は変えない。画面はすでに出ているので、結果を後から書き足すだけ。
+ */
+async function submitToGlobalRanking() {
+  dom.matchGlobalMessage.textContent = '共通ランキングへ送信中…';
+
+  const result = await remoteRanking.submit(
+    buildSubmission({ name: playerName, match, points: matchPoints })
+  );
+
+  if (!result.ok) {
+    dom.matchGlobalMessage.textContent = result.reason
+      ? `共通ランキングに送れませんでした（${result.reason}）`
+      : '共通ランキングに送れませんでした';
+    return;
+  }
+  if (!result.accepted) {
+    // 理論上あり得ない記録として弾かれた場合
+    dom.matchGlobalMessage.textContent = '記録の整合性を確認できなかったため、共通ランキングには反映されません';
+    return;
+  }
+  dom.matchGlobalMessage.textContent = result.rank !== null
+    ? `共通ランキング ${result.rank}位（${result.score}点）`
+    : `共通ランキングに記録しました（${result.score}点・圏外）`;
+}
+
 function returnToSetup() {
   stopSession();
   match = null;
@@ -1437,3 +1518,6 @@ function returnToTitle() {
 }
 
 initSetupScreen();
+
+// 前回オフラインだったぶんを送り直す。失敗しても黙って次回に回す
+remoteRanking.flushPending();

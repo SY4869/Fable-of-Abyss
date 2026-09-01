@@ -91,6 +91,7 @@
       <ul class="howto-list">
         <li>敵が<b class="c-startup">オレンジに光ったら攻撃の予兆</b>です。頭上のゲージが満タンになる瞬間に当たります。ガードか回避を合わせましょう。</li>
         <li>敵が<b class="c-recovery">暗くなって「スキ！」と出たら反撃のチャンス</b>。技を空振った直後は無防備です。</li>
+        <li><b>ガードは何もしていない時だけ</b>構えられます。技を振っている間や移動中は守れないので、振る前に受けるか避けるかを決めましょう。</li>
         <li><b>左右キーで移動</b>できます。相手とレーンがずれていれば攻撃は当たりません。</li>
         <li>大きな攻撃を受けると、出しかけた技が<b class="c-recovery">中断（ひるみ）</b>されます。これは自分も敵も同じです。強い技ほど発生が遅いので、撃つ隙を作ってから狙いましょう。</li>
       </ul>
@@ -100,7 +101,7 @@
       <h2>モード</h2>
       <label class="mode-option">
         <input type="radio" name="mode" value="match" checked>
-        勝ち抜き（全5戦）<span class="hint">1戦目勝利後に流派を選択。スコアはランキングに記録されます</span>
+        勝ち抜き（全5戦）<span class="hint">1戦目勝利後に流派を選択。スコアは公開ランキングに掲載されます</span>
       </label>
       <label class="mode-option">
         <input type="radio" name="mode" value="free">
@@ -124,7 +125,7 @@
   <!-- ===== STEP 2: 名前 & ステータス割り振り ===== -->
   <div class="setup-step hidden" data-step="2">
     <div class="setup-block" id="name-block">
-      <h2>挑戦者の名前<span class="hint">（ランキングに記録されます）</span></h2>
+      <h2>挑戦者の名前<span class="hint">（公開ランキングに掲載されます）</span></h2>
       <input type="text" id="player-name" maxlength="12" placeholder="名無し">
     </div>
 
@@ -254,6 +255,11 @@
 <section id="ranking" class="panel hidden">
   <div class="setup-block">
     <h2>ランキング<span class="hint">（スコア上位10件）</span></h2>
+    <div id="ranking-tabs" class="rank-tabs">
+      <button type="button" class="rank-tab selected" data-source="global">全体</button>
+      <button type="button" class="rank-tab" data-source="local">この端末</button>
+    </div>
+    <p id="ranking-status" class="rank-status hidden"></p>
     <div id="ranking-list"></div>
     <p id="ranking-empty" class="hidden">まだ記録がありません。勝ち抜きモードに挑戦してみましょう。</p>
     <div id="ranking-detail"></div>
@@ -312,6 +318,7 @@
 
     <div id="match-rank-result" class="hidden">
       <p id="match-rank-message"></p>
+      <p id="match-global-message" class="rank-status"></p>
       <div id="match-ranking-list"></div>
     </div>
 

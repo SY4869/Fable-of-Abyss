@@ -144,11 +144,15 @@ export class Fighter {
     this.isGuarding = false;
     this.lastGuardDamageTaken = 0; // カウンターブラスト用
 
-    // 回避代替スキル成功後の「攻撃可能」ウィンドウが開いているか
-    this.canActWhileDodging = false;
-
     // 回避入力を行った時刻（BattleRound#declareDodge が設定し、判定時に消費・null化する）
     this.dodgeRequestedAt = null;
+
+    // その回避が成功したときに得られる無敵の長さ（秒）。
+    // 通常回避は0。即応反射/即応反撃で回避した場合だけ値が入る。
+    this.dodgeInvincibleSeconds = 0;
+
+    // 無敵が切れる時刻（秒）。null なら無敵ではない。
+    this.invulnerableUntil = null;
   }
 
   /* ---- スキル装備管理（インターバル成長: 勝利後1枠交換） ---- */
@@ -250,8 +254,9 @@ export class Fighter {
     this.currentAction = null;
     this.isGuarding = false;
     this.lastGuardDamageTaken = 0;
-    this.canActWhileDodging = false;
     this.dodgeRequestedAt = null;
+    this.dodgeInvincibleSeconds = 0;
+    this.invulnerableUntil = null;
     for (const s of this.skills) s.reset();
   }
 }

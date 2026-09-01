@@ -249,7 +249,7 @@ class FighterPanel {
     else if (f.isGuarding) state = 'guard';
 
     this.actor.dataset.state = state;
-    this.actor.classList.toggle('dodging', f.dodgeRequestedAt != null || f.canActWhileDodging);
+    this.actor.classList.toggle('dodging', f.dodgeRequestedAt != null || f.invulnerableUntil != null);
 
     // 後隙(中・大)とひるみは攻め込める時間なので明示的に強調する
     const punishable = state === 'flinch'
@@ -369,7 +369,7 @@ class FighterPanel {
     const states = [];
     if (f.isGuarding) states.push('ガード中');
     if (f.dodgeRequestedAt != null) states.push('回避受付');
-    if (f.canActWhileDodging) states.push('反撃可能');
+    if (f.invulnerableUntil != null) states.push('無敵');
     if (f.hasFlag('dodgeDisabled')) states.push('回避不可');
     if (f.hasFlag('guardDisabled')) states.push('防御不可');
 

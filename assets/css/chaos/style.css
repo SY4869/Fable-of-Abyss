@@ -778,6 +778,44 @@ button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.6); }
 
 #ranking { display: flex; flex-direction: column; gap: 20px; }
 
+/* 全体／この端末 の切り替え */
+.rank-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.rank-tab {
+  font-family: var(--serif);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  padding: 6px 20px;
+  color: var(--muted);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+
+.rank-tab:hover { color: var(--text); border-color: var(--border-gold); }
+
+.rank-tab.selected {
+  color: var(--accent-bright);
+  border-color: var(--accent);
+  background: var(--panel-raised);
+}
+
+/* 読み込み中・通信できなかったときの一行 */
+.rank-status {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--muted);
+  min-height: 1.2em;
+}
+
+#match-global-message { margin: 6px 0 12px; }
+
 .rank-row {
   display: grid;
   grid-template-columns: 3.2em 1fr 7em 6.5em;

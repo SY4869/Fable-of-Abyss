@@ -62,6 +62,46 @@ export const RECOVERY_TIER_DOWN = Object.freeze({
 });
 
 /* =========================================================
+ * 2.5 スピードによる行動速度の補正
+ *
+ * 上の STARTUP_TIME / RECOVERY_TIME に書かれた秒数は
+ * 「スピード10.0のとき」の値として扱い、そこからの差で伸び縮みさせる。
+ * スピード10.0 は、割り振り10ポイント（5 + 10/2）のときの値。
+ *
+ * 掛かる先は「発生」「後隙」「レーン移動」の3つ。
+ * ひるみの硬直（FLINCH_DURATION_SEC）は被弾側のペナルティなので対象外。
+ *
+ * 数値はバランス調整対象。効きを強くしたければ SPEED_ACTION_FACTOR を上げる。
+ * =======================================================*/
+
+/** 倍率1.0になる基準のスピード（割り振り10ポイント相当） */
+export const SPEED_REFERENCE = 10;
+
+/** スピード1あたり何割ぶん行動時間を縮めるか */
+export const SPEED_ACTION_FACTOR = 0.03;
+
+/**
+ * 倍率の下限・上限。
+ * バフを重ねたときに行動時間が消し飛んだり、逆に止まって見えるほど遅くなるのを防ぐ。
+ */
+export const SPEED_MULTIPLIER_MIN = 0.55;
+export const SPEED_MULTIPLIER_MAX = 1.30;
+
+/**
+ * 発生・後隙・移動にかける倍率。1未満なら速く、1より大きければ遅い。
+ *
+ *   スピード20.0（最大）… 0.70   スピード10.0（基準）… 1.00
+ *   スピード 5.0（最小）… 1.15
+ *
+ * @param {number} speed バフ込みの実効スピード
+ */
+export function getSpeedActionMultiplier(speed) {
+  if (!Number.isFinite(speed)) return 1;
+  const raw = 1 - (speed - SPEED_REFERENCE) * SPEED_ACTION_FACTOR;
+  return Math.min(SPEED_MULTIPLIER_MAX, Math.max(SPEED_MULTIPLIER_MIN, raw));
+}
+
+/* =========================================================
  * 3. 通常攻撃（要件定義.md 3.2）
  * =======================================================*/
 
@@ -79,8 +119,37 @@ export const NORMAL_ATTACKS = Object.freeze({
 export const GUARD_DAMAGE_RATE = 0.40;
 
 // 回避：相手の攻撃判定タイミングに「合わせる」必要がある。
-// 判定の許容誤差は要件定義.md に明記が無いプロトタイプ暫定値。要バランス調整。
-export const DODGE_TIMING_TOLERANCE_SEC = 0.10;
+// 回避を入力してから、この秒数のあいだに攻撃判定が来れば成立する。
+//
+// 受付時間はスピードで変わる。発生・後隙とは向きが逆で、速いほど「長い」
+// （反応が利くほど避けやすい）。振り分けの両端で下記になるよう線形に対応させる。
+//
+//   割り振り 0 → スピード 5.0 → 0.10秒（60fps で約 6フレーム）
+//   割り振り10 → スピード10.0 → 0.15秒（約 9フレーム）
+//   割り振り30 → スピード20.0 → 0.25秒（約15フレーム）
+//
+// 回避はダメージを完全に無効化するため、広げすぎると読み合いが成立しなくなる。要バランス調整。
+
+/** 受付時間の下端と、それに対応するスピード */
+export const DODGE_TOLERANCE_MIN_SEC = 0.10;
+export const DODGE_SPEED_LOW = 5;
+
+/** 受付時間の上端と、それに対応するスピード */
+export const DODGE_TOLERANCE_MAX_SEC = 0.25;
+export const DODGE_SPEED_HIGH = 20;
+
+/**
+ * そのスピードでの回避の受付時間（秒）。
+ * スピードがバフで上下端を越えた場合も、受付時間は上下端で頭打ちにする。
+ *
+ * @param {number} speed バフ込みの実効スピード
+ */
+export function getDodgeToleranceSeconds(speed) {
+  if (!Number.isFinite(speed)) return DODGE_TOLERANCE_MIN_SEC;
+  const ratio = (speed - DODGE_SPEED_LOW) / (DODGE_SPEED_HIGH - DODGE_SPEED_LOW);
+  const clamped = Math.min(1, Math.max(0, ratio));
+  return DODGE_TOLERANCE_MIN_SEC + clamped * (DODGE_TOLERANCE_MAX_SEC - DODGE_TOLERANCE_MIN_SEC);
+}
 
 /* =========================================================
  * 4.3 レーン（左右移動 / 要件定義.md には未定義のプロトタイプ仕様）
@@ -214,10 +283,11 @@ const SKILL_ROWS = [
     '相手の防御を無効化する',
     { kind: 'buff', target: 'enemy', flags: { guardDisabled: true } }],
 
-  ['必中', '速', '小', '22s', 'なし', '3s',
-    '攻撃が必ず当たる',
-    // レーンのずれも回避も無視して命中させる自己バフ
-    { kind: 'buff', target: 'self', flags: { alwaysHit: true } }],
+  ['必中', '速', '大', '32s', 'なし', '3s',
+    '別レーンにも攻撃が当たるが、ガードされた場合ダメージが半減する。',
+    // レーンのずれを無視して命中する。回避は従来どおり間に合う（データ一覧の補足）。
+    // ガードされた場合は通常の軽減に加えてさらに半減する。
+    { kind: 'buff', target: 'self', flags: { alwaysHit: true, halvedWhenGuarded: true } }],
 
   ['フレイムエンチャント', '最速', '小', '24s', 'なし', '15s',
     '攻撃力が上昇する',
@@ -240,7 +310,7 @@ const SKILL_ROWS = [
     { kind: 'passive', target: 'self', stat: 'guardRate', magnitude: 'normal' }],
 
   ['不死再生', '無', '無', '無', 'なし', '-',
-    'HPが徐々に回復する(割合ではなく、固定値)',
+    'HPが徐々に回復する',
     // データ一覧.xlsx の指定どおり固定値回復。毎秒の量は未指定のためプロトタイプ暫定値。
     { kind: 'passive', target: 'self', hpRegenPerSec: 0.8 }],
 
@@ -256,9 +326,9 @@ const SKILL_ROWS = [
     '速度が上昇する',
     { kind: 'passive', target: 'self', stat: 'speed', magnitude: 'normal' }],
 
-  ['即応反射', '速', '中', '6s', 'なし', '-',
-    '回避の代わりとして発動可能。このスキルで回避に成功した場合、回避行動中に攻撃(スキル含む)が行える。',
-    { kind: 'evadeSkill' }],
+  ['即応反射', '無', '小', '5s', 'なし', '-',
+    '回避の代わりとして発動可能。このスキルで回避に成功した場合、2.5秒間無敵になる。',
+    { kind: 'evadeSkill', invincibleSeconds: 2.5 }],
 
   ['カウンターブラスト', '最速', '大', '18s', 'なし', '-',
     '直前の防御で受けたダメージ+攻撃力の130%のダメージを与える',
@@ -307,10 +377,10 @@ const SKILL_ROWS = [
     '攻撃力と速度が上昇する',
     { kind: 'buff', target: 'self', stats: ['attack', 'speed'], magnitude: 'normal' }],
 
-  ['即応反撃', '最速', '小', '6s', '連炎流', '-',
-    '回避の代わりとして発動可能。このスキルで回避に成功した場合、回避行動中に攻撃(スキル含む)が行える。',
-    // 即応反射(流派なし)より発生が速く、後隙が短い（要件定義.md 5.3）
-    { kind: 'evadeSkill' }],
+  ['即応反撃', '無', '小', '4s', '連炎流', '-',
+    '回避の代わりとして発動可能。このスキルで回避に成功した場合、3秒間無敵になる。',
+    // 即応反射(流派なし)よりCTが短く、無敵時間も長い
+    { kind: 'evadeSkill', invincibleSeconds: 3 }],
 
   ['炎舞', '並', '中', '11s', '連炎流', '-',
     'フレイムエンチャント発動中のみ使用可能。攻撃力の210%のダメージを与える',
@@ -328,9 +398,10 @@ const SKILL_ROWS = [
     '攻撃力が大幅に上昇する',
     { kind: 'buff', target: 'self', stat: 'attack', magnitude: 'large' }],
 
-  ['瞬歩', '速', '小', '30s', '瞬瞑流', '3.5s',
-    '自身の速度を上昇させ、攻撃が必ず当たる',
-    { kind: 'buff', target: 'self', stat: 'speed', magnitude: 'normal', flags: { alwaysHit: true } }],
+  ['瞬歩', '速', '中', '40s', '瞬瞑流', '3.5s',
+    '自身の速度を上昇させ、別レーンにも攻撃が当たるが、ガードされた場合ダメージが半減する。(回避コマンドは可能)',
+    { kind: 'buff', target: 'self', stat: 'speed', magnitude: 'normal',
+      flags: { alwaysHit: true, halvedWhenGuarded: true } }],
 
   ['雷刃', '遅', '大', '90s', '瞬瞑流', '-',
     'サンダーエンチャント発動中のみ使用可能。攻撃力の540%のダメージを与える',
@@ -348,7 +419,7 @@ const SKILL_ROWS = [
     }],
 ];
 
-/** 画像アセットの置き場所（chaos.html はサイト直下にあるのでドキュメント相対で書く） */
+/** 画像アセットの置き場所（img/ はプロジェクトルート、HTMLは prototype/ にある） */
 export const IMAGE_BASE = 'assets/images/chaos/';
 
 /**
@@ -399,12 +470,12 @@ const CHARACTER_ROWS = [
   ['緋天 飛鳥', 51, 20, 14, ['ウィンドエンチャント', '鉄壁', 'ソードスラッシュ', '心頭滅却'], '4戦目ランダム(30%)', null, 35],
   ['ローザ', 63, 24, 10, ['フレイムエンチャント', '連武', '炎舞', '底力'], '4戦目ランダム(30%)', null, 35],
   ['武田 白波', 81, 28, 5, ['炎気', '瞬歩', '鉄壁', 'カウンターブラスト'], '4戦目ランダム(30%)', null, 35],
-  ['切裂 劣子', 51, 27, 13, ['即応反射', '必中', 'アルティメットスマッシュ', '精神統一'], '4戦目低確率(10%)', 'レアエネミー', 40],
+  ['切裂 劣子', 51, 27, 14, ['即応反射', '必中', 'アルティメットスマッシュ', '精神統一'], '4戦目低確率(10%)', 'レアエネミー', 42],
   ['瞬瞑 龍斗', 42, 30, 16, ['サンダーエンチャント', '瞬歩', '雷刃', '心眼'], '5戦目', 'ボス', 46],
   ['沖田 雫', 78, 28, 18, ['瞬歩', '即応反撃', '底力', '不死再生'], '6戦目(特殊条件)', '裏ボス(ボスをノーダメで倒すと6戦目に突入)', 60],
 ];
 
-/* ---- 画像アセット（assets/images/chaos/ 配下） ----
+/* ---- 画像アセット（img/ 配下） ----
  * データ一覧.xlsx「キャラクター一覧」シートの「立ち絵」「背景」列に対応する。
  * シート側は拡張子なしのファイル名（例: Goro / sougen_Background）なので、
  * ここで拡張子を補ってパス化する。行データを汚さないよう別マップで持つ。

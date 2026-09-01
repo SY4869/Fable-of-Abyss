@@ -5,9 +5,10 @@
 'use strict';
 
 import {
-  NORMAL_ATTACKS, DODGE_TIMING_TOLERANCE_SEC, MATCH_CONFIG, CHARACTERS, SKILLS,
+  NORMAL_ATTACKS, getDodgeToleranceSeconds, MATCH_CONFIG, CHARACTERS, SKILLS,
   FLINCH_DAMAGE_RATIO, FLINCH_DURATION_SEC,
   MOVE_STARTUP_SEC, MOVE_RECOVERY_SEC, calculateBattleScore,
+  getSpeedActionMultiplier,
 } from './data.js';
 import { ActionState } from './models.js';
 import {
@@ -17,6 +18,22 @@ import {
   onUseSkill, onJudgmentSkill, canActivateSkill,
 } from './skill-effects.js';
 
+/**
+ * その時点のスピードから、発生・後隙・移動にかける倍率を求める。
+ * バフ・デバフを含めた実効値を見るので、ウィンドエンチャントや神速なども効く。
+ */
+function speedMultiplierOf(fighter) {
+  return getSpeedActionMultiplier(fighter.getEffectiveStat('speed'));
+}
+
+/**
+ * その闘士の回避受付時間（秒）。
+ * 発生・後隙とは逆に、スピードが高いほど長くなる。
+ */
+function dodgeToleranceOf(fighter) {
+  return getDodgeToleranceSeconds(fighter.getEffectiveStat('speed'));
+}
+
 /* =========================================================
  * BattleRound: 1戦闘（勝敗が決まるまでの1本）
  *
@@ -25,7 +42,8 @@ import {
  *
  * CTは「宣言した瞬間」から消費開始する（= 発生中もCTは減っていく）。
  * 回避(ダッジ)は「攻撃側の判定タイミング」と「回避入力タイミング」の
- * 差が DODGE_TIMING_TOLERANCE_SEC 以内であれば成立する。
+ * 差が受付時間以内であれば成立する。受付時間は闘士のスピードで変わる
+ * （getDodgeToleranceSeconds / スピードが高いほど長い＝避けやすい）。
  * =======================================================*/
 
 export class BattleRound {
@@ -80,27 +98,22 @@ export class BattleRound {
    */
   _canAct(fighter) {
     if (fighter.actionState === ActionState.FLINCH) return false; // ひるみ中は何もできない
-    return fighter.isIdle || fighter.canActWhileDodging;
-  }
-
-  /** 回避代替スキルの成功で得た行動許可を消費し、進行中の後隙をキャンセルする */
-  _consumeDodgeActWindow(fighter) {
-    if (!fighter.canActWhileDodging) return;
-    fighter.canActWhileDodging = false;
-    fighter.currentAction = null;
-    fighter.actionState = ActionState.IDLE;
+    return fighter.isIdle;
   }
 
   declareNormalAttack(fighter, attackType) {
     if (!this._canAct(fighter)) return false;
     const def = NORMAL_ATTACKS[attackType];
     if (!def) return false;
-    this._consumeDodgeActWindow(fighter);
+    const speedMult = speedMultiplierOf(fighter);
     this._beginAction(fighter, {
       kind: 'normal',
       name: attackType,
-      startupSeconds: def.startup * getStartupMultiplier(fighter) * getEnemyStartupSlowMultiplier(fighter),
-      recoverySeconds: def.recovery * getRecoveryMultiplier(fighter),
+      startupSeconds: def.startup * getStartupMultiplier(fighter) * getEnemyStartupSlowMultiplier(fighter) * speedMult,
+      recoverySeconds: def.recovery * getRecoveryMultiplier(fighter) * speedMult,
+      // 補正前の後隙。スピードやバフで秒数が伸び縮みしても
+      // 「元が重い技か」を判断できるようにAIが参照する
+      baseRecoverySeconds: def.recovery,
       damageMultiplier: def.damageMultiplier,
     });
     return true;
@@ -110,7 +123,6 @@ export class BattleRound {
     if (!this._canAct(fighter)) return false;
     const skillInstance = fighter.getSkill(skillName);
     if (!skillInstance || !canActivateSkill(fighter, skillInstance)) return false;
-    this._consumeDodgeActWindow(fighter);
 
     const def = skillInstance.definition;
     const opponent = this.opponentOf(fighter);
@@ -118,13 +130,23 @@ export class BattleRound {
     onUseSkill(fighter, opponent, skillInstance);
     skillInstance.startCooldown(getCooldownMultiplier(fighter, def));
 
+    // 回避の代わりとして撃つスキル（即応反射/即応反撃）は、
+    // 発動した瞬間に回避入力を行ったものとして扱う。
+    // 成功したときだけ、そのスキル固有の無敵時間が付く。
+    if (def.effect?.kind === 'evadeSkill') {
+      fighter.dodgeRequestedAt = this.time;
+      fighter.dodgeInvincibleSeconds = def.effect.invincibleSeconds ?? 0;
+    }
+
     const recoveryOverride = getRecoveryOverrideSeconds(fighter, def);
+    const speedMult = speedMultiplierOf(fighter);
     this._beginAction(fighter, {
       kind: 'skill',
       name: skillName,
       skillInstance,
-      startupSeconds: def.startupSeconds * getStartupMultiplier(fighter) * getEnemyStartupSlowMultiplier(fighter),
-      recoverySeconds: (recoveryOverride ?? def.recoverySeconds) * getRecoveryMultiplier(fighter),
+      startupSeconds: def.startupSeconds * getStartupMultiplier(fighter) * getEnemyStartupSlowMultiplier(fighter) * speedMult,
+      recoverySeconds: (recoveryOverride ?? def.recoverySeconds) * getRecoveryMultiplier(fighter) * speedMult,
+      baseRecoverySeconds: recoveryOverride ?? def.recoverySeconds,
     });
     return true;
   }
@@ -141,9 +163,9 @@ export class BattleRound {
     const target = fighter.lane + Math.sign(direction);
     if (!fighter.canMoveTo(target)) return false;
 
-    this._consumeDodgeActWindow(fighter);
     fighter.isGuarding = false; // 動き出したらガードは解ける
     fighter.actionState = ActionState.MOVING;
+    const moveSpeedMult = speedMultiplierOf(fighter);
     fighter.currentAction = {
       kind: 'move',
       name: direction < 0 ? '左移動' : '右移動',
@@ -152,19 +174,22 @@ export class BattleRound {
       arrived: false,
       elapsed: 0,
       judged: true,
-      startupSeconds: MOVE_STARTUP_SEC,
-      recoverySeconds: MOVE_RECOVERY_SEC,
+      startupSeconds: MOVE_STARTUP_SEC * moveSpeedMult,
+      recoverySeconds: MOVE_RECOVERY_SEC * moveSpeedMult,
     };
     this._emit('moveStart', { fighter: fighter.id, from: fighter.lane, to: target });
     return true;
   }
 
-  /** ガードは発生・後隙を持たない即時トグル（要件定義.md 3.3: スタミナ消費なし） */
+  /**
+   * ガードは発生・後隙を持たない即時トグル（要件定義.md 3.3: スタミナ消費なし）。
+   *
+   * ただし何もしていないとき（IDLE）にしか構えられない。
+   * 発生中（技の溜め）・後隙・移動中・ひるみ中はいずれも守れない。
+   * 技を振りながら守れてしまうと、リスクを負わずに攻め続けられるため。
+   */
   declareGuard(fighter, isGuarding) {
-    if (fighter.actionState === ActionState.RECOVERY) return false; // 後隙中は無防備
-    if (fighter.actionState === ActionState.FLINCH) return false;   // ひるみ中も守れない
-    // 移動中も不可。避けながら守れると防御手段が重なりすぎる
-    if (fighter.actionState === ActionState.MOVING) return false;
+    if (!fighter.isIdle) return false;
     fighter.isGuarding = isGuarding;
     return true;
   }
@@ -172,18 +197,12 @@ export class BattleRound {
   /** 相手の攻撃判定タイミングに合わせて入力する回避（要件定義.md 3.3） */
   declareDodge(fighter) {
     fighter.dodgeRequestedAt = this.time;
+    fighter.dodgeInvincibleSeconds = 0; // 通常回避は無敵を伴わない
     return true;
   }
 
-  /** 回避代替スキルの発生（無敵）フレーム中かどうか */
-  _isInEvadeSkillStartup(fighter) {
-    const action = fighter.currentAction;
-    if (!action || fighter.actionState !== ActionState.STARTUP) return false;
-    if (action.kind !== 'skill') return false;
-    return action.skillInstance.definition.effect.kind === 'evadeSkill';
-  }
-
   _beginAction(fighter, action) {
+    fighter.isGuarding = false; // 動き出したらガードは解ける（移動側は declareMove で落としている）
     fighter.actionState = ActionState.STARTUP;
     fighter.currentAction = { ...action, elapsed: 0, judged: false };
     this._emit('actionStart', { actor: fighter.id, action: action.name, kind: action.kind });
@@ -202,8 +221,14 @@ export class BattleRound {
       applyHpRegenPassives(f, dt);
       if (f.currentAction) f.currentAction.elapsed += dt;
       // 回避入力の受付ウィンドウを失効させる（UIの「回避中」表示もこの値を参照する）
-      if (f.dodgeRequestedAt != null && this.time - f.dodgeRequestedAt > DODGE_TIMING_TOLERANCE_SEC) {
+      if (f.dodgeRequestedAt != null && this.time - f.dodgeRequestedAt > dodgeToleranceOf(f)) {
         f.dodgeRequestedAt = null;
+        f.dodgeInvincibleSeconds = 0;
+      }
+      // 無敵（即応反射/即応反撃の成功後）の期限切れ。
+      // ここで null に戻すので、表示側は invulnerableUntil の有無だけ見ればよい
+      if (f.invulnerableUntil != null && this.time >= f.invulnerableUntil) {
+        f.invulnerableUntil = null;
       }
     }
 
@@ -230,8 +255,6 @@ export class BattleRound {
       if (action.elapsed >= action.recoverySeconds) {
         fighter.actionState = ActionState.IDLE;
         fighter.currentAction = null;
-        // 回避成功で得た「後隙キャンセル行動」の権利は、その行動が終わった時点で失効する
-        fighter.canActWhileDodging = false;
       }
     } else if (fighter.actionState === ActionState.FLINCH) {
       if (action.elapsed >= action.recoverySeconds) {
@@ -253,25 +276,30 @@ export class BattleRound {
   }
 
   _resolveJudgment(attacker, defender, action) {
-    // 「攻撃が必ず当たる」（必中・瞬歩）が乗っている間は、
-    // レーンのずれも回避も無視して命中させる
+    // 「別レーンにも攻撃が当たる」（必中・瞬歩）。
+    // レーンのずれは無視するが、回避は従来どおり間に合う（データ一覧.xlsx の補足）。
     const alwaysHit = attacker.hasFlag('alwaysHit');
 
-    // 回避代替スキル(即応反射/即応反撃)の無敵判定（要件定義.md 5.3）
-    // 敵の攻撃判定が、これらのスキルの発生時間と重なった場合は無敵。
-    if (!alwaysHit && this._isInEvadeSkillStartup(defender) && !defender.hasFlag('dodgeDisabled')) {
-      defender.canActWhileDodging = true; // 回避行動中に攻撃(スキル含む)が行える
-      this._emit('dodge', { defender: defender.id, attacker: attacker.id, action: action.name, viaSkill: defender.currentAction.name });
+    // 即応反射/即応反撃で回避に成功した直後の無敵時間中は、何を受けても通らない
+    if (defender.invulnerableUntil != null && this.time < defender.invulnerableUntil) {
+      this._emit('dodge', { defender: defender.id, attacker: attacker.id, action: action.name, viaInvincible: true });
       return; // ダメージ完全無効化
     }
 
-    // 回避判定: 攻撃の判定タイミングと回避入力タイミングの差が許容誤差以内なら成立
-    if (!alwaysHit && defender.dodgeRequestedAt != null) {
+    // 回避判定: 攻撃の判定タイミングと回避入力タイミングの差が受付時間以内なら成立
+    if (defender.dodgeRequestedAt != null) {
       const diff = Math.abs(this.time - defender.dodgeRequestedAt);
-      const succeeded = diff <= DODGE_TIMING_TOLERANCE_SEC && !defender.hasFlag('dodgeDisabled');
+      const succeeded = diff <= dodgeToleranceOf(defender) && !defender.hasFlag('dodgeDisabled');
+      const invincibleSec = defender.dodgeInvincibleSeconds || 0;
       defender.dodgeRequestedAt = null;
+      defender.dodgeInvincibleSeconds = 0;
       if (succeeded) {
-        this._emit('dodge', { defender: defender.id, attacker: attacker.id, action: action.name });
+        // 即応反射/即応反撃で避けた場合は、そのあと一定時間だけ無敵になる
+        if (invincibleSec > 0) defender.invulnerableUntil = this.time + invincibleSec;
+        this._emit('dodge', {
+          defender: defender.id, attacker: attacker.id, action: action.name,
+          invincibleSec: invincibleSec > 0 ? invincibleSec : undefined,
+        });
         return; // ダメージ完全無効化
       }
     }
@@ -307,6 +335,8 @@ export class BattleRound {
       const isGuarded = !damageInfo.ignoresGuard && defender.isGuarding && !defender.hasFlag('guardDisabled');
       if (isGuarded) {
         damage *= defender.getGuardDamageMultiplier();
+        // 必中・瞬歩は別レーンにも届く代わりに、ガードされると通常の軽減に加えて半減する
+        if (attacker.hasFlag('halvedWhenGuarded')) damage *= 0.5;
         defender.lastGuardDamageTaken = damage;
         guardedAny = true;
       }
@@ -359,8 +389,8 @@ export class BattleRound {
       recoverySeconds: FLINCH_DURATION_SEC,
     };
     fighter.isGuarding = false;
-    fighter.canActWhileDodging = false;
     fighter.dodgeRequestedAt = null;
+    fighter.dodgeInvincibleSeconds = 0;
 
     this._emit('flinch', { fighter: fighter.id, canceledAction });
   }
