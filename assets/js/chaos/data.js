@@ -330,7 +330,7 @@ const SKILL_ROWS = [
     '回避の代わりとして発動可能。このスキルで回避に成功した場合、2.5秒間無敵になる。',
     { kind: 'evadeSkill', invincibleSeconds: 2.5 }],
 
-  ['カウンターブラスト', '最速', '大', '18s', 'なし', '-',
+  ['カウンターブラスト', '速', '大', '18s', 'なし', '-',
     '直前の防御で受けたダメージ+攻撃力の130%のダメージを与える',
     { kind: 'special', id: 'counterBlast', multiplier: 1.30 }],
 
@@ -394,7 +394,7 @@ const SKILL_ROWS = [
     '攻撃力の230%のダメージを与える',
     { kind: 'damage', multiplier: 2.30 }],
 
-  ['冥想', '並', '小', '20s', '瞬瞑流', '5s',
+  ['冥想', '速', '小', '20s', '瞬瞑流', '5s',
     '攻撃力が大幅に上昇する',
     { kind: 'buff', target: 'self', stat: 'attack', magnitude: 'large' }],
 

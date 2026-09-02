@@ -96,8 +96,23 @@ export class BattleRound {
    * 通常はIDLE時のみだが、回避代替スキル(即応反射/即応反撃)で回避に成功した直後は
    * 「回避行動中に攻撃(スキル含む)が行える」ため後隙をキャンセルして行動できる。
    */
+  /**
+   * 回避の受付時間中か。
+   *
+   * 回避は「入力した瞬間から受付時間内に攻撃判定が来れば成立」という賭けなので、
+   * その間は攻撃・スキル・移動・ガードのいずれも受け付けない。
+   * 受付中に動けると、回避を置いたまま攻撃するという一方的に得な行動が成立してしまう。
+   *
+   * 成立した時点で dodgeRequestedAt は null に戻るため、避けた直後はすぐ動ける。
+   * 空振りに終わった場合も、受付時間が過ぎれば tick() 側で解除される。
+   */
+  _isDodgeWindowOpen(fighter) {
+    return fighter.dodgeRequestedAt != null;
+  }
+
   _canAct(fighter) {
     if (fighter.actionState === ActionState.FLINCH) return false; // ひるみ中は何もできない
+    if (this._isDodgeWindowOpen(fighter)) return false;           // 回避に賭けている間は動けない
     return fighter.isIdle;
   }
 
@@ -189,6 +204,7 @@ export class BattleRound {
    * 技を振りながら守れてしまうと、リスクを負わずに攻め続けられるため。
    */
   declareGuard(fighter, isGuarding) {
+    if (this._isDodgeWindowOpen(fighter)) return false; // 回避の受付中はガードに切り替えられない
     if (!fighter.isIdle) return false;
     fighter.isGuarding = isGuarding;
     return true;
@@ -196,6 +212,9 @@ export class BattleRound {
 
   /** 相手の攻撃判定タイミングに合わせて入力する回避（要件定義.md 3.3） */
   declareDodge(fighter) {
+    // 受付中に押し直せると、連打で受付時間を延ばし続けて何でも避けられてしまう
+    if (this._isDodgeWindowOpen(fighter)) return false;
+    fighter.isGuarding = false;         // 回避に切り替えたらガードは解ける
     fighter.dodgeRequestedAt = this.time;
     fighter.dodgeInvincibleSeconds = 0; // 通常回避は無敵を伴わない
     return true;
