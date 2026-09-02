@@ -357,11 +357,11 @@ const SKILL_ROWS = [
     '速度が大幅に上昇する',
     { kind: 'passive', target: 'self', stat: 'speed', magnitude: 'large' }],
 
-  ['ツインスラッシュ', '並', '小', '17s', '双海流', '-',
+  ['ツインスラッシュ', '並', '小', '14s', '双海流', '-',
     '二刀流の攻撃力低下を無効化して、攻撃力の170%で2回攻撃する',
     { kind: 'damage', multiplier: 1.70, hits: 2, ignoresNitoryuPenalty: true }],
 
-  ['クロススラッシュ', '並', '大', '32s', '双海流', '-',
+  ['クロススラッシュ', '並', '大', '28s', '双海流', '-',
     '二刀流の攻撃力低下を無効化して、攻撃力の340%で防御無視攻撃をする',
     { kind: 'damage', multiplier: 3.40, ignoresGuard: true, ignoresNitoryuPenalty: true }],
 

@@ -492,7 +492,7 @@ export class BattleMatch {
     this._pendingOpponentName = null; // 抽選済みの次戦相手（resolveNextOpponentName のキャッシュ）
 
     this.totalScore = 0;       // 勝利した戦闘のスコア合計
-    this.usedContinue = false; // コンテニューを使ったか（使うとスコアは0から数え直し）
+    this.usedContinue = false; // コンテニューを使ったか（スコアは減らさず、印だけ残す）
   }
 
   /* ---- 対戦相手の決定（データ一覧.xlsx「戦闘タイミング」列準拠） ---- */
@@ -594,7 +594,12 @@ export class BattleMatch {
   /**
    * 敗北した戦闘をやり直す（コンテニュー）。
    * ステータスと装備スキルはそのまま引き継ぎ、負けた戦闘の直前の状態へ戻す。
-   * 引き換えにスコアは0から数え直しになる。
+   *
+   * それまでに稼いだスコアは**そのまま維持する**。
+   * 以前は0から数え直していたが、サーバー側は敗北した戦闘が履歴から取り除かれた
+   * 記録を受け取って勝った戦闘だけを合算するため減点されず、
+   * 「全体ランキングと端末内のスコアが大きく食い違う」状態になっていた。
+   * コンテニューを使ったことは usedContinue として記録し、順位表では印を付ける。
    * @returns {boolean} コンテニューできたか
    */
   continueAfterDefeat() {
@@ -603,11 +608,7 @@ export class BattleMatch {
 
     this.history.pop();          // 敗北の記録を取り消す
     this.roundNumber -= 1;       // 同じ戦闘をもう一度
-    this.totalScore = 0;         // コンテニューの代償
     this.usedContinue = true;
-    // 合計が0なのに過去の戦闘に点が残っていると食い違って見えるため、
-    // それまでに稼いだスコアも無効にする（記録自体は残す）
-    for (const entry of this.history) entry.score = null;
     this.currentRound = null;
     // 同じ相手と戦い直せるよう、抽選済みの相手をそのまま復元する
     this._pendingOpponentName = last.opponentName;

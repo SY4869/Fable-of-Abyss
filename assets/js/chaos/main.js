@@ -1453,7 +1453,7 @@ function showMatchResult() {
     : `第${match.roundNumber}戦で敗北`;
 
   dom.matchScoreValue.textContent = String(match.totalScore);
-  dom.matchContinueNote.textContent = match.usedContinue ? '※コンテニュー使用（スコアは再挑戦後の分のみ）' : '';
+  dom.matchContinueNote.textContent = match.usedContinue ? '※コンテニュー使用' : '';
 
   dom.matchHistory.innerHTML = match.history.map((h) => {
     const isWin = h.winnerId === 'player';
