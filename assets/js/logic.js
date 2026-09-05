@@ -146,8 +146,8 @@ var DIFFS=[
    d:'弾は遅く、ボスの体力も少なめ。まずは五つの寓話を最後まで読み通すための難易度。'},
   {k:'hard',n:'ハード',lat:'HARD',bs:1.00,bhp:1.00,ehp:1.00,eden:1.00,ex:0,bomb:2,inv:115,
    d:'避ける腕と、振り分けの設計と、ボムを切る度胸が同時に要る。'},
-  {k:'extra',n:'エクストラ',lat:'EXTRA',bs:1.13,bhp:1.16,ehp:1.22,eden:0.84,ex:1,bomb:1,inv:96,
-   d:'弾速も体力も増し、ボスはどのゲージにも追撃を重ねてくる。ボムは一つきり。現在調整中のため非推奨。'}
+  {k:'extra',n:'エクストラ',lat:'EXTRA',bs:1.13,bhp:1.16,ehp:1.22,eden:0.56,ex:1,bomb:1,inv:96,
+   d:'弾速も体力も増し、道中の敵は一層厚い。ボスは幾つかの弾幕が別物に変わる。ボムは一つきり。現在調整中のため非推奨。'}
 ];
 var DF=DIFFS[1];
 function setDiff(k){ for(var i=0;i<DIFFS.length;i++) if(DIFFS[i].k===k) DF=DIFFS[i]; }
@@ -257,6 +257,16 @@ function burst(b){
   if(b.burst){ var q=b.burst; ring(b.x,b.y,q.n,q.spd,rnd(TAU),q.r,q.color,q.o); }
   addFx('boom',b.x,b.y,b.color,b.r*1.6);
   if(b.r>10) sfx('hit',0.6);
+}
+/* ボス戦に入る合図。残っていた雑魚は撃破扱いにせず、その場で散って消える */
+function clearEnemies(){
+  for(var i=0;i<G.enemies.length;i++){
+    var e=G.enemies[i];
+    addFx('boom',e.x,e.y,e.col,e.r*1.6);
+    addFx('spark',e.x,e.y,e.col,8);
+  }
+  if(G.enemies.length) sfx('kill',0.5);
+  G.enemies.length=0;
 }
 function clearBullets(toScore){
   if(toScore){ G.score+=G.bullets.length*12; }
@@ -399,7 +409,7 @@ function updatePBullets(){
           if(d2(b.x,b.y,u.x,u.y)<bo.shieldR*bo.shieldR){
             var ra=ang(u.x,u.y,b.x,b.y);
             bo.refl++;
-            if(bo.refl%3===0) bul(u.x+Math.cos(ra)*bo.shieldR,u.y+Math.sin(ra)*bo.shieldR,ra,3.1,5,'#ffe08a');
+            if(bo.refl%(DF.ex?1:3)===0) bul(u.x+Math.cos(ra)*bo.shieldR,u.y+Math.sin(ra)*bo.shieldR,ra,3.1,5,'#ffe08a');
             addFx('spark',b.x,b.y,'#ffe08a',7);
             hitted=true; break;
           }
@@ -612,7 +622,7 @@ var STAGE_CONF=[
   {midLen:2600, gap:180, ebs:2.75, ehp:1.55, tint:'#2a2213', name:'お菓子の家'},
   {midLen:2700, gap:170, ebs:3.00, ehp:2.20, tint:'#1c2230', name:'鏡の城'},
   {midLen:2800, gap:160, ebs:3.20, ehp:2.95, tint:'#26202c', name:'灰かぶりの城'},
-  {midLen:2900, gap:150, ebs:3.45, ehp:3.80, tint:'#2a0f1a', name:'奈落の館'}
+  {midLen:2900, gap:150, ebs:3.45, ehp:3.30, tint:'#2a0f1a', name:'奈落の館'}
 ];
 var ECOLOR=[null,'#ff6b8a','#ffb35c','#9fd8e6','#c9a6e0','#ff5c5c'];
 
@@ -704,7 +714,7 @@ function updateWarn(){
   G.phaseT++;
   if(G.phaseT>130){
     G.phase='boss'; G.phaseT=0;
-    clearBullets(false);
+    clearBullets(false); clearEnemies();
     setBGM('vs'+G.stage);
     bgmWarm(G.stage>=5?'after':'prologue');
     var st=STORY[G.stage];
@@ -821,10 +831,6 @@ function updateBoss(){
     b.x=(b.mates[0].x+b.mates[1].x)/2; b.y=(b.mates[0].y+b.mates[1].y)/2;
   }
   b.card.fire(b,b.t);
-  if(DF.ex){
-    if(b.t%156===78) ringGap(b.x,b.y,22,2.75,rnd(TAU),4.5,'#ffffff',aimP(b.x,b.y),0.26);
-    if(b.t%19===0){ var ep=edgePoint(22); bul(ep.x,ep.y,aimP(ep.x,ep.y),3.1,4,b.def.color); }
-  }
   if(b.timer<=0) breakCard(false);
 }
 
@@ -1276,8 +1282,10 @@ var BOSSES=[
     fire:function(b,t){
       if(t%34===0){
         var gap=ri(0,10);
+        /* エクストラでは緑の落下弾が黒く濁り、下へ行くほど加速する */
+        var fsp=DF.ex?1.35:2.65, fcol=DF.ex?'#15151f':'#2f6b46', fo=DF.ex?{acc:0.05,maxspd:7.4}:null;
         for(var i=0;i<12;i++){ if(i===gap||i===gap+1) continue;
-          bul(20+i*40,-12,Math.PI/2,2.65,6,'#2f6b46'); }
+          bul(20+i*40,-12,Math.PI/2,fsp,6,fcol,fo); }
       }
       if(t%4===0){ for(var j=0;j<3;j++) bul(b.x,b.y,b.rot+j*TAU/3,2.4,5,'#ff5570'); b.rot+=0.29; }
       if(t%130===0) ring(b.x,b.y,22,3.3,rnd(TAU),5,'#ffd0d8');
@@ -1383,9 +1391,11 @@ var BOSSES=[
     fire:function(b,t){
       if(t%140===0){
         var cx=clamp(P.x,110,W-110), cy=clamp(P.y,140,H-90), ww=170, hh=185, sp=0.62;
-        for(var i=0;i<12;i++){ var fx=cx-ww+i*(2*ww/11);
+        /* エクストラでは壁の目が細かくなり、抜け道は一点だけになる */
+        var nh=DF.ex?22:12, nv=DF.ex?24:10;
+        for(var i=0;i<nh;i++){ var fx=cx-ww+i*(2*ww/(nh-1));
           bul(fx,cy-hh,Math.PI/2,sp,6,'#9fb8d8'); bul(fx,cy+hh,-Math.PI/2,sp,6,'#9fb8d8'); }
-        for(var j=0;j<10;j++){ var fy=cy-hh+j*(2*hh/9);
+        for(var j=0;j<nv;j++){ var fy=cy-hh+j*(2*hh/(nv-1));
           bul(cx-ww,fy,0,sp,6,'#9fb8d8'); bul(cx+ww,fy,Math.PI,sp,6,'#9fb8d8'); }
         addFx('ripple',cx,cy,'#9fb8d8',200);
       }
@@ -1403,7 +1413,9 @@ var BOSSES=[
       }
       if(t%104===0) ring(b.x,b.y,28,1.35,rnd(TAU),6,'#ffd24a',{acc:0.043,maxspd:5.2});
       if(t%42===0) bul(b.x,b.y,aimP(b.x,b.y),5.2,7,'#fff1c0');
-      if(t%9===0) bul(rnd(0,W),H+10,-Math.PI/2,2.6,4,'#ff5c2a');
+      /* エクストラでは下から昇る炎が四倍に増える代わりに、ゆっくり昇る */
+      if(t%9===0){ var un=DF.ex?4:1, usp=DF.ex?1.3:2.6;
+        for(var u=0;u<un;u++) bul(rnd(0,W),H+10,-Math.PI/2,usp,4,'#ff5c2a'); }
     }}
  ]},
 /* ---------------- 4面 : シンデレラ ---------------- */
@@ -1443,11 +1455,11 @@ var BOSSES=[
       if(t%64===0) fan(b.x,b.y,3,0.3,aimP(b.x,b.y),3.4,6,'#ffffff');
     }},
   /* 一定時間ごとに障壁を展開。展開中は攻撃が通らず、撃ち込んだ弾は跳ね返ってくる */
-  { name:'アイギス', hp:11000, time:70,
+  { name:'アイギス', hp:11000, time:30,
     mv:function(b,t){ wander(b,t,120,80,0.01); },
     fire:function(b,t){
       var c=t%340, i, j;
-      b.shieldOn=(c>=44&&c<116);
+      b.shieldOn=DF.ex?true:(c>=44&&c<116);   /* エクストラでは障壁を解かない */
       b.shieldT=c;
       if(c===24){ addFx('ripple',b.x,b.y,'#ffe08a',150); sfx('spell'); }
       if(c===44){
@@ -1461,9 +1473,9 @@ var BOSSES=[
         addFx('ripple',b.x,b.y,'#fff3c4',210); G.shake=10;
       }
       if(b.shieldOn){                                /* 障壁の縁から弾がこぼれる */
-        if(t%9===0){ var ea=rnd(TAU);
+        if(t%(DF.ex?3:9)===0){ var ea=rnd(TAU);
           bul(b.x+Math.cos(ea)*b.shieldR,b.y+Math.sin(ea)*b.shieldR,ea,2.6,5,'#ffe08a'); }
-        if(t%54===0) fan(b.x,b.y,5,0.5,aimP(b.x,b.y),3.1,5,'#fff3c4',{bounce:2});
+        if(t%(DF.ex?18:54)===0) fan(b.x,b.y,5,0.5,aimP(b.x,b.y),3.1,5,'#fff3c4',{bounce:2});
       } else {                                       /* 無防備な間は撃ち返しが激しい */
         if(t%6===0){ for(j=0;j<4;j++) bul(b.x,b.y,b.rot+j*TAU/4,3.3,5,'#c9a24a'); b.rot+=0.052; }
         if(t%44===0) fan(b.x,b.y,5,0.5,aimP(b.x,b.y),3.1,5,'#fff3c4',{bounce:2});
@@ -1604,36 +1616,44 @@ var BOSSES=[
       }
     },
     fire:function(b,t){
-      var ph=((t/400)|0)%4, i, j;
-      var gs=b.gmap?b.gmap[ph]:null, g0=(gs&&gs[0])||b, g1=(gs&&gs[1])||g0;
-      if(t%400===0){
-        b.sub=ph;
-        var cl=['#ff3b5c','#ffb35c','#9fd8e6','#c9a6e0'][ph];
-        if(gs) for(i=0;i<gs.length;i++) addFx('ripple',gs[i].x,gs[i].y,cl,170);
+      /* エクストラでは順番を待たず、少女たちが初めから全員で撃つ。そのぶん弾は少し遅い */
+      var all=DF.ex?1:0, k=all?0.86:1, ph=((t/400)|0)%4, i, j, q;
+      var CL=['#ff3b5c','#ffb35c','#9fd8e6','#c9a6e0'];
+      if(all?(t===1):(t%400===0)){
+        b.sub=all?-1:ph;
+        for(q=0;q<4;q++){
+          if(!all&&q!==ph) continue;
+          var gq=b.gmap?b.gmap[q]:null;
+          if(gq) for(i=0;i<gq.length;i++) addFx('ripple',gq[i].x,gq[i].y,CL[q],170);
+        }
       }
-      if(ph===0){
-        if(t%40===0){ var cx=rnd(60,W-60), cy=rnd(70,300); addFx('circle',cx,cy,'#ff5570',48);
-          for(i=0;i<16;i++) bul(cx,cy,rnd(TAU)+i*TAU/16,2.1,6,'#ff5570',{delay:60}); }
-        if(t%30===0) fan(g0.x,g0.y,3,0.16,aimP(g0.x,g0.y),3.9,5,'#ffd0d8');
-      } else if(ph===1){
-        if(t%5===0){ for(j=0;j<4;j++) bul(b.x,b.y,b.rot+j*TAU/4,2.6,6,'#ffb35c',{blink:[36,20,104]}); b.rot+=0.23; }
-        if(t%9===0) bul(rnd(0,W),H+10,-Math.PI/2,2.5,4.5,'#ffcc55',{ay:-0.012});
-        if(t%76===0) fan(g0.x,g0.y,3,0.2,aimP(g0.x,g0.y),3.6,5,'#ffe0a0');
-        if(t%76===38) fan(g1.x,g1.y,3,0.2,aimP(g1.x,g1.y),3.6,5,'#ffe0a0');
-      } else if(ph===2){
-        if(t%4===0) bul(g0.x,g0.y,rnd(TAU),rnd(3.0,4.4),5,'#cfe6ff',{stopAt:26,goAt:140,goSpd:3.6});
-        if(t%6===0) bul(rnd(0,W),-10,Math.PI/2,4.7,4,'#dff0ff',{shape:'rice'});
-      } else {
-        if(t%2===0) bul(rnd(0,W),-10,Math.PI/2,rnd(1.2,1.9),5,'#9a94a6',{sway:[rnd(0.02,0.045),rnd(TAU),0.75]});
-        if(t%54===0) fan(g0.x,g0.y,5,0.1,aimP(g0.x,g0.y),5.2,5,'#ffe9a8');
+      for(q=0;q<4;q++){
+        if(!all&&q!==ph) continue;
+        var gs=b.gmap?b.gmap[q]:null, g0=(gs&&gs[0])||b, g1=(gs&&gs[1])||g0;
+        if(q===0){
+          if(t%40===0){ var cx=rnd(60,W-60), cy=rnd(70,300); addFx('circle',cx,cy,'#ff5570',48);
+            for(i=0;i<16;i++) bul(cx,cy,rnd(TAU)+i*TAU/16,2.1*k,6,'#ff5570',{delay:60}); }
+          if(t%30===0) fan(g0.x,g0.y,3,0.16,aimP(g0.x,g0.y),3.9*k,5,'#ffd0d8');
+        } else if(q===1){
+          if(t%5===0){ for(j=0;j<4;j++) bul(b.x,b.y,b.rot+j*TAU/4,2.6*k,6,'#ffb35c',{blink:[36,20,104]}); b.rot+=0.23; }
+          if(t%9===0) bul(rnd(0,W),H+10,-Math.PI/2,2.5*k,4.5,'#ffcc55',{ay:-0.012});
+          if(t%76===0) fan(g0.x,g0.y,3,0.2,aimP(g0.x,g0.y),3.6*k,5,'#ffe0a0');
+          if(t%76===38) fan(g1.x,g1.y,3,0.2,aimP(g1.x,g1.y),3.6*k,5,'#ffe0a0');
+        } else if(q===2){
+          if(t%4===0) bul(g0.x,g0.y,rnd(TAU),rnd(3.0,4.4)*k,5,'#cfe6ff',{stopAt:26,goAt:140,goSpd:3.6*k});
+          if(t%6===0) bul(rnd(0,W),-10,Math.PI/2,4.7*k,4,'#dff0ff',{shape:'rice'});
+        } else {
+          if(t%2===0) bul(rnd(0,W),-10,Math.PI/2,rnd(1.2,1.9)*k,5,'#9a94a6',{sway:[rnd(0.02,0.045),rnd(TAU),0.75]});
+          if(t%54===0) fan(g0.x,g0.y,5,0.1,aimP(g0.x,g0.y),5.2*k,5,'#ffe9a8');
+        }
       }
-      if(t%120===0) ringGap(b.x,b.y,26,3.1,rnd(TAU),5,'#ffffff',aimP(b.x,b.y),0.3);
+      if(t%120===0) ringGap(b.x,b.y,26,3.1*k,rnd(TAU),5,'#ffffff',aimP(b.x,b.y),0.3);
     },
     draw:function(b){
       var gs=b.ghosts; if(!gs) return;
       var cl=['#ff3b5c','#ffb35c','#9fd8e6','#c9a6e0'];
       for(var i=0;i<gs.length;i++){
-        var g=gs[i], on=(g.ph===b.sub), h=116*g.s;
+        var g=gs[i], on=(DF.ex?true:(g.ph===b.sub)), h=116*g.s;
         var al=(on?0.60:0.22)+Math.sin(G.frame*0.05+i)*0.05;
         ctx.save();
         var rg=ctx.createRadialGradient(g.x,g.y,4,g.x,g.y,62);
