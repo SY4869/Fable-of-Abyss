@@ -708,13 +708,15 @@ function updateMid(){
   G.phaseT++;
   var gp=Math.max(80,Math.round(conf.gap*DF.eden));
   if(G.phaseT<conf.midLen&&G.phaseT%gp===41) spawnWave();
-  if(G.phaseT===conf.midLen){ G.phase='warn'; G.phaseT=0; sfx('spell'); }
+  /* 警告と同時に道中を片付ける。ここから背景にボスの立ち絵が出るため、
+     残った雑魚の弾が絵に紛れて避けられなくなる */
+  if(G.phaseT===conf.midLen){ G.phase='warn'; G.phaseT=0; sfx('spell'); clearEnemies(); clearBullets(false); }
 }
 function updateWarn(){
   G.phaseT++;
   if(G.phaseT>130){
     G.phase='boss'; G.phaseT=0;
-    clearBullets(false); clearEnemies();
+    clearBullets(false);
     setBGM('vs'+G.stage);
     bgmWarm(G.stage>=5?'after':'prologue');
     var st=STORY[G.stage];
@@ -1616,8 +1618,9 @@ var BOSSES=[
       }
     },
     fire:function(b,t){
-      /* エクストラでは順番を待たず、少女たちが初めから全員で撃つ。四つの弾幕が重なるため、弾速は半分に落とす */
-      var all=DF.ex?1:0, k=all?0.50:1, ph=((t/400)|0)%4, i, j, q;
+      /* エクストラでは順番を待たず、少女たちが初めから全員で撃つ。四つの弾幕が重なるため、弾速を半分に、密度は四分の一まで落とす。
+         d は発射間隔の倍率（間隔を d 倍にするか、一度に出す本数を d 分の一にするか、弾ごとにどちらか一方だけを掛ける） */
+      var all=DF.ex?1:0, k=all?0.50:1, d=all?4:1, ph=((t/400)|0)%4, i, j, q, rn;
       var CL=['#ff3b5c','#ffb35c','#9fd8e6','#c9a6e0'];
       if(all?(t===1):(t%400===0)){
         b.sub=all?-1:ph;
@@ -1631,23 +1634,23 @@ var BOSSES=[
         if(!all&&q!==ph) continue;
         var gs=b.gmap?b.gmap[q]:null, g0=(gs&&gs[0])||b, g1=(gs&&gs[1])||g0;
         if(q===0){
-          if(t%40===0){ var cx=rnd(60,W-60), cy=rnd(70,300); addFx('circle',cx,cy,'#ff5570',48);
-            for(i=0;i<16;i++) bul(cx,cy,rnd(TAU)+i*TAU/16,2.1*k,6,'#ff5570',{delay:60}); }
-          if(t%30===0) fan(g0.x,g0.y,3,0.16,aimP(g0.x,g0.y),3.9*k,5,'#ffd0d8');
+          if(t%40===0){ var cx=rnd(60,W-60), cy=rnd(70,300); addFx('circle',cx,cy,'#ff5570',48); rn=16/d;
+            for(i=0;i<rn;i++) bul(cx,cy,rnd(TAU)+i*TAU/rn,2.1*k,6,'#ff5570',{delay:60}); }
+          if(t%(30*d)===0) fan(g0.x,g0.y,3,0.16,aimP(g0.x,g0.y),3.9*k,5,'#ffd0d8');
         } else if(q===1){
-          if(t%5===0){ for(j=0;j<4;j++) bul(b.x,b.y,b.rot+j*TAU/4,2.6*k,6,'#ffb35c',{blink:[36,20,104]}); b.rot+=0.23; }
-          if(t%9===0) bul(rnd(0,W),H+10,-Math.PI/2,2.5*k,4.5,'#ffcc55',{ay:-0.012});
-          if(t%76===0) fan(g0.x,g0.y,3,0.2,aimP(g0.x,g0.y),3.6*k,5,'#ffe0a0');
-          if(t%76===38) fan(g1.x,g1.y,3,0.2,aimP(g1.x,g1.y),3.6*k,5,'#ffe0a0');
+          if(t%(5*d)===0){ for(j=0;j<4;j++) bul(b.x,b.y,b.rot+j*TAU/4,2.6*k,6,'#ffb35c',{blink:[36,20,104]}); b.rot+=0.23*d; }
+          if(t%(9*d)===0) bul(rnd(0,W),H+10,-Math.PI/2,2.5*k,4.5,'#ffcc55',{ay:-0.012});
+          if(t%(76*d)===0) fan(g0.x,g0.y,3,0.2,aimP(g0.x,g0.y),3.6*k,5,'#ffe0a0');
+          if(t%(76*d)===38*d) fan(g1.x,g1.y,3,0.2,aimP(g1.x,g1.y),3.6*k,5,'#ffe0a0');
         } else if(q===2){
-          if(t%4===0) bul(g0.x,g0.y,rnd(TAU),rnd(3.0,4.4)*k,5,'#cfe6ff',{stopAt:26,goAt:140,goSpd:3.6*k});
-          if(t%6===0) bul(rnd(0,W),-10,Math.PI/2,4.7*k,4,'#dff0ff',{shape:'rice'});
+          if(t%(4*d)===0) bul(g0.x,g0.y,rnd(TAU),rnd(3.0,4.4)*k,5,'#cfe6ff',{stopAt:26,goAt:140,goSpd:3.6*k});
+          if(t%(6*d)===0) bul(rnd(0,W),-10,Math.PI/2,4.7*k,4,'#dff0ff',{shape:'rice'});
         } else {
-          if(t%2===0) bul(rnd(0,W),-10,Math.PI/2,rnd(1.2,1.9)*k,5,'#9a94a6',{sway:[rnd(0.02,0.045),rnd(TAU),0.75]});
-          if(t%54===0) fan(g0.x,g0.y,5,0.1,aimP(g0.x,g0.y),5.2*k,5,'#ffe9a8');
+          if(t%(2*d)===0) bul(rnd(0,W),-10,Math.PI/2,rnd(1.2,1.9)*k,5,'#9a94a6',{sway:[rnd(0.02,0.045),rnd(TAU),0.75]});
+          if(t%(54*d)===0) fan(g0.x,g0.y,5,0.1,aimP(g0.x,g0.y),5.2*k,5,'#ffe9a8');
         }
       }
-      if(t%120===0) ringGap(b.x,b.y,26,3.1*k,rnd(TAU),5,'#ffffff',aimP(b.x,b.y),0.3);
+      if(t%(120*d)===0) ringGap(b.x,b.y,26,3.1*k,rnd(TAU),5,'#ffffff',aimP(b.x,b.y),0.3);
     },
     draw:function(b){
       var gs=b.ghosts; if(!gs) return;
