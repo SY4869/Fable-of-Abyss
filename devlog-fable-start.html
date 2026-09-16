@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050409">
+<title>弾幕シューティングが、いちばん最初に完成した｜制作記録</title>
+<meta name="description" content="ターン制RPGもチェスみたいなゲームも作りかけていたのに、最初に完成したのは弾幕シューティングでした。『フェイブル・オブ・アビス』が何を下敷きにして、なぜこの形になったのかの記録です。">
+<link rel="canonical" href="https://sygames.net/devlog-fable-start.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="SY GAMES">
+<meta property="og:title" content="弾幕シューティングが、いちばん最初に完成した｜制作記録">
+<meta property="og:description" content="『フェイブル・オブ・アビス』が何を下敷きにして、なぜこの形になったのか。">
+<meta property="og:url" content="https://sygames.net/devlog-fable-start.html">
+<meta property="og:image" content="https://sygames.net/assets/images/scene/st.webp">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/css/site.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "弾幕シューティングが、いちばん最初に完成した",
+  "description": "『フェイブル・オブ・アビス』が何を下敷きにして、なぜこの形になったのかの記録。",
+  "url": "https://sygames.net/devlog-fable-start.html",
+  "image": "https://sygames.net/assets/images/scene/st.webp",
+  "datePublished": "2026-09-17",
+  "inLanguage": "ja",
+  "author": { "@type": "Person", "name": "SY4869" },
+  "publisher": { "@type": "Person", "name": "SY4869" }
+}
+</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6058664157090890"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="inner">
+    <a class="mark" href="index.html"><strong>SY GAMES</strong><span>SYGAMES.NET</span></a>
+    <nav class="topnav">
+      <a href="index.html">トップ</a>
+      <a href="index.html#games">ゲーム</a>
+      <a href="devlog.html" aria-current="page">制作記録</a>
+      <a href="about.html">このサイトについて</a>
+      <a href="contact.html">お問い合わせ</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+<p class="crumbs"><a href="index.html">トップ</a><span class="sep">›</span><a href="devlog.html">制作記録</a><span class="sep">›</span>弾幕シューティングが最初に完成した</p>
+<p class="eyebrow">DEV LOG &mdash; FABLE 01</p>
+<h1>弾幕シューティングが、<br>いちばん最初に完成した</h1>
+<p class="lede">『フェイブル・オブ・アビス』って、思いついてすぐ作りはじめた作品じゃないんです。<br>先に物語があって、遊びの形はあとから探しました。</p>
+<p class="stamp">2026年9月17日 &middot; フェイブル・オブ・アビス</p>
+
+<div class="divider"></div>
+
+<section class="clause">
+  <h2><span class="num">Ⅰ</span>じつは下敷きがあります</h2>
+  <p>この作品には下敷きになった物語があります。もともと別に書いていた長い話があって、そのなかに「フェイブル・オブ・アビス」と呼ばれる事件が出てきます。それをシューティングゲーム用に書き直したのが本作です。</p>
+  <p>つまり、ゲームのために話を考えたんじゃなくて、<b>すでにあった話を遊べる形に載せ替えた</b>という順番ですね。奈落も、童話の少女たちも、それぞれが自分の物語を演じようとしている構図も、全部ゲームより先にありました。</p>
+  <p>で、載せ替える先として弾幕シューティングはけっこう相性がよさそうだな、と思ったんです。もとの話のほうに「それぞれの少女が、それぞれの物語を演じる」という構造があるので、<b>ボス一体に弾幕を何枚か割り当てる</b>という弾幕シューティングの形にそのまま収まる。一話ぶんが一人の少女で、そのなかの一枚が物語の一場面になる。数えてみたら全五話・ボス五体・弾幕22枚になっていました。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅱ</span>完成しなかったゲームたち</h2>
+  <p>ゲーム制作はけっこう前から趣味のひとつでした。ただ、ほかの趣味に比べて<b>完成させるのがとにかく難しい。</b>動画もシナリオも、ひととおり終わらせればとりあえず形にはなります。ゲームはそうはいかなくて、途中で辞めることのほうが多かったです。</p>
+  <p>この作品を作っていたころも、ターン制のコマンドバトル RPG とか、チェスみたいなゲームとかを並行して触っていました。それでも最初に完成したのは弾幕シューティングでした。</p>
+  <p>作り終えて思ったのが、<b>弾幕シューティングってかなり作りやすいんだな</b>ということです。</p>
+  <p>できあがったものを見返すと、自機にできることは移動と攻撃とボムの三つだけ。難易度による弾速の補正も、弾を作る処理のたった一か所にまとまっています。そこをいじれば22枚ぜんぶに効くので、難しさを変えるのに全部を書き直す必要がない。しかも弾幕を一枚足せば、遊べる時間もそのぶん素直に伸びます。作業がそのまま積み上がっていく感じがありました。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅲ</span>最初の構想にけっこう近いまま完成した</h2>
+  <p>できあがったものは、最初に考えていた形にかなり近いものになりました。これは自分でも意外でした。ふつう、作っているうちに当初の案からどんどん離れていくものだと思うので。</p>
+  <p>大きく変えたのは一点だけです。<b>会話と弾幕を分けたこと。</b>最初は弾幕を避けながら会話を読ませるつもりでした。でも実際に遊んでみたら、避けるので精一杯でストーリーなんて読めたものじゃない。せっかく先に物語があるのに、それが伝わらないんじゃ本末転倒です。なので思い切って分けました。このあたりは<a href="devlog-fable-system.html">別の記事</a>で詳しく書いています。</p>
+  <p>それ以外は、だいたい思っていたとおりのものになりました。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅳ</span>9割はあっという間でした</h2>
+  <p>完成したときの正直な感想は「<b>9割くらいが思っていたよりあっという間にできて驚いた</b>」です。そのとき口から出たのは「AI スゲー！」でした。</p>
+  <p>プログラムはほとんど Claude Code に書いてもらっています。ここ数年でこの部分のハードルが一気に下がったのが、完成まで辿り着けた最大の理由です。以前の自分なら、弾の当たり判定を書いているあたりで力尽きていたと思います。</p>
+  <p>ただ、残りの1割は別でした。<b>任せる範囲が大きいほど、こっちが中身を理解するのと、指示の出し方が難しくなる。</b>何が起きているか分からないまま出来上がったものは、ちょっと調整しようとした途端に手が止まります。この感覚は二作目のカオスソードガーデンでもっと強く出るんですが、その話は<a href="devlog-chaos-struggle.html">そっちの記事</a>で。</p>
+  <p>かけた時間と労力を振り返ってみて、これなら今後も作っていけそうだなと感じています。</p>
+</section>
+
+<div class="pager">
+  <span></span>
+  <a href="devlog-fable-danmaku.html"><span class="lat">NEXT</span>技名から弾幕を起こす ›</a>
+</div>
+
+<div class="divider"></div>
+<p><a class="cta" href="fable.html">ゲームを始める</a>　<a class="cta quiet" href="fable-about.html">作品紹介を読む</a>　<a class="cta quiet" href="devlog.html">制作記録の一覧へ</a></p>
+
+</main>
+
+<div id="ad-inline"></div>
+
+<footer class="colophon">
+  <div class="inner">
+    <nav>
+      <a href="index.html">トップ</a>
+      <a href="index.html#games">ゲーム</a>
+      <a href="devlog.html">制作記録</a>
+      <a href="about.html">このサイトについて</a>
+      <a href="credits.html">クレジット</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+      <a href="contact.html">お問い合わせ</a>
+    </nav>
+    <p class="sig">SY4869 &middot; SYGAMES.NET</p>
+  </div>
+</footer>
+
+<script src="assets/js/ads.js"></script>
+</body>
+</html>

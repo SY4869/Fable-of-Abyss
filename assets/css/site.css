@@ -68,6 +68,12 @@ h1{margin:0 0 18px; font-size:29px; font-weight:400; letter-spacing:.16em; line-
   font-family:var(--mono); font-size:12px; color:var(--gold);
   border:1px solid rgba(201,162,74,.4); background:rgba(201,162,74,.07);
 }
+/* 節のなかの小見出し */
+.clause h3{
+  margin:26px 0 10px; font-size:14.5px; font-weight:400; letter-spacing:.15em;
+  color:var(--vellum); border-left:2px solid rgba(201,162,74,.5); padding-left:12px; line-height:1.6;
+}
+.clause h3:first-child{margin-top:0;}
 .clause p{margin:0 0 12px; color:rgba(232,220,200,.8);}
 .clause p:last-child{margin-bottom:0;}
 .clause ul{margin:0 0 12px; padding-left:1.2em; color:rgba(232,220,200,.8);}
@@ -209,3 +215,40 @@ body.ads-on #ad-inline{display:block;}
   .gamecard-art{width:min(184px,60%); align-self:center;}
   .gamecard h3{font-size:18px;}
 }
+
+/* ---------- パンくず（ゲーム配下のページで、いまどこにいるかを示す） ---------- */
+.crumbs{
+  margin:0 0 14px; font-family:var(--mono); font-size:10.5px;
+  letter-spacing:.2em; color:rgba(232,220,200,.38);
+}
+.crumbs a{color:rgba(232,220,200,.55); text-decoration:none;}
+.crumbs a:hover{color:var(--gold);}
+.crumbs .sep{color:var(--gold); margin:0 8px;}
+
+/* ---------- 記事の一覧（制作記録） ----------
+   一本ぶんを一行として並べる。日付・題・ひとこと紹介の三段 */
+.postlist{list-style:none; margin:0; padding:0;}
+.postlist li{
+  border-top:1px solid var(--line); padding:17px 0 16px;
+}
+.postlist li:last-child{border-bottom:1px solid var(--line);}
+.postlist .post-date{
+  display:block; font-family:var(--mono); font-size:9.5px;
+  letter-spacing:.26em; color:var(--gold); margin-bottom:5px;
+}
+.postlist h3{margin:0 0 6px; padding-left:0; border-left:0;
+  font-size:16px; font-weight:400; letter-spacing:.1em; line-height:1.6;}
+.postlist h3 a{color:var(--vellum); text-decoration:none;}
+.postlist h3 a:hover{color:var(--gold);}
+.postlist p{margin:0; font-size:13.5px; color:rgba(232,220,200,.68);}
+
+/* ---------- 前後の記事へ ---------- */
+.pager{
+  display:flex; justify-content:space-between; gap:18px; flex-wrap:wrap;
+  border-top:1px solid var(--line); margin-top:34px; padding-top:18px;
+  font-size:12.5px;
+}
+.pager a{color:rgba(232,220,200,.6); text-decoration:none;}
+.pager a:hover{color:var(--gold);}
+.pager .lat{display:block; font-family:var(--mono); font-size:9px;
+  letter-spacing:.26em; color:var(--gold); margin-bottom:3px;}

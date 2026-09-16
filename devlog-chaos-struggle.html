@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050409">
+<title>画面を見ただけでは気づけない不具合｜制作記録</title>
+<meta name="description" content="ガードや回避の仕様を AI に正確に伝えるのが、いちばん難しい作業でした。『カオスソードガーデン』の制作で実際に起きた不具合と、そこから分かったことの記録です。">
+<link rel="canonical" href="https://sygames.net/devlog-chaos-struggle.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="SY GAMES">
+<meta property="og:title" content="画面を見ただけでは気づけない不具合｜制作記録">
+<meta property="og:description" content="動いているように見えるのに間違っている、という状態との戦いの記録。">
+<meta property="og:url" content="https://sygames.net/devlog-chaos-struggle.html">
+<meta property="og:image" content="https://sygames.net/assets/images/chaos/thumb.webp">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/css/site.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "画面を見ただけでは気づけない不具合",
+  "description": "『カオスソードガーデン』の制作で苦労したことの記録。",
+  "url": "https://sygames.net/devlog-chaos-struggle.html",
+  "image": "https://sygames.net/assets/images/chaos/thumb.webp",
+  "datePublished": "2026-09-17",
+  "inLanguage": "ja",
+  "author": { "@type": "Person", "name": "SY4869" },
+  "publisher": { "@type": "Person", "name": "SY4869" }
+}
+</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6058664157090890"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="inner">
+    <a class="mark" href="index.html"><strong>SY GAMES</strong><span>SYGAMES.NET</span></a>
+    <nav class="topnav">
+      <a href="index.html">トップ</a>
+      <a href="index.html#games">ゲーム</a>
+      <a href="devlog.html" aria-current="page">制作記録</a>
+      <a href="about.html">このサイトについて</a>
+      <a href="contact.html">お問い合わせ</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+<p class="crumbs"><a href="index.html">トップ</a><span class="sep">›</span><a href="devlog.html">制作記録</a><span class="sep">›</span>画面を見ただけでは気づけない不具合</p>
+<p class="eyebrow">DEV LOG &mdash; CHAOS 02</p>
+<h1>画面を見ただけでは<br>気づけない不具合</h1>
+<p class="lede">『カオスソードガーデン』でいちばん時間を取られたのは、弾でも絵でもなく<b>仕様を正確に伝えること</b>でした。<br>動いているように見えるのに間違っている、というのがとにかく厄介です。</p>
+<p class="stamp">2026年9月17日 &middot; カオスソードガーデン</p>
+
+<div class="divider"></div>
+
+<section class="clause">
+  <h2><span class="num">Ⅰ</span>「動いている」と「正しい」は別</h2>
+  <p>プログラムはほとんど Claude Code に書いてもらっています。一作目の<a href="devlog-fable-start.html">フェイブル・オブ・アビス</a>のときも同じでしたが、二作目のほうが明らかに大変でした。</p>
+  <p>理由ははっきりしていて、弾幕シューティングは<b>間違っていたら見て分かるんです。</b>弾が変な方向へ飛べば分かるし、当たらないはずの弾に当たれば分かる。画面がそのまま答え合わせになります。</p>
+  <p>ところが剣戟アクションは違いました。<b>ガードや回避や発生の仕様は、画面を見ただけでは合っているか分からない。</b>斬られた。ガードしたはずなのに。……いまのは自分の入力が遅かったのか、それともガードが効いていないのか。判別がつかないんですよ。</p>
+  <p>この「間違っていることに気づけない」という状態が、作っているあいだずっと続いていました。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅱ</span>実際に起きていたこと</h2>
+  <p>見つけて直したものをいくつか挙げます。</p>
+
+  <h3>技を振っている最中でもガードできてしまう</h3>
+  <p>ガードは<b>何もしていないときだけ</b>構えられる、という仕様にしていました。振る前に受けるか避けるかを決める、というのがこのゲームの読み合いの中心なので。ところが実装では、発生中や後隙中にもガードのコマンドが通ってしまっていました。</p>
+  <p>こうなると、とりあえず技を振っておいて危なくなったらガードすればいい、という戦い方が最適になります。<b>発生と後隙でリスクを表現した意味がまるごと消えます。</b></p>
+
+  <h3>回避の受付時間中にも他の行動が取れる</h3>
+  <p>同じ種類の問題です。回避には受付時間があって、そのあいだは他の行動を取れないはずでした。ここも塞げていなかったので、あとから修正しています。</p>
+
+  <h3>中断されたスキルの自己強化が残る</h3>
+  <p>自分を強化するスキルが、ひるみで中断されたときの話です。技そのものは不発になるのに、<b>強化の効果だけ乗ったままになっていました。</b>これ、画面上ではまったく分かりません。ダメージの数字が微妙に高いだけです。しばらく気づきませんでした。</p>
+
+  <p>三つとも共通しているのは、<b>「ある状態のときに、ある操作を受け付けない」という条件の抜け</b>です。仕様としては当たり前でも、書き漏らしていると普通に動いてしまう。そして普通に動いてしまうから、テストプレイでは気づけないんですよね。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅲ</span>伝え方の問題でもありました</h2>
+  <p>これ、実装の問題であると同時に<b>伝え方の問題</b>でもありました。</p>
+  <p>「ガードは何もしていないときだけできる」と書いたつもりでも、<b>「何もしていない」が何を指すのか</b>を定義していなかったんです。移動中は？ 技の発生中は？ 後隙中は？ ひるみ中は？ 自分の頭のなかでは決まっていても、書き出していないと伝わりません。</p>
+  <p>足りなかったのは、<b>キャラクターが取りうる状態をひとつずつ書き出しておくこと</b>でした。移動中、発生中、後隙中、ひるみ中、回避の受付中。それぞれで何を受け付けて何を受け付けないのかが決まっていれば、抜けたときに気づけます。文章で説明しているかぎり、抜けは抜けたまま通ってしまいました。</p>
+  <div class="aside"><p>じつは一作目でも似たことが起きています。シンデレラの盾が「自機の弾とレーザーは止めるのに、ボムだけ貫通する」状態になっていました。あれも<b>経路が三つあることを書き出していなかった</b>のが原因です。ジャンルが違うのに、同じ形の失敗をしているんですね。</p></div>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅳ</span>立ち絵は生成 AI で作りました</h2>
+  <p>登場する相手の立ち絵は、すべて生成 AI で作成しています。個人制作で13人ぶんの絵を用意するのは、ほかの手段だと現実的じゃなかったので。</p>
+  <p>公開後に一度、一戦目の相手の立ち絵を差し替えています。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅴ</span>ゼロから作るのはまだ難しい</h2>
+  <p>作り終えての実感は、<b>0ベースでゲームを作るのは難しい</b>ということです。</p>
+  <p>一作目の弾幕シューティングには、ジャンルとしての型がありました。自機があって、弾があって、ボスがいる。何を作ればいいかは最初から決まっていて、あとは中身を書くだけ。判断に迷う場面がほとんどありません。</p>
+  <p>二作目にはそれがなかった。間合いを入れるかどうか、ひるみをどう扱うか、スキルをいつ組み替えさせるか。ひとつひとつ自分で決める必要があって、しかも決めたことが正しいかどうかは<b>実際に動かしてみるまで分からない。</b>間合いを足す前の単調さなんて、まさにそれです。</p>
+  <p>なので今後しばらくは、<b>ジャンルとしてベースが固まっているもの</b>を作ったほうがいいなと感じています。次に予定しているのはターン制のコマンドバトル RPG です。これも型のあるジャンルですね。</p>
+  <p>カオスソードガーデンのほうは、細かいバランス調整を随時続けていきます。気になった点があれば<a href="contact.html">お問い合わせ</a>から教えてください。</p>
+</section>
+
+<div class="pager">
+  <a href="devlog-chaos-battle.html"><span class="lat">PREV</span>‹ 間合いがないと剣戟は単調になる</a>
+  <a href="devlog.html"><span class="lat">INDEX</span>制作記録の一覧へ ›</a>
+</div>
+
+<div class="divider"></div>
+<p><a class="cta" href="chaos.html">ゲームを始める</a>　<a class="cta quiet" href="chaos-howto.html">遊び方を読む</a>　<a class="cta quiet" href="devlog.html">制作記録の一覧へ</a></p>
+
+</main>
+
+<div id="ad-inline"></div>
+
+<footer class="colophon">
+  <div class="inner">
+    <nav>
+      <a href="index.html">トップ</a>
+      <a href="index.html#games">ゲーム</a>
+      <a href="devlog.html">制作記録</a>
+      <a href="about.html">このサイトについて</a>
+      <a href="credits.html">クレジット</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+      <a href="contact.html">お問い合わせ</a>
+    </nav>
+    <p class="sig">SY4869 &middot; SYGAMES.NET</p>
+  </div>
+</footer>
+
+<script src="assets/js/ads.js"></script>
+</body>
+</html>

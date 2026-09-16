@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050409">
+<title>避けるゲームを、避けるだけのゲームにしない｜制作記録</title>
+<meta name="description" content="会話と弾幕を分けた仕様変更、当たり判定を点にした理由、制限時間の扱い、三つの難易度の狙い。『フェイブル・オブ・アビス』のゲームシステムを考えたときの記録です。">
+<link rel="canonical" href="https://sygames.net/devlog-fable-system.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="SY GAMES">
+<meta property="og:title" content="避けるゲームを、避けるだけのゲームにしない｜制作記録">
+<meta property="og:description" content="仕様変更、当たり判定、制限時間、難易度。ゲームシステムを考えたときの記録。">
+<meta property="og:url" content="https://sygames.net/devlog-fable-system.html">
+<meta property="og:image" content="https://sygames.net/assets/images/scene/st.webp">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/css/site.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "避けるゲームを、避けるだけのゲームにしない",
+  "description": "『フェイブル・オブ・アビス』のゲームシステムを考えたときの記録。",
+  "url": "https://sygames.net/devlog-fable-system.html",
+  "image": "https://sygames.net/assets/images/scene/st.webp",
+  "datePublished": "2026-09-17",
+  "inLanguage": "ja",
+  "author": { "@type": "Person", "name": "SY4869" },
+  "publisher": { "@type": "Person", "name": "SY4869" }
+}
+</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6058664157090890"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="inner">
+    <a class="mark" href="index.html"><strong>SY GAMES</strong><span>SYGAMES.NET</span></a>
+    <nav class="topnav">
+      <a href="index.html">トップ</a>
+      <a href="index.html#games">ゲーム</a>
+      <a href="devlog.html" aria-current="page">制作記録</a>
+      <a href="about.html">このサイトについて</a>
+      <a href="contact.html">お問い合わせ</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+<p class="crumbs"><a href="index.html">トップ</a><span class="sep">›</span><a href="devlog.html">制作記録</a><span class="sep">›</span>避けるだけのゲームにしない</p>
+<p class="eyebrow">DEV LOG &mdash; FABLE 03</p>
+<h1>避けるゲームを、<br>避けるだけのゲームにしない</h1>
+<p class="lede">弾幕シューティングって、放っておくと「避ける腕前だけで決まるゲーム」になりがちです。<br>それ自体は悪いことじゃないんですが、この作品ではちょっと避けたかった。先に物語があったので。</p>
+<p class="stamp">2026年9月17日 &middot; フェイブル・オブ・アビス</p>
+
+<div class="divider"></div>
+
+<section class="clause">
+  <h2><span class="num">Ⅰ</span>最初の仕様を壊した話</h2>
+  <p>当初の設計では、<b>弾幕を避けながら会話を読ませる</b>つもりでした。画面の下に台詞が流れて、そのあいだも弾は飛んでくる。臨場感あっていいんじゃないか、と思っていたんです。</p>
+  <p>実際に遊んでみたら、まったく駄目でした。<b>避けるので手一杯で、文字を読む余裕がぜんぜんない。</b>読もうとすれば当たるし、避けようとすれば読めない。どっちも中途半端になります。</p>
+  <p>この作品は、先に物語があって、それを遊べる形に載せ替えたものです。<a href="devlog-fable-start.html">前回の記事</a>に書いたとおりですね。物語が伝わらないなら根本からひっくり返ってしまいます。なので思い切って分けました。</p>
+  <p>いまは<b>技がひとつ終わるたびに時間が完全に止まります。</b>弾も、ボスの制限時間も、自機の動きも、全部止まる。会話を読み終えてから次の弾幕が始まります。会話中に事故死することは、仕組みの上で起こりません。</p>
+  <div class="aside"><p>この「止める」は演出じゃなくて、実装としても本当に止めています。ゲームの状態が「会話中」になっているあいだは、更新処理そのものが動きません。止め忘れがあると会話の裏で弾が進んでしまうので、状態の判定は一か所にまとめてあります。</p></div>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅱ</span>当たり判定はかなり小さめ</h2>
+  <p>自機に当たり判定があるのは、中心の赤い点だけです。半径にして <b>2.6 ピクセル。</b>480×640 の画面のなかだとかなり小さい値です。</p>
+  <p>狙いは<b>避けている実感</b>です。画面が弾で埋まっているように見えても、実際には抜けられる。抜けたときに「いまの通れた！」と思えるのが、このジャンルの気持ちよさだと思っています。判定が機体の見た目どおりだったら、埋まった瞬間に詰みです。</p>
+  <p>ただ、小さいだけだと伝わらないんですよね。自分の判定の大きさを知らないと、避けられるのに避けようとしてしまう。なので<kbd>Shift</kbd>の集中中だけ赤い点が見えるようにしました。一度見てもらえれば、そのあとの動き方が変わります。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅲ</span>準備の段階で戦い方を決めてもらう</h2>
+  <p>避ける腕だけのゲームにしないために置いたのが、開始前の準備です。</p>
+  <ul>
+    <li><b>ステータス10ポイント</b>を体力・攻撃・速度に配分する</li>
+    <li><b>武装を三つから一つ</b>選ぶ（一度選ぶと最後まで変えられません）</li>
+    <li><b>ボムを五つから一つ</b>選ぶ（こっちも変えられません）</li>
+  </ul>
+  <p>途中で変えられない仕様にしたのは、選択に重さを持たせたかったからです。いつでも変えられるなら、それはもう選択じゃないので。</p>
+  <p>おかげで、同じ弾幕でも構成によってまるで違うものに見えるようになりました。時間を止めるボムを持っている人と、無敵で走り抜けるボムを持っている人とでは、同じ場面での正解が違います。</p>
+  <p>ただ、ここは<b>やり残しがあります。</b>ステータスとボムのバランスは、もう少し均等にしたかった。いまは組み合わせによって明らかにラクなものと、明らかにキツいものがあります。五つのボムの強さを揃えるのはとくに苦労しました。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅳ</span>制限時間は保険であって攻略法じゃない</h2>
+  <p>ボスの弾幕にはそれぞれ制限時間があります。倒せなくても、避け切れば次のゲージに進みます。</p>
+  <p>これは<b>腕前が理由で結末に届かない作りにしない</b>ための仕掛けです。火力を低めに組んだ人でも、そこで永久に詰まることはありません。</p>
+  <p>ところが、テストプレイを重ねて分かったのが<b>耐え続けるより削り切るほうが速くて事故も少ない</b>ということでした。弾幕は長引くほど被弾の機会が増えます。時間いっぱい避け続けるのって、単純にしんどいんですよね。</p>
+  <p>なので制限時間は仕組みとしては残しつつ、<b>攻略法としては勧めていません。</b>行き詰まったときの答えは「耐える」じゃなくて「攻撃に振る」です。<a href="howto.html">遊び方</a>にもそう書いてあります。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅴ</span>三つの難易度に、別々の役割を持たせた</h2>
+  <table class="spec">
+    <tr><th>ノーマル<span class="lat">NORMAL</span></th><td><b>物語を最後まで読み通すための難易度。</b>ステータスとボムを選べば誰でもクリアできることを目標に調整しました。</td></tr>
+    <tr><th>ハード<span class="lat">HARD</span></th><td><b>実力が要る難易度。</b>避ける腕、振り分けの設計、ボムを切る判断が同時に必要になります。</td></tr>
+    <tr><th>エクストラ<span class="lat">EXTRA</span></th><td><b>上級者でも楽しめる難易度。</b>ここが、いまだに決着していません。</td></tr>
+  </table>
+  <p>三つのうち、<b>ハードの調整はうまくできたと思っています。</b>狙いどおりの手応えになりました。</p>
+  <p>問題はエクストラです。<b>これが適切な難しさなのか、自分では判断できないんですよ。</b>作った本人は全部の弾幕の中身を知っているので、初見の難しさが測れない。かといって難しくしすぎると、誰も辿り着けないものになります。公開してからも何度か手を入れていて、たとえば全カードに一律で追加弾を重ねる方式はやめて、カードごとに固有の変化を付ける方針に切り替えました。密度を四分の一まで落とした弾幕もあります。</p>
+  <p>というわけでエクストラは、いまも<b>調整中につき非推奨</b>としています。もしクリアできた方がいたら、ぜひ<a href="contact.html">報告</a>をください。自分で測れない部分なので、遊んだ人の声がそのまま判断材料になります。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅵ</span>じつは順番が大事だったりします</h2>
+  <p>最後に、実装でいちばん気を遣ったところを書いておきます。<b>1フレームのなかで何を先にやるか</b>です。地味な話ですが、けっこう効きます。</p>
+  <p>このゲームは毎フレーム、自機を動かして、ボムの効果を処理して、敵を動かして、弾を動かして、最後に<b>被弾判定</b>をやります。被弾判定を最後に置いているのは、その1フレームの結果が全部出そろってから当たったかどうかを決めるためです。</p>
+  <p>とくに効いているのが、<b>ボムによる弾消しを、敵が弾を撃つより前に置いてある</b>こと。弾幕を消し続けるボムの最中でも、ボスは撃ってきます。その弾は1フレームだけ存在するんですが、判定に届く前に消えます。おまけにボムの発動中は無敵なので、二重で実害が出ないようにしてあります。</p>
+  <p>この順番を入れ替えると、「消しているはずのボムを使っているのに当たる」という、いちばん納得のいかない被弾が起きます。目に見えない部分ですけど、遊んだときの印象を決めているのはこういうところだと思っています。</p>
+</section>
+
+<div class="pager">
+  <a href="devlog-fable-danmaku.html"><span class="lat">PREV</span>‹ 技名から弾幕を起こす</a>
+  <a href="devlog-chaos-battle.html"><span class="lat">NEXT</span>間合いがないと剣戟は単調になる ›</a>
+</div>
+
+<div class="divider"></div>
+<p><a class="cta" href="fable.html">ゲームを始める</a>　<a class="cta quiet" href="fable-about.html">作品紹介を読む</a>　<a class="cta quiet" href="devlog.html">制作記録の一覧へ</a></p>
+
+</main>
+
+<div id="ad-inline"></div>
+
+<footer class="colophon">
+  <div class="inner">
+    <nav>
+      <a href="index.html">トップ</a>
+      <a href="index.html#games">ゲーム</a>
+      <a href="devlog.html">制作記録</a>
+      <a href="about.html">このサイトについて</a>
+      <a href="credits.html">クレジット</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+      <a href="contact.html">お問い合わせ</a>
+    </nav>
+    <p class="sig">SY4869 &middot; SYGAMES.NET</p>
+  </div>
+</footer>
+
+<script src="assets/js/ads.js"></script>
+</body>
+</html>

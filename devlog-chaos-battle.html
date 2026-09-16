@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050409">
+<title>間合いがないと、剣戟は単調になる｜制作記録</title>
+<meta name="description" content="発生と後隙だけでは足りませんでした。『カオスソードガーデン』の戦闘システムに、後から間合いとひるみを足していった過程と、スキルの強さを揃えるために決めた方針の記録です。">
+<link rel="canonical" href="https://sygames.net/devlog-chaos-battle.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="SY GAMES">
+<meta property="og:title" content="間合いがないと、剣戟は単調になる｜制作記録">
+<meta property="og:description" content="『カオスソードガーデン』の戦闘システムを組み立てていった過程の記録。">
+<meta property="og:url" content="https://sygames.net/devlog-chaos-battle.html">
+<meta property="og:image" content="https://sygames.net/assets/images/chaos/thumb.webp">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/css/site.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "間合いがないと、剣戟は単調になる",
+  "description": "『カオスソードガーデン』の戦闘システムを組み立てていった過程の記録。",
+  "url": "https://sygames.net/devlog-chaos-battle.html",
+  "image": "https://sygames.net/assets/images/chaos/thumb.webp",
+  "datePublished": "2026-09-17",
+  "inLanguage": "ja",
+  "author": { "@type": "Person", "name": "SY4869" },
+  "publisher": { "@type": "Person", "name": "SY4869" }
+}
+</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6058664157090890"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="inner">
+    <a class="mark" href="index.html"><strong>SY GAMES</strong><span>SYGAMES.NET</span></a>
+    <nav class="topnav">
+      <a href="index.html">トップ</a>
+      <a href="index.html#games">ゲーム</a>
+      <a href="devlog.html" aria-current="page">制作記録</a>
+      <a href="about.html">このサイトについて</a>
+      <a href="contact.html">お問い合わせ</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+<p class="crumbs"><a href="index.html">トップ</a><span class="sep">›</span><a href="devlog.html">制作記録</a><span class="sep">›</span>間合いがないと剣戟は単調になる</p>
+<p class="eyebrow">DEV LOG &mdash; CHAOS 01</p>
+<h1>間合いがないと、<br>剣戟は単調になる</h1>
+<p class="lede">二作目の『カオスソードガーデン』は、一作目と何も共有していません。ジャンルもコードも設計の考え方も別物です。<br>そのぶん、作りながら形を探すことになりました。</p>
+<p class="stamp">2026年9月17日 &middot; カオスソードガーデン</p>
+
+<div class="divider"></div>
+
+<section class="clause">
+  <h2><span class="num">Ⅰ</span>出発点は「アクションを作ろう」だけ</h2>
+  <p>本当にそれだけでした。そこに、自分で置いた条件がいくつか。</p>
+  <ul>
+    <li>ステータスとスキルを駆使して戦うアクションにしたい</li>
+    <li>複雑にはしたくない</li>
+    <li>簡単に作れるよう2Dで</li>
+  </ul>
+  <p>この三つを満たそうとしていった結果が、いまの<b>一対一のリアルタイム戦闘</b>です。最初から「剣戟ゲームを作るぞ」と決めていたわけじゃありません。条件を満たす形を探していったら、たまたまここに着いた、という感じです。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅱ</span>発生と後隙は最初から必須だと思っていた</h2>
+  <p>スキルシステムを入れるなら、<b>発生</b>（振り始めてから当たるまで）と<b>後隙</b>（振り終えてから動けるまで）は絶対に要る。これは最初から決めていました。</p>
+  <p>この二つがないと、スキルの強弱を「威力」でしか表現できないんですよね。威力だけで差を付けると、強い技を持っている人がひたすらそれを押すだけのゲームになります。発生と後隙があれば、<b>強い技には「長く無防備になる」という代償を付けられる。</b></p>
+  <p>なので、強いスキルほど発生を遅く、後隙を大きく設定しました。<b>ひとつのスキルが強くなりすぎないように</b>するためです。全体の方針としても、極端に強い技も極端に弱い技も作らないようにしています。</p>
+  <p>ちなみにスキル自体は、以前作った TRPG シナリオからの流用です。名前も効果も、そのとき考えたものが土台になっています。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅲ</span>間合いを後から足しました</h2>
+  <p>ここがこの作品でいちばん大きな作り直しです。</p>
+  <p><b>作りはじめた時点では、間合いがありませんでした。</b>お互いその場に立っていて、技を出し合うだけ。発生と後隙はもう入っていたので、読み合いは成立するはずだったんです。</p>
+  <p>ところが実際に動かしてみたら、<b>かなり単調でした。</b>やることが「攻める」か「守る」かの二択しかない。相手の予兆を見てガードして、隙を見て斬る。その繰り返しで、ぜんぜん局面が変わらないんですよ。</p>
+  <p>そこで、左右三つのマスを移動できるようにしました。相手とレーンがずれていれば攻撃は当たりません。これを入れた途端、選択肢が二択から三択になります。</p>
+  <ul>
+    <li>受ける（ガード。ダメージは 40% になる）</li>
+    <li>避ける（回避。当たる瞬間に合わせれば無傷）</li>
+    <li>外す（移動。そもそも当たらない位置へ行く）</li>
+  </ul>
+  <p>しかも移動には発生 0.18 秒と後隙 0.12 秒があるので、<b>連続でステップし続けることはできません。</b>ここに時間を使えば、そのぶん攻める時間が減る。ただ逃げ回るだけでは決着しないので、どこかで前に出る必要が出てきます。</p>
+  <p>単調さの正体は、単に選択肢が少なかったことでした。一つ足すだけでここまで変わるとは思っていなかったです。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅳ</span>大技を強引に振れてしまう問題</h2>
+  <p>動かしてみて分かった穴がもうひとつ。<b>攻撃を受けながら大技を出し切れてしまう</b>んです。</p>
+  <p>発生の遅い技は、当たるまでに時間がかかります。その間に相手から斬られても、こっちの技は止まらずに出る。つまり「多少殴られても撃ち勝てばいい」という戦い方が最適になってしまう。発生と後隙でリスクを表現したはずが、ぜんぜん機能していませんでした。</p>
+  <p>対策として<b>ひるみ</b>を足しました。技の発生中に<b>最大HPの20%以上</b>のダメージを受けると、その技は中断されて 0.45 秒動けなくなります。ここには細かい条件を三つ付けています。</p>
+  <table class="spec">
+    <tr><th>後隙中は対象外<span class="lat">RECOVERY</span></th><td>後隙はもともと無防備で反撃を受ける時間なので、そこにさらにひるみを重ねると硬直が長すぎます。</td></tr>
+    <tr><th>軽い攻撃では怯まない<span class="lat">THRESHOLD</span></th><td>割合で線を引いてあるので、いちばん軽い突きを当て続けるだけでは止められません。</td></tr>
+    <tr><th>中断されても CT は戻らない<span class="lat">COOLDOWN</span></th><td>技は不発でも待ち時間だけは発生します。大技を強引に振ることのリスクですね。</td></tr>
+  </table>
+  <p>で、これは<b>自分にも敵にも同じように適用されます。</b>プレイヤー側だけ有利な仕様にすると、読み合いとして成立しなくなるので。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅴ</span>最強ビルドを最初から組ませない</h2>
+  <p>スキルは四つの枠に装備します。ここで迷ったのが、いつ組み替えられるようにするかでした。</p>
+  <p>最終的に、<b>勝つたびに一枠だけ入れ替えられる</b>形にしました。初めから最強の組み合わせを作れるより、ゲームを進めることで一部のスキルが解放されていくほうが楽しめるだろうと考えたからです。</p>
+  <p>一戦目に勝った時点で流派を選ぶ仕組みも同じ狙いです。選んだ流派で以降の対戦相手が変わって、手に入るスキルも変わる。一度の挑戦で全部は手に入りません。</p>
+  <p>流派そのものにも性格を付けました。たとえば双海流の二刀流は、<b>攻撃力が大きく下がる代わりに</b>、流派スキルの再使用が半分になって後隙も一段階短くなります。一発の重さを捨てて手数を取る、という選択ですね。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅵ</span>スコアの線の引き方</h2>
+  <p>勝ち抜きモードにはスコアがあって、全プレイヤー共通のランキングに載ります。評価軸は<b>「速く倒す」「被弾を減らす」の二つ</b>だけにしました。</p>
+  <p>ひとつ気を付けたのが被弾の数え方です。減点は受けたダメージの絶対量じゃなくて、<b>最大HPに対する割合</b>で計算しています。絶対量で数えると、HP に振っていない構成が一方的に不利になってしまうので。ビルドの自由は残したかったところです。</p>
+</section>
+
+<div class="pager">
+  <a href="devlog-fable-system.html"><span class="lat">PREV</span>‹ 避けるだけのゲームにしない</a>
+  <a href="devlog-chaos-struggle.html"><span class="lat">NEXT</span>画面を見ただけでは気づけない不具合 ›</a>
+</div>
+
+<div class="divider"></div>
+<p><a class="cta" href="chaos.html">ゲームを始める</a>　<a class="cta quiet" href="chaos-about.html">作品紹介を読む</a>　<a class="cta quiet" href="devlog.html">制作記録の一覧へ</a></p>
+
+</main>
+
+<div id="ad-inline"></div>
+
+<footer class="colophon">
+  <div class="inner">
+    <nav>
+      <a href="index.html">トップ</a>
+      <a href="index.html#games">ゲーム</a>
+      <a href="devlog.html">制作記録</a>
+      <a href="about.html">このサイトについて</a>
+      <a href="credits.html">クレジット</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+      <a href="contact.html">お問い合わせ</a>
+    </nav>
+    <p class="sig">SY4869 &middot; SYGAMES.NET</p>
+  </div>
+</footer>
+
+<script src="assets/js/ads.js"></script>
+</body>
+</html>
