@@ -2677,6 +2677,9 @@ function bind(){
   $('btn-title').onclick=function(){ sfx('ui'); backToTitle(); };
   $('btn-title2').onclick=function(){ sfx('ui'); backToTitle(); };
   $('btn-resume').onclick=function(){ G.state='play'; showScreen(null); };
+  /* 中断からのやり直し。敗北からの retryStage と同じ扱いにして、
+     止めて仕切り直すほうが得になる状況を作らない */
+  $('btn-pause-retry').onclick=function(){ sfx('ui'); retryStage(); };
   $('btn-quit').onclick=function(){ backToTitle(); };
   var muteBtns=document.querySelectorAll('.mute-btn'), mbi;
   for(mbi=0;mbi<muteBtns.length;mbi++){

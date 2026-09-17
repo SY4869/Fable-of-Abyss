@@ -168,6 +168,9 @@ body.compact{padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px)
   #scr-title .sheet{padding:0 14px 5%;}
   #scr-title .btnrow{gap:10px;}
   #scr-title .btnrow button{min-width:124px; padding:11px 16px; font-size:12px;}
+  /* 中断はボタンが3つ並ぶので、狭い画面でも一行に収まるよう詰める */
+  #scr-pause .btnrow{gap:8px;}
+  #scr-pause .btnrow button{padding:11px 13px; font-size:12px; letter-spacing:.12em;}
   .wgrid,.dgrid{grid-template-columns:1fr;}
   .screen{padding:14px;}
   .sheet h2{font-size:19px;}
