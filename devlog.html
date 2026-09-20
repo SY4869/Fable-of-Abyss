@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#050409">
 <title>制作記録｜SY GAMES</title>
-<meta name="description" content="個人でブラウザゲームを作った記録。『フェイブル・オブ・アビス』の構想と弾幕の作り方、ゲームシステムの設計、『カオスソードガーデン』の戦闘システムと制作で苦労したことを書いています。">
+<meta name="description" content="個人でブラウザゲームを作った記録を置いています。『フェイブル・オブ・アビス』の構想と弾幕の作り方、ゲームシステムの設計、『カオスソードガーデン』の戦闘システムと、Claude Code に任せるうえで苦労したことを書きました。">
 <link rel="canonical" href="https://sygames.net/devlog.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="SY GAMES">
 <meta property="og:title" content="制作記録｜SY GAMES">
-<meta property="og:description" content="個人でブラウザゲームを作った記録。構想、仕様変更、実装で苦労した点、バランス調整の過程。">
+<meta property="og:description" content="個人でブラウザゲームを作った記録を置いています。構想、仕様変更、実装でつまずいた点、バランス調整の過程まで。">
 <meta property="og:url" content="https://sygames.net/devlog.html">
 <meta property="og:image" content="https://sygames.net/assets/images/scene/st.webp">
 <meta name="twitter:card" content="summary_large_image">
@@ -36,7 +36,7 @@
 <main class="page">
 <p class="eyebrow">DEV LOG</p>
 <h1>制作記録</h1>
-<p class="lede">個人でゲームを作って公開するまでに、何を考えて何を作り直したかの記録です。<br>うまくいった話だけじゃなく、途中で壊した仕様や、いまも直しきれていないところも書いています。</p>
+<p class="lede">個人でゲームを作って公開するまでに、何を考えて何を作り直したかを書きためています。<br>うまくいった話だけじゃなく、途中で壊した仕様や、いまも直しきれていないところも残しました。</p>
 
 <div class="divider"></div>
 
@@ -45,18 +45,18 @@
   <ul class="postlist">
     <li>
       <span class="post-date">2026.09.17</span>
-      <h3><a href="devlog-fable-start.html">弾幕シューティングが、いちばん最初に完成した</a></h3>
-      <p>ターン制 RPG もチェスみたいなものも作りかけていたのに、完成したのは弾幕シューティングでした。何を下敷きにして、なぜこの形になったのか。</p>
+      <h3><a href="devlog-fable-start.html">なんで弾幕シューティングが最初に完成したのか</a></h3>
+      <p>ターン制 RPG もチェスみたいなものも作りかけていたのに、完成したのは弾幕シューティングでした。何を下敷きにして、どうしてこの形に落ち着いたのか振り返ってみます。</p>
     </li>
     <li>
       <span class="post-date">2026.09.17</span>
-      <h3><a href="devlog-fable-danmaku.html">技名から弾幕を起こす ─ 童話を弾の動きに翻訳する</a></h3>
-      <p>「始めはなかった赤い頭巾」「消えた実母」。先に技名を決めて、その言葉が指すものを弾の動きに置き換えていった話。全22枚ぶんの作り方です。</p>
+      <h3><a href="devlog-fable-danmaku.html">弾幕は、だいたい技名から考えています</a></h3>
+      <p>「始めはなかった赤い頭巾」「消えた実母」。先に技名を決めて、その言葉が指すものを弾の動きに置き換えていきました。22枚ぜんぶ、だいたいこの調子で作っています。</p>
     </li>
     <li>
       <span class="post-date">2026.09.17</span>
-      <h3><a href="devlog-fable-system.html">避けるゲームを、避けるだけのゲームにしない</a></h3>
-      <p>会話と弾幕を分けた仕様変更、当たり判定を点にした理由、制限時間の扱い、三つの難易度の狙い。そして、いまだに決着していないところ。</p>
+      <h3><a href="devlog-fable-system.html">避けるだけのゲームにはしたくなかった</a></h3>
+      <p>会話と弾幕を分けた仕様変更、当たり判定を点にした理由、制限時間の扱い、三つの難易度の狙い。ついでに、いまだに決着していないところも正直に書いておきました。</p>
     </li>
   </ul>
 </section>
@@ -66,26 +66,26 @@
   <ul class="postlist">
     <li>
       <span class="post-date">2026.09.17</span>
-      <h3><a href="devlog-chaos-battle.html">間合いがないと、剣戟は単調になる</a></h3>
-      <p>発生と後隙だけじゃ足りませんでした。後から間合いを足して、ひるみを足して、そうやって読み合いの形を探した記録です。</p>
+      <h3><a href="devlog-chaos-battle.html">間合いがないと、ここまで単調になるのか</a></h3>
+      <p>発生と後隙だけじゃ足りませんでした。後から間合いを足して、ひるみを足して、そうやって読み合いの形を探していきました。</p>
     </li>
     <li>
       <span class="post-date">2026.09.17</span>
-      <h3><a href="devlog-chaos-struggle.html">画面を見ただけでは気づけない不具合</a></h3>
-      <p>ガードや回避の仕様を AI に正確に伝えるのが、いちばん難しい作業でした。動いているように見えるのに間違っている、という状態との戦いです。</p>
+      <h3><a href="devlog-chaos-struggle.html">画面を見ても気づけない不具合にやられた</a></h3>
+      <p>コードはほぼ全部 Claude Code まかせなので、難しいのは仕様をプロンプトに書き出すほうでした。動いているように見えるのに間違っている。これにはだいぶ手こずりました。</p>
     </li>
   </ul>
 </section>
 
 <section class="clause">
   <h2><span class="num">Ⅲ</span>これから書く予定のこと</h2>
-  <p>公開して終わりにはせず、遊んで気づいたことを直しながら続けています。今後はこんな話を足していく予定です。</p>
+  <p>公開して終わりにはせず、遊んで気づいたことを直しながら続けています。今後はこんな話を足していくつもりです。</p>
   <ul>
     <li>エクストラ難易度の調整が、どこで決着したか</li>
     <li>ターン制コマンドバトル RPG の制作</li>
     <li>個人開発でバックエンドが必要になったときの選び方</li>
   </ul>
-  <p>各ゲームの仕様そのものは<a href="fable-about.html">フェイブル・オブ・アビスの作品紹介</a>と<a href="chaos-about.html">カオスソードガーデンの作品紹介</a>に、運営者と使っている技術は<a href="about.html">このサイトについて</a>にまとめています。</p>
+  <p>各ゲームの仕様そのものは<a href="fable-about.html">フェイブル・オブ・アビスの作品紹介</a>と<a href="chaos-about.html">カオスソードガーデンの作品紹介</a>に、運営者と使っている技術は<a href="about.html">このサイトについて</a>にまとめてあります。</p>
 </section>
 
 <div class="divider"></div>
