@@ -1557,7 +1557,6 @@ var BOSSES=[
             a0+i*TAU/3+Math.PI/2,1.15,5,'#cfcfff',{av:0.03,avUntil:150});
           b.rot+=0.36;
         }
-        if(c%26===0) fan(b.x,b.y,3,0.2,aimP(b.x,b.y),3.6,5,'#e0e0ff');
         if(c===0) ringGap(b.x,b.y,34,2.6,rnd(TAU),6,'#9090e0',aimP(b.x,b.y),0.34);
       } else if(c<148){
         /* 突進中 : 進路の左右へ弾を撒き散らし、通った跡が壁になる */
@@ -1571,8 +1570,6 @@ var BOSSES=[
           ringGap(b.x,b.y,32,3.1,rnd(TAU),6,'#f0f0ff',aimP(b.x,b.y),0.3);
           addFx('ripple',b.x,b.y,'#f0f0ff',200); G.shake=18;
         }
-      } else {
-        if(c%9===0) bul(b.x,b.y,aimP(b.x,b.y)+rnd(-0.26,0.26),5.0,5,'#cfcfff');
       }
     },
     draw:function(b){
@@ -1618,45 +1615,37 @@ var BOSSES=[
       }
     },
     fire:function(b,t){
-      /* エクストラでは順番を待たず、少女たちが初めから全員で撃つ。四つの弾幕が重なるため、弾速を半分に、密度は四分の一まで落とす。
-         d は発射間隔の倍率（間隔を d 倍にするか、一度に出す本数を d 分の一にするか、弾ごとにどちらか一方だけを掛ける） */
-      var all=DF.ex?1:0, k=all?0.50:1, d=all?4:1, ph=((t/400)|0)%4, i, j, q, rn;
+      /* 少女たちが400フレームごとに1人ずつ順番に撃つ（全難易度共通） */
+      var ph=((t/400)|0)%4, i, j;
       var CL=['#ff3b5c','#ffb35c','#9fd8e6','#c9a6e0'];
-      if(all?(t===1):(t%400===0)){
-        b.sub=all?-1:ph;
-        for(q=0;q<4;q++){
-          if(!all&&q!==ph) continue;
-          var gq=b.gmap?b.gmap[q]:null;
-          if(gq) for(i=0;i<gq.length;i++) addFx('ripple',gq[i].x,gq[i].y,CL[q],170);
-        }
+      var gs=b.gmap?b.gmap[ph]:null, g0=(gs&&gs[0])||b, g1=(gs&&gs[1])||g0;
+      if(t%400===0){
+        b.sub=ph;
+        if(gs) for(i=0;i<gs.length;i++) addFx('ripple',gs[i].x,gs[i].y,CL[ph],170);
       }
-      for(q=0;q<4;q++){
-        if(!all&&q!==ph) continue;
-        var gs=b.gmap?b.gmap[q]:null, g0=(gs&&gs[0])||b, g1=(gs&&gs[1])||g0;
-        if(q===0){
-          if(t%40===0){ var cx=rnd(60,W-60), cy=rnd(70,300); addFx('circle',cx,cy,'#ff5570',48); rn=16/d;
-            for(i=0;i<rn;i++) bul(cx,cy,rnd(TAU)+i*TAU/rn,2.1*k,6,'#ff5570',{delay:60}); }
-          if(t%(30*d)===0) fan(g0.x,g0.y,3,0.16,aimP(g0.x,g0.y),3.9*k,5,'#ffd0d8');
-        } else if(q===1){
-          if(t%(5*d)===0){ for(j=0;j<4;j++) bul(b.x,b.y,b.rot+j*TAU/4,2.6*k,6,'#ffb35c',{blink:[36,20,104]}); b.rot+=0.23*d; }
-          if(t%(9*d)===0) bul(rnd(0,W),H+10,-Math.PI/2,2.5*k,4.5,'#ffcc55',{ay:-0.012});
-          if(t%(76*d)===0) fan(g0.x,g0.y,3,0.2,aimP(g0.x,g0.y),3.6*k,5,'#ffe0a0');
-          if(t%(76*d)===38*d) fan(g1.x,g1.y,3,0.2,aimP(g1.x,g1.y),3.6*k,5,'#ffe0a0');
-        } else if(q===2){
-          if(t%(4*d)===0) bul(g0.x,g0.y,rnd(TAU),rnd(3.0,4.4)*k,5,'#cfe6ff',{stopAt:26,goAt:140,goSpd:3.6*k});
-          if(t%(6*d)===0) bul(rnd(0,W),-10,Math.PI/2,4.7*k,4,'#dff0ff',{shape:'rice'});
-        } else {
-          if(t%(2*d)===0) bul(rnd(0,W),-10,Math.PI/2,rnd(1.2,1.9)*k,5,'#9a94a6',{sway:[rnd(0.02,0.045),rnd(TAU),0.75]});
-          if(t%(54*d)===0) fan(g0.x,g0.y,5,0.1,aimP(g0.x,g0.y),5.2*k,5,'#ffe9a8');
-        }
+      if(ph===0){
+        if(t%40===0){ var cx=rnd(60,W-60), cy=rnd(70,300); addFx('circle',cx,cy,'#ff5570',48);
+          for(i=0;i<16;i++) bul(cx,cy,rnd(TAU)+i*TAU/16,2.1,6,'#ff5570',{delay:60}); }
+        if(t%30===0) fan(g0.x,g0.y,3,0.16,aimP(g0.x,g0.y),3.9,5,'#ffd0d8');
+      } else if(ph===1){
+        if(t%5===0){ for(j=0;j<4;j++) bul(b.x,b.y,b.rot+j*TAU/4,2.6,6,'#ffb35c',{blink:[36,20,104]}); b.rot+=0.23; }
+        if(t%9===0) bul(rnd(0,W),H+10,-Math.PI/2,2.5,4.5,'#ffcc55',{ay:-0.012});
+        if(t%76===0) fan(g0.x,g0.y,3,0.2,aimP(g0.x,g0.y),3.6,5,'#ffe0a0');
+        if(t%76===38) fan(g1.x,g1.y,3,0.2,aimP(g1.x,g1.y),3.6,5,'#ffe0a0');
+      } else if(ph===2){
+        if(t%4===0) bul(g0.x,g0.y,rnd(TAU),rnd(3.0,4.4),5,'#cfe6ff',{stopAt:26,goAt:140,goSpd:3.6});
+        if(t%6===0) bul(rnd(0,W),-10,Math.PI/2,4.7,4,'#dff0ff',{shape:'rice'});
+      } else {
+        if(t%2===0) bul(rnd(0,W),-10,Math.PI/2,rnd(1.2,1.9),5,'#9a94a6',{sway:[rnd(0.02,0.045),rnd(TAU),0.75]});
+        if(t%54===0) fan(g0.x,g0.y,5,0.1,aimP(g0.x,g0.y),5.2,5,'#ffe9a8');
       }
-      if(t%(120*d)===0) ringGap(b.x,b.y,26,3.1*k,rnd(TAU),5,'#ffffff',aimP(b.x,b.y),0.3);
+      if(t%120===0) ringGap(b.x,b.y,26,3.1,rnd(TAU),5,'#ffffff',aimP(b.x,b.y),0.3);
     },
     draw:function(b){
       var gs=b.ghosts; if(!gs) return;
       var cl=['#ff3b5c','#ffb35c','#9fd8e6','#c9a6e0'];
       for(var i=0;i<gs.length;i++){
-        var g=gs[i], on=(DF.ex?true:(g.ph===b.sub)), h=116*g.s;
+        var g=gs[i], on=(g.ph===b.sub), h=116*g.s;
         var al=(on?0.60:0.22)+Math.sin(G.frame*0.05+i)*0.05;
         ctx.save();
         var rg=ctx.createRadialGradient(g.x,g.y,4,g.x,g.y,62);
