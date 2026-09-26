@@ -584,9 +584,10 @@ class Battle {
     let dmgType = spec.dmg;
     if (unitFlags(target).allDamageAsPhys) dmgType = 'PHYS';
 
-    // 絶対領域
+    // 絶対領域（貫通攻撃は無効化されない。ブルーリコレクション中の攻撃や、刈り取りなどの貫通スキル）
+    const pierce = !!(spec.pierce || flags.allPierce);
     const tPassive = passiveOf(target);
-    if (tPassive && tPassive.immune === dmgType) {
+    if (tPassive && tPassive.immune === dmgType && !pierce) {
       this.say('→ ' + target.displayName + 'の【' + target.passiveId + '】がダメージを無効化した！', 'good');
       this.emit('hit', { target: target, element: meta.element || actor.element, dmgType: dmgType, amount: 0 });
       return 0;
@@ -594,7 +595,7 @@ class Battle {
 
     // 防御
     let def = dmgType === 'PHYS' ? tS.defPhys : tS.defMag;
-    if (spec.pierce || flags.allPierce) def = 0;
+    if (pierce) def = 0;
     else if (spec.defHalf) def = Math.floor(def / 2);
 
     let dmg = Math.max(CONFIG.DAMAGE_MIN, power - def);
