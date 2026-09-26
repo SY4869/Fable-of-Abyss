@@ -102,6 +102,6 @@ const SKILL_MASTER = [
   { id: "魔弓撃", name: "魔弓撃", typeRaw: "パッシブ", category: "PASSIVE", element: null, costMp: 0, desc: "魔法攻撃力の半分の値を物理攻撃力に加算する。" },
   { id: "インドラの矢", name: "インドラの矢", typeRaw: "雷", category: "ATTACK", element: "THUNDER", costMp: 8, desc: "魔法攻撃力+8の貫通ダメージを1体に与える。" },
   { id: "終わりの始まり", name: "終わりの始まり", typeRaw: "パッシブ", category: "PASSIVE", element: null, costMp: 0, desc: "ラウンド終了時に敵全体に1点の貫通ダメージを与える。" },
-  { id: "メギドの火", name: "メギドの火", typeRaw: "火", category: "ATTACK", element: "FIRE", costMp: 8, desc: "魔法攻撃力-2点の魔法貫通を1エリアの敵全体に与える。" },
+  { id: "メギドの火", name: "メギドの火", typeRaw: "火", category: "ATTACK", element: "FIRE", costMp: 8, desc: "魔法攻撃力-2点の貫通ダメージを1エリアの敵全体に与える。" },
   { id: "終焉", name: "終焉", typeRaw: "無", category: "ATTACK", element: "NONE", costMp: 3, desc: "経過ターンと同じ値の貫通ダメージを敵全体に与える。" },
 ];

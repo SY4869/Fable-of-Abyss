@@ -56,7 +56,7 @@ class BattleSession {
     return this.core.BattleActions.capture(this.battle, () => this.battle.onTurnStart(actor)).events;
   }
 
-  legal(actor) { return this.core.BattleActions.legal(this.battle, actor); }
+  legal(actor) { return this.core.BattleActions.legal(this.battle, actor, { allowWait: true }); }
 
   check(actor, action) {
     return this.core.BattleActions.check(this.battle, actor, action, { allowWait: action && action.type === 'wait' });

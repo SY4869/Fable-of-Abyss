@@ -216,7 +216,7 @@ const Screens = {
       el('div', { class: 'menu-foot' }, [
         el('button', { class: 'btn small ghost', 'data-se': 'cancel', text: 'タイトルへ', onclick: () => { App.stack = []; App.show(Screens.title, []); } }),
         el('div', { class: 'spacer' }),
-        el('span', { class: 'faint', text: 'Ver. 1.2.0' }),
+        el('span', { class: 'faint', text: 'Ver. 1.2.1' }),
       ]),
     ]);
   },
@@ -938,7 +938,7 @@ const Novel = {
   play(scenes, done, opt) {
     opt = opt || {};
     if (!scenes || !scenes.length) { done(); return; }
-    Sound.playBgm('menu');
+    Sound.playBgm('story');
     const chara = opt.character || null;
     let si = 0, li = 0;
     let auto = false, autoTimer = null;

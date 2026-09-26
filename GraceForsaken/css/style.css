@@ -1236,3 +1236,22 @@ body { background: transparent; }
   .mode-grid { grid-template-columns: 1fr; }
   .mode-card { padding: 26px 14px; }
 }
+
+/* ---------- 戦闘の説明（相性・状態） ---------- */
+.tag.tappable { cursor: pointer; font-family: inherit; line-height: 1.6; }
+.tag.tappable:hover { border-color: var(--purple); color: #d8ccff; }
+.battle-help h3 { margin: 14px 0 6px; font-size: 15px; color: #d8ccff; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+.battle-help p { margin: 4px 0; line-height: 1.7; }
+.help-cycle { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 8px 0; }
+.help-el { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px 2px 4px;
+  border: 1px solid var(--line); border-radius: 4px; background: rgba(10, 10, 24, .7); }
+.help-arrow { color: var(--ink-dim); font-weight: bold; }
+.help-list { display: grid; grid-template-columns: max-content 1fr; gap: 6px 12px; margin: 6px 0; }
+.help-list dt { font-weight: bold; white-space: nowrap; }
+.help-list dt.good { color: #8fe3a8; }
+.help-list dt.bad { color: #ff9a8a; }
+.help-list dd { margin: 0; line-height: 1.6; font-size: 13px; }
+@media (max-width: 560px) {
+  .help-list { grid-template-columns: 1fr; gap: 2px; }
+  .help-list dd { margin-bottom: 8px; }
+}

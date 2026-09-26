@@ -13,6 +13,7 @@ const BGM_FILES = {
   menu: 'Menu_BGM.mp3',
   battle: 'Battle_BGM.mp3',
   battleOkita: 'BattleOkita_BGM.mp3',
+  story: 'AcceptQuest_BGM.mp3',
 };
 
 const SE_FILES = {

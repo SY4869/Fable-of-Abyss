@@ -591,4 +591,37 @@ const SKILL_LOGIC = {
     act: 'attack', tgt: 'ENEMY_ONE',
     atk: { base: 'atkPhys', mod: 6, dmg: 'PHYS', pierce: true },
   },
+
+  // ---------------- 天より堕ちし色（レイア第3話） ----------------
+  '星の落とし子': {
+    act: 'passive',
+    // HPが半分以下になった時に1度だけ能力が変わる（battle.js checkHalfHp）
+    passive: { regen: { hp: 2 }, halfHpOnce: { defPhys: -5, defMag: -5, atkMag: 5 } },
+  },
+  '灰化の光': {
+    act: 'attack', tgt: 'ENEMY_AREA',
+    atk: { base: 'atkMag', mod: -3, dmg: 'MAG' },
+    then: [{ act: 'buff', tgt: 'ENEMY_AREA', buff: { dur: 2, stats: { speed: -2 } } }],
+  },
+  '命の吸い上げ': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkMag', mod: 0, dmg: 'MAG' },
+    then: [{ act: 'special', custom: 'drainHeal' }],
+  },
+  '名状しがたき色彩': {
+    act: 'buff', tgt: 'ENEMY_AREA',
+    buff: { dur: 3, acc: -15 },
+  },
+  '結晶の棘': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkPhys', mod: 3, dmg: 'PHYS' },
+  },
+  '地に張る根': {
+    act: 'buff', tgt: 'SELF', quick: true,
+    buff: { dur: 99, shield: { base: 'defPhys', div: 1 } },
+  },
+  '開花': {
+    act: 'attack', tgt: 'ENEMY_AREA',
+    atk: { base: 'atkMag', mod: 4, dmg: 'MAG', pierce: true },
+  },
 };

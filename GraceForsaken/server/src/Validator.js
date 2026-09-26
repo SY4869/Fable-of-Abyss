@@ -67,7 +67,7 @@ function makeValidator(core) {
     action(p) {
       if (!isObj(p) || !Number.isInteger(p.seq) || typeof p.actorId !== 'string') return { ok: false, error: P.ERR.INVALID_PAYLOAD };
       const t = p.type;
-      if (!['attack', 'skill', 'quick', 'move'].includes(t)) return { ok: false, error: P.ERR.INVALID_ACTION };
+      if (!['attack', 'skill', 'quick', 'move', 'wait'].includes(t)) return { ok: false, error: P.ERR.INVALID_ACTION };
       const a = { type: t };
       if (p.targetId !== undefined) { if (typeof p.targetId !== 'string') return { ok: false, error: P.ERR.INVALID_ACTION }; a.targetId = p.targetId; }
       if (p.skillId !== undefined) { if (typeof p.skillId !== 'string') return { ok: false, error: P.ERR.INVALID_ACTION }; a.skillId = p.skillId; }

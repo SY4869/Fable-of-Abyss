@@ -666,6 +666,7 @@ class Battle {
       if (b.flags && b.flags.onDamagedPerm) this.gainPerm(target, b.flags.onDamagedPerm, b.name);
     });
     if (target.hp <= 0) return this.tryEndure(target, source);
+    this.checkHalfHp(target);
     return false;
   }
 
@@ -678,6 +679,17 @@ class Battle {
     this.say('→ ' + target.displayName + 'は【' + label + '】で ' + dmg + ' ダメージ', 'damage');
     this.emit('rawDamage', { target: target, amount: dmg });
     if (target.hp <= 0) this.tryEndure(target, source);
+    else this.checkHalfHp(target);
+  }
+
+  /** 星の落とし子: HPが半分以下になった時、1度だけ能力が変わる */
+  checkHalfHp(target) {
+    const p = passiveOf(target);
+    if (!p || !p.halfHpOnce || target.halfHpTriggered || !target.alive) return;
+    if (target.hp > target.maxHp / 2) return;
+    target.halfHpTriggered = true;
+    this.say('→ ' + target.displayName + 'の【' + target.passiveId + '】が目覚めた！', 'skill');
+    this.gainPerm(target, p.halfHpOnce, target.passiveId);
   }
 
   /** 不死なる魔王（復活後）: 一定以下のダメージを無効化する */
@@ -803,7 +815,7 @@ class Battle {
       unit.perm[k] = (unit.perm[k] || 0) + gain[k];
       if (k === 'hp') { unit.maxHp += gain[k]; unit.hp += gain[k]; }
       if (k === 'mp') { unit.maxMp += gain[k]; unit.mp = Math.min(unit.maxMp, unit.mp + gain[k]); }
-      parts.push(STAT_LABEL[k] + '+' + gain[k]);
+      parts.push(STAT_LABEL[k] + (gain[k] >= 0 ? '+' : '') + gain[k]);
     }
     this.say('→ ' + unit.displayName + 'の' + parts.join('・') + '（' + label + '）', 'good');
   }
@@ -920,6 +932,11 @@ class Battle {
         if (wounded && dealt > 0) this.heal(wounded, Math.floor(dealt / 2), '反魂');
         break;
       }
+
+      case 'drainHeal':
+        // 命の吸い上げ: 与えたダメージの半分だけ自身のHPを回復
+        if (lastDamage > 0) this.heal(actor, Math.floor(lastDamage / 2), sk ? sk.name : '吸収');
+        break;
 
       case 'summon': {
         const mob = unitMob(lg.summonName || '魔人', actor.side, 1, this.rng);

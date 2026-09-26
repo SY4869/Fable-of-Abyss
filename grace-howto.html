@@ -88,10 +88,21 @@
     <tr><th>通常攻撃<span class="lat">ATTACK</span></th><td>射程内の敵1体を攻撃します。MPを使いません。</td></tr>
     <tr><th>スキル<span class="lat">SKILL</span></th><td>MP（一部はHP）を使って攻撃・回復・強化を行います。1体を狙うもの、1マスをまとめて狙うもの、自分や全体にかかるものがあります。</td></tr>
     <tr><th>クイック<span class="lat">QUICK</span></th><td>行動を消費しないスキルです。使ったあとも同じ手番で続けて行動できます。</td></tr>
-    <tr><th>移動・待機<span class="lat">MOVE / WAIT</span></th><td>隣のマスへ1つ動く、または何もせずに手番を終えます。</td></tr>
+    <tr><th>移動・待機<span class="lat">MOVE / WAIT</span></th><td>隣のマスへ1つ動く、または何もせずに手番を終えます（リアルタイム対戦でも待機できます）。</td></tr>
   </table>
   <p>コマンドを押すと、狙える相手やマスが光ります。選ぶと実行、「キャンセル」で選び直せます。自分にかかるスキルは、効果の範囲を確認して「決定」を押します。キャラクターをタップすると、そのキャラクターの状態を確認できます（敵のスキルは見えません）。</p>
   <div class="aside"><p>カットイン演出はオプションで切れます。テンポよく進めたいときにどうぞ。</p></div>
+  <h3>状態</h3>
+  <p>戦闘画面上部の「相性・状態」ボタンで、属性相性と状態の一覧をいつでも確認できます。キャラクター情報欄の状態タグをタップすると、その効果の説明が出ます。</p>
+  <table class="spec">
+    <tr><th>洗脳<span class="lat">CHARM</span></th><td>【チャーム】などで付与されます。攻撃・スキルを使うとき、70%の確率で対象がランダムに変わります（味方を攻撃してしまうことも）。自分の手番の開始時に「魔法防御力×3%」の確率で解除されます。</td></tr>
+    <tr><th>隠密<span class="lat">STEALTH</span></th><td>単体攻撃の対象に選ばれなくなります。範囲攻撃・全体攻撃は当たります。一部の固有スキルを持つキャラクターには見破られます。</td></tr>
+    <tr><th>シールド<span class="lat">SHIELD</span></th><td>受けるダメージを数値の分だけ肩代わりします。</td></tr>
+    <tr><th>リーサルカウント<span class="lat">LETHAL</span></th><td>残りラウンド数が0になると、ラウンド終了時に戦闘不能になります。</td></tr>
+    <tr><th>アンチヒール<span class="lat">ANTI HEAL</span></th><td>HPの回復・蘇生を受けられなくなります。</td></tr>
+    <tr><th>耐え<span class="lat">ENDURE</span></th><td>HPが0になるダメージを受けたとき、確率でHP1で耐えます（1度発動すると消えます）。</td></tr>
+    <tr><th>貫通<span class="lat">PIERCE</span></th><td>相手の防御力を無視してダメージを与えます。【絶対領域】などのダメージ無効化も貫通します。</td></tr>
+  </table>
 </section>
 
 <section class="clause" id="s5">

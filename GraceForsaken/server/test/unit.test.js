@@ -116,3 +116,17 @@ test('BattleSession: 相手のスキルは送らない・同じ乱数で同じ�
   const views = a.views(0);
   views.forEach(v => assert.strictEqual(v.side === 0, !!v.skills));
 });
+
+test('待機: PVPでも手動で選べる', () => {
+  const r = V.action({ roomId: 'r', seq: 1, actorId: 'u', type: 'wait' });
+  assert.ok(r.ok, JSON.stringify(r));
+  const s = new BattleSession(core, { parties: [party(), party().reverse()], field: { time: 'DAY', location: 'PLAINS' }, seed: 7 });
+  s.start();
+  const a = s.currentActor();
+  s.turnStart(a);
+  assert.ok(s.legal(a).some(e => e.type === 'wait'));
+  assert.ok(s.check(a, { type: 'wait' }));
+  const res = s.run(a, { type: 'wait' });
+  assert.ok(res && Array.isArray(res.events));
+  assert.notStrictEqual(s.currentActor(), a);
+});

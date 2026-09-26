@@ -143,9 +143,14 @@ function createBattleView(cfg) {
     onclick: () => { logWrap.classList.toggle('closed'); },
   });
 
+  const helpBtn = el('button', {
+    class: 'btn small ghost', text: '相性・状態',
+    onclick: () => BattleHelp.openGuide(),
+  });
+
   const root = el('div', { class: 'screen battle' }, [
     topbar(cfg.title, {
-      en: cfg.en || 'BATTLE', wallet: false, extra: [cfg.headRight || null, logToggle].concat(cfg.extra || []).filter(Boolean),
+      en: cfg.en || 'BATTLE', wallet: false, extra: [cfg.headRight || null, helpBtn, logToggle].concat(cfg.extra || []).filter(Boolean),
       onBack: cfg.onBack,
     }),
     hud, banner, fieldBox, targetBar, cutinLayer,
@@ -274,14 +279,18 @@ function createBattleView(cfg) {
       ['速度', s.speed], ['物理攻撃力', s.atkPhys], ['魔法攻撃力', s.atkMag],
       ['物理防御力', s.defPhys], ['魔法防御力', s.defMag], ['射程', u.range],
     ].map(([k, v]) => el('div', { class: 'stat' }, [el('span', { text: k }), el('b', { text: String(v) })]))));
+    // [表示, 説明のキー]（タップで説明を表示）
     const effects = [];
-    if (u.shield > 0) effects.push('シールド ' + u.shield);
-    if (u.stealth) effects.push('隠密');
-    if (u.brainwashed) effects.push('洗脳');
-    if (u.doom) effects.push('リーサルカウント 残り' + u.doom);
-    (u.buffs || []).forEach(b => effects.push(b.name + (b.dur ? '（' + b.dur + 'R）' : '')));
+    if (u.shield > 0) effects.push(['シールド ' + u.shield, 'シールド']);
+    if (u.stealth) effects.push(['隠密', '隠密']);
+    if (u.brainwashed) effects.push(['洗脳', '洗脳']);
+    if (u.doom) effects.push(['リーサルカウント 残り' + u.doom, 'リーサルカウント']);
+    (u.buffs || []).forEach(b => effects.push([b.name + (b.dur ? '（' + b.dur + 'R）' : ''), b.name]));
     if (effects.length) {
-      actorBox.appendChild(el('div', { class: 'effects' }, effects.map(t => el('span', { class: 'tag', text: t }))));
+      actorBox.appendChild(el('div', { class: 'effects' }, effects.map(([t, key]) => el('button', {
+        class: 'tag tappable', text: t + ' ⓘ', title: 'タップで説明',
+        onclick: e => { e.stopPropagation(); BattleHelp.explain(key); },
+      }))));
     }
     // 敵のスキルは確認できない（相手のスキルはサーバーからも送られてこない）
     if (!isActor && u.side === 'ALLY' && u.skills && u.skills.length) {
