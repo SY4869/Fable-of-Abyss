@@ -255,7 +255,7 @@ function createBattleView(cfg) {
     actorBox.appendChild(el('div', { class: 'actor-head' }, [
       faceIcon(u, { class: 'medium' }),
       el('div', { class: 'actor-title' }, [
-        el('small', { text: isActor ? (u.side === 'ALLY' ? (u.isGuest ? 'GUEST TURN' : (state.mine ? 'YOUR TURN' : 'ALLY TURN')) : 'ENEMY TURN') : '確認中' }),
+        el('small', { text: isActor ? (u.side === 'ALLY' ? (state.mine ? (u.isGuest ? 'YOUR TURN（GUEST）' : 'YOUR TURN') : 'ALLY TURN') : 'ENEMY TURN') : '確認中' }),
         el('b', { text: u.displayName }),
         el('div', { class: 'row' }, [
           elementChip(u.element),
@@ -574,9 +574,9 @@ const BattleFlow = {
     const infoBox = el('div', { class: 'prep-info panel frame' });
 
     const moveTo = (u, area) => {
-      if (u.isGuest) { App.toast('ゲストの配置は変更できません'); return; }
       u.area = area;
-      if (u.charId) Save.setPlacement(u.charId, area);
+      // ゲストの配置はこの戦闘の間だけ（所持キャラの初期配置は書き換えない）
+      if (u.charId && !u.isGuest) Save.setPlacement(u.charId, area);
       render();
     };
 
@@ -588,7 +588,7 @@ const BattleFlow = {
       fieldBox.appendChild(buildFieldRow((c, cell, units) => {
         if (c.side === 'ALLY') {
           cell.setAttribute('data-drop', String(c.area));
-          if (selected && !selected.isGuest && selected.side === 'ALLY' && selected.area !== c.area) {
+          if (selected && selected.side === 'ALLY' && selected.area !== c.area) {
             cell.classList.add('movable');
             cell.addEventListener('click', () => moveTo(selected, c.area));
           }
@@ -603,7 +603,7 @@ const BattleFlow = {
             selected = selected === u ? null : u;
             render();
           });
-          if (c.side === 'ALLY' && !u.isGuest) {
+          if (c.side === 'ALLY') {
             makeDraggable(t, {
               onStart: () => { selected = u; },
               onDrop: (d) => moveTo(u, Number(d.getAttribute('data-drop'))),

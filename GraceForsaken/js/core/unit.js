@@ -53,7 +53,7 @@ function createUnit(opt) {
     isMob: !!opt.isMob,
     isBoss: !!opt.isBoss,
     isGuest: !!opt.isGuest,
-    isPlayerControlled: opt.side === 'ALLY' && !opt.isGuest,
+    isPlayerControlled: opt.side === 'ALLY',   // ストーリーのゲストもプレイヤーが操作する
     brainwashed: false,
     doom: 0,                     // リーサルカウント残ラウンド（0=なし）
     kills: 0,
