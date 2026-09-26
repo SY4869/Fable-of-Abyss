@@ -11,6 +11,7 @@ GitHub Pages で配信しています。`main` に push すると反映されま
 | `/` | `index.html` | トップ（ゲーム一覧） |
 | `/fable.html` | `fable.html` | 弾幕シューティング『フェイブル・オブ・アビス』 |
 | `/chaos.html` | `chaos.html` | 剣戟バトル『カオスソードガーデン』 |
+| `/GraceForsaken/` | `GraceForsaken/` | ターン制コマンドバトルRPG『GraceForsaken』（作品紹介 `grace-about.html`・遊び方 `grace-howto.html`） |
 | `/howto.html` | `howto.html` | 遊び方と物語 |
 | `/about.html` | `about.html` | このサイトについて |
 | `/credits.html` | `credits.html` | 素材提供元のクレジット |
@@ -35,6 +36,19 @@ assets/audio/chaos/   カオス：BGM と効果音
 `file://` では開けません。下記のローカルサーバー経由で確認してください。
 素材のパスは `assets/js/chaos/data.js` の `IMAGE_BASE` と
 `assets/js/chaos/sound.js` の `SOUND_BASE` に集約しています。
+
+### GraceForsaken
+
+ゲーム本体は `GraceForsaken/` フォルダにまとまっています（素材が多いため、ルート直下ではなくフォルダごと配置）。
+このフォルダは開発用フォルダから `python tools/deploy_site.py` で丸ごとコピーして作るので、**ここを直接編集しないでください。**
+
+```
+GraceForsaken/index.html     ゲーム本体（/GraceForsaken/ で開く）
+GraceForsaken/server/        リアルタイム対戦サーバー（AWS Lightsail で動かす。GitHub Pages では動かない）
+assets/images/grace/thumb.webp  ゲーム一覧・作品紹介のサムネイル
+```
+
+リアルタイム対戦サーバーの構築・更新手順は `GraceForsaken/server/README.md` にあります。
 
 ## ローカルで開く
 
