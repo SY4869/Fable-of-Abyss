@@ -1,0 +1,51 @@
+# /etc/systemd/system/gf-pvp.service
+# GraceForsaken リアルタイム対戦サーバー
+#
+#   sudo systemctl daemon-reload && sudo systemctl enable --now gf-pvp
+#
+# 新しい対戦の受付を止める（ドレイン）: sudo systemctl kill -s SIGUSR2 gf-pvp
+# 状態の確認: curl -s http://127.0.0.1:3100/health
+#
+# カオスソードガーデンのランキングAPI（csg-ranking, 3000番）と同居するため 3100 番を使う。
+# 対戦はプロセスのメモリ上で管理するので、1プロセスのみで動かすこと。
+
+[Unit]
+Description=GraceForsaken realtime PVP server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=gfpvp
+Group=gfpvp
+WorkingDirectory=/opt/gf-pvp/server
+ExecStart=/usr/bin/node --no-warnings src/index.js
+Restart=always
+RestartSec=3
+# 停止時は進行中の対戦を無効試合として終了させてから落ちる（src/index.js）
+KillSignal=SIGTERM
+TimeoutStopSec=10
+
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+Environment=PORT=3100
+Environment=ALLOWED_ORIGINS=https://sygames.net
+Environment=LOG_LEVEL=info
+
+# --- 権限を絞る ---
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=192M
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=gf-pvp
+
+[Install]
+WantedBy=multi-user.target

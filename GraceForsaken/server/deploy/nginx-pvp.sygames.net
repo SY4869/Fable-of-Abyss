@@ -1,0 +1,53 @@
+# pvp.sygames.net — GraceForsaken リアルタイム対戦サーバー（WebSocket）
+#
+# 【この時点では 80 番のみ】
+# certbot --nginx を通すと、この server ブロックが 443 側へ複製され、
+# 証明書の指定と HTTP→HTTPS のリダイレクトが自動で書き足される。
+# そのため、最初から proxy の設定を入れた状態で置いておくこと。
+#
+# 有効化は /etc/nginx/sites-enabled/zz-pvp.sygames.net というリンク名で行う
+# （既存の default より後ろに来る名前にして、既存サイトを既定サーバーのままにする）。
+
+# 同じIPからの同時接続を 5 までに制限する（PVP対戦_設計書 7章）
+limit_conn_zone $binary_remote_addr zone=gf_pvp_conn:10m;
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name pvp.sygames.net;
+
+    server_tokens off;
+    client_max_body_size 8k;
+
+    access_log /var/log/nginx/gf-pvp.access.log;
+    error_log  /var/log/nginx/gf-pvp.error.log;
+
+    # certbot が Let's Encrypt の確認に使う
+    location /.well-known/acme-challenge/ {
+        root /var/www/html;
+    }
+
+    location = /health {
+        proxy_pass http://127.0.0.1:3100;
+        include /etc/nginx/proxy_params;
+        proxy_http_version 1.1;
+    }
+
+    location /socket.io/ {
+        limit_conn gf_pvp_conn 5;
+        proxy_pass http://127.0.0.1:3100;
+        include /etc/nginx/proxy_params;
+        proxy_http_version 1.1;
+        # WebSocket のための引き継ぎ
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        # 対戦中は接続を長く保つ（生存確認は Socket.IO が5秒ごとに行う）
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+    }
+
+    # それ以外は何も置かない
+    location / {
+        return 404;
+    }
+}

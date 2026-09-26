@@ -44,153 +44,89 @@ node tools/pvp_sim.js 100        # 対人戦の試合数を指定
 
 ---
 
-## 2. 本番環境の構築手順（初回のみ）
+## 2. 本番環境（構築済み）
 
-AWS・お名前.com の操作が必要なため、ご自身で行ってください。
-コマンドはインスタンスへ SSH 接続した後、`ubuntu` ユーザーで実行します。
+カオスソードガーデンのランキングAPI（`api.sygames.net`）と同じ Lightsail インスタンスに同居させています。
+既存サービスに合わせ、pm2 ではなく **systemd** で常駐させています。
 
-### 2.1 Lightsail インスタンス
+| 項目 | 内容 |
+|---|---|
+| インスタンス | Lightsail 東京・Ubuntu 22.04・メモリ 512MB（`ubuntu@52.198.114.237`） |
+| 配置先 | `/opt/gf-pvp/`（`js/` と `server/`。所有者 root、実行ユーザー `gfpvp` は読み取りのみ） |
+| 常駐 | systemd の `gf-pvp.service`（`127.0.0.1:3100`。メモリ上限 192MB） |
+| 公開 | nginx の `pvp.sygames.net` → `127.0.0.1:3100`（WebSocket、同一IPの同時接続は5まで） |
+| 同居 | `csg-ranking.service`（`127.0.0.1:3000`、`api.sygames.net`） |
+| 作業記録 | サーバーの `~/gf-work/`（実行したスクリプトとログ） |
 
-1. Lightsail コンソール →「インスタンスの作成」
-   - リージョン: **東京（ap-northeast-1）**
-   - プラットフォーム: Linux/Unix、ブループリント: **OS のみ → Ubuntu 24.04 LTS**
-   - プラン: メモリ **1GB** から開始（負荷が高ければ後から 2GB へ）
-2. 作成後、「ネットワーキング」タブで
-   - **静的 IP** を作成してインスタンスにアタッチ
-   - IPv4 ファイアウォールに **HTTP(80)・HTTPS(443)** を追加（SSH(22) は既定で開いています。可能なら接続元を自分のIPに限定）
+設定ファイルと手順は `deploy/` にあります。
 
-### 2.2 DNS（お名前.com）
+| ファイル | 内容 |
+|---|---|
+| `deploy/upload.sh` | 手元から転送して手順を実行する（Git Bash で使う） |
+| `deploy/gf_01_deploy.sh` | アプリの配置・依存パッケージ・systemd 登録・起動・既存サービスの生存確認 |
+| `deploy/gf_02_nginx.sh` | nginx に `pvp.sygames.net` を追加（80番） |
+| `deploy/gf_03_tls.sh` | 証明書の取得と HTTPS 化（DNS 設定後に実行） |
+| `deploy/gf-pvp.service` | systemd ユニット |
+| `deploy/nginx-pvp.sygames.net` | nginx の設定 |
 
-お名前.com Navi →「DNS設定/転送設定」→ `sygames.net` の「DNSレコード設定」で、次のレコードを追加します。
-既存の GitHub Pages 向けのレコードは変更しません。
+### DNS（お名前.com）
+
+お名前.com Navi →「DNS設定/転送設定」→ `sygames.net` の「DNSレコード設定」で追加します。
 
 | ホスト名 | TYPE | VALUE |
 |---|---|---|
-| `pvp` | A | Lightsail の静的IP |
+| `pvp` | A | `52.198.114.237`（`api` と同じIP） |
 
-反映に時間がかかることがあるため、証明書の取得（2.6）の前に済ませておきます。
-反映の確認: `nslookup pvp.sygames.net`
-
-### 2.3 ソフトウェアのインストール
+反映後（`nslookup pvp.sygames.net` で確認）に、証明書を取得します。
 
 ```sh
-sudo apt update && sudo apt -y upgrade
-# Node.js 22 LTS
-curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt -y install nodejs nginx certbot python3-certbot-nginx git
-sudo npm install -g pm2
-node -v    # v22 以降であること
+bash server/deploy/upload.sh gf_03_tls.sh
 ```
-
-### 2.4 サーバーのプログラムを配置
-
-```sh
-cd ~
-git clone https://github.com/SY4869/Fable-of-Abyss.git
-cd Fable-of-Abyss/GraceForsaken/server
-npm ci --omit=dev
-cp .env.example .env             # 必要なら編集（通常はそのままでよい）
-```
-
-### 2.5 nginx（HTTPS の終端とリバースプロキシ）
-
-`/etc/nginx/sites-available/pvp` を作成します（`sudo nano /etc/nginx/sites-available/pvp`）。
-
-```nginx
-# 同じIPからの同時接続を 5 までに制限（PVP対戦_設計書 7章）
-limit_conn_zone $binary_remote_addr zone=pvp_conn:10m;
-
-server {
-    listen 80;
-    server_name pvp.sygames.net;
-
-    location / {
-        limit_conn pvp_conn 5;
-        proxy_pass http://127.0.0.1:3000;
-        proxy_http_version 1.1;
-        # WebSocket のための引き継ぎ
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_read_timeout 3600s;
-        proxy_send_timeout 3600s;
-    }
-}
-```
-
-```sh
-sudo ln -s /etc/nginx/sites-available/pvp /etc/nginx/sites-enabled/pvp
-sudo nginx -t && sudo systemctl reload nginx
-```
-
-### 2.6 証明書（Let's Encrypt）
-
-```sh
-sudo certbot --nginx -d pvp.sygames.net
-# メールアドレスの入力と規約への同意を求められます。
-# 「HTTP を HTTPS へリダイレクトするか」は「する」を選びます。自動更新も設定されます。
-sudo certbot renew --dry-run     # 自動更新の確認
-```
-
-### 2.7 起動（pm2）
-
-```sh
-cd ~/Fable-of-Abyss/GraceForsaken/server
-pm2 start ecosystem.config.js
-pm2 save
-pm2 startup                      # 表示されたコマンド（sudo env PATH=... ）をそのまま実行
-pm2 install pm2-logrotate        # ログの肥大化を防ぐ
-```
-
-> **cluster モードにしないこと。** 試合はプロセスのメモリ上にあるため、1プロセス固定で動かします。
-
-### 2.8 確認
-
-```sh
-curl https://pvp.sygames.net/health
-# {"status":"ok","rooms":0,"queue":0,"connections":0,"draining":false}
-```
-
-ゲーム（`https://sygames.net/GraceForsaken/`）を開き、BATTLE →「リアルタイム対戦」→「対戦を開始する」で、
-15秒後に BOT との対戦が始まれば成功です。最後に Lightsail で**スナップショット**を1つ取得しておきます。
 
 ---
 
 ## 3. 運用
 
-### 更新（通常）
+### 更新
 
-プロトコル（`js/net/protocol.js` の `VERSION`）を変えない更新は、そのまま反映してかまいません。
-進行中の試合を失わないよう、ドレイン（新規受付の停止）してから再起動します。
+手元の `GraceForsaken` フォルダ（Git Bash）で実行します。
+進行中の対戦は、再起動の時点で無効試合になります。人がいる時間を避けるか、先にドレインしてください。
 
 ```sh
-cd ~/Fable-of-Abyss && git pull
-cd GraceForsaken/server && npm ci --omit=dev
-pm2 sendSignal SIGUSR2 gf-pvp                  # 新しい対戦の受付を停止
-watch -n 5 curl -s https://pvp.sygames.net/health   # rooms が 0 になるまで待つ（Ctrl+C で抜ける）
-pm2 restart gf-pvp
+# （任意）新しい対戦の受付を止め、進行中の対戦が終わるのを待つ
+ssh -i ~/Downloads/LightsailDefaultKey-ap-northeast-1.pem ubuntu@52.198.114.237 \
+  'sudo systemctl kill -s SIGUSR2 gf-pvp; watch -n 5 curl -s http://127.0.0.1:3100/health'
+
+# 転送して配置・再起動（既存のアプリは /opt/gf-pvp.bak_日時.tar.gz に退避される）
+bash server/deploy/upload.sh
 ```
 
 ### プロトコルを変える更新
 
+`js/net/protocol.js` の `VERSION` を変えたときは、
 1. 上記の手順でサーバーを更新する
 2. その後で GitHub Pages（ゲーム本体）を更新する
 
-古いゲーム画面から接続すると「ゲームが更新されました。ページを再読み込みしてください。」と表示されます。
+の順にします。古いゲーム画面から接続すると「ゲームが更新されました。ページを再読み込みしてください。」と表示されます。
 
-### ログ・監視
+### ログ・状態
 
 ```sh
-pm2 logs gf-pvp          # ログを見る
-pm2 status               # 状態・メモリ
+sudo systemctl status gf-pvp
+sudo journalctl -u gf-pvp -n 100 --no-pager      # アプリのログ（プレイヤー名は記録しない）
+sudo tail /var/log/nginx/gf-pvp.access.log      # 接続記録
+curl -s http://127.0.0.1:3100/health             # {"status":"ok","rooms":..,"queue":..,"connections":..}
 ```
-
-- Lightsail の「メトリクス」で CPU 使用率のアラーム（例: 80% 超で通知）を設定しておくと安心です。
-- `https://pvp.sygames.net/health` を外部の無料監視サービスで定期確認することもできます（任意）。
 
 ### 設定値
 
 時間・報酬などは `../js/core/config.js` の `PVP` にあり、サーバーとゲーム本体で共用しています。
-接続を許可する接続元は `.env` の `ALLOWED_ORIGINS` で変更します（`www.sygames.net` を使う場合は追加）。
+待ち受けポートと接続元の許可は `deploy/gf-pvp.service` の `Environment=` で変更します
+（`www.sygames.net` を使う場合は `ALLOWED_ORIGINS` にカンマ区切りで追加）。
+
+### 注意
+
+- インスタンスのメモリは 512MB で、ランキングAPIと共用しています。PVPサーバーは1試合あたり数MB程度ですが、
+  利用者が増えてメモリが足りなくなったら Lightsail のプランを上げてください（`free -m` で確認）。
+- 対戦はプロセスのメモリ上で管理しています。複数プロセスで動かさないでください。
+
