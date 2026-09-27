@@ -89,6 +89,12 @@ class Battle {
     if (this.round > this.roundLimit) { this.judgeTimeout(); return; }
     this.say('―― ラウンド ' + this.round + ' ――', 'round');
 
+    // 剣と薔薇の物語（フレアを回復・復活させる）
+    this.allUnits().forEach(u => {
+      const p = u.alive && passiveOf(u);
+      if (p && p.flareSupport) this.supportFlare(u, p.flareSupport);
+    });
+
     this.allUnits().forEach(u => {
       if (!u.alive) return;
       u.tookDamageLastRound = u.tookDamageThisRound;
@@ -108,6 +114,8 @@ class Battle {
         if (p.roundStartPerm) {
           this.gainPerm(u, p.roundStartPerm, u.passiveId);
         }
+        // 心頭滅却（1ラウンド目だけ）
+        if (p.firstRoundBuff && this.round === 1) this.applyBuff(u, p.firstRoundBuff, u.passiveId, u);
       }
       u.buffs.forEach(b => applyRegen(b.regen, b.name));
 
@@ -140,6 +148,25 @@ class Battle {
     this.order = queue;
     this.orderIndex = 0;
     this.advanceToActor();
+  }
+
+  /** 剣と薔薇の物語: 味方のフレアを回復し、戦闘不能なら復活させる */
+  supportFlare(owner, amount) {
+    const flare = this.teamOf(owner.side).find(u => u !== owner && u.name === 'フレア');
+    if (!flare) return;
+    if (!flare.alive) {
+      flare.alive = true;
+      flare.hp = Math.min(flare.maxHp, amount.hp);
+      flare.mp = Math.min(flare.maxMp, amount.mp);
+      flare.buffs = [];
+      flare.shield = 0;
+      this.say('→ 【' + owner.passiveId + '】— ' + flare.displayName + 'が復活した！（HP ' + flare.hp + '）', 'good');
+      this.emit('heal', { target: flare, amount: flare.hp });
+      return;
+    }
+    if (hasFlag(flare, 'noHeal')) { this.say('→ ' + flare.displayName + 'は回復を受けられない（アンチヒール）', 'bad'); return; }
+    this.heal(flare, amount.hp, owner.passiveId, true);
+    this.restoreMp(flare, amount.mp, owner.passiveId);
   }
 
   endRound() {
@@ -931,17 +958,6 @@ class Battle {
           t.buffs = [];
           this.say('→ ' + t.displayName + 'が復活した！（HP ' + t.hp + '）', 'good');
         });
-        break;
-      }
-
-      case 'swordAndRose': {
-        const flare = this.teamOf(actor.side).find(u => u.name === 'フレア');
-        if (!flare) { this.say('→ しかしフレアは戦場にいない…', 'minor'); break; }
-        if (hasFlag(flare, 'noHeal')) { this.say('→ フレアは回復を受けられない（アンチヒール）', 'bad'); break; }
-        flare.alive = true;
-        flare.hp = flare.maxHp;
-        flare.mp = flare.maxMp;
-        this.say('→ フレアのHPとMPが全回復した！', 'good');
         break;
       }
 

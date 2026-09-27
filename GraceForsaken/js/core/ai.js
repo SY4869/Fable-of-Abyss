@@ -176,11 +176,6 @@ const AI = {
             const dead = battle.teamOf(unit.side).filter(u => !u.alive).length;
             return dead >= 2 ? 90 : 0;
           }
-          case 'swordAndRose': {
-            const flare = battle.teamOf(unit.side).find(u => u.name === 'フレア');
-            if (!flare) return 0;
-            return (!flare.alive || hpRatio(flare) < 0.4) ? 70 : 0;
-          }
           case 'hangon': {
             const amount = Math.max(0, s.atkMag - 4);
             return amount - cost.mp;

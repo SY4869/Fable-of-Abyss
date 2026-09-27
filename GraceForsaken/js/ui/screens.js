@@ -216,7 +216,7 @@ const Screens = {
       el('div', { class: 'menu-foot' }, [
         el('button', { class: 'btn small ghost', 'data-se': 'cancel', text: 'タイトルへ', onclick: () => { App.stack = []; App.show(Screens.title, []); } }),
         el('div', { class: 'spacer' }),
-        el('span', { class: 'faint', text: 'Ver. 1.2.2' }),
+        el('span', { class: 'faint', text: 'Ver. 1.2.3' }),
       ]),
     ]);
   },

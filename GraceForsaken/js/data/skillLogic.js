@@ -216,7 +216,7 @@ const SKILL_LOGIC = {
   // ---------------- 連炎華凛 ----------------
   '心頭滅却': {
     act: 'passive',
-    passive: { costReduce: 1 },
+    passive: { costReduce: 1, firstRoundBuff: { dur: 1, stats: { speed: 3 } } },   // 1ラウンド目だけ速度+3
   },
   '炎気': {
     act: 'buff', tgt: 'SELF', quick: true,
@@ -327,7 +327,9 @@ const SKILL_LOGIC = {
 
   // ---------------- No.15 ミリア / No.27 フレア ----------------
   '剣と薔薇の物語': {
-    act: 'special', tgt: 'NONE', custom: 'swordAndRose',
+    act: 'passive',
+    // ラウンド開始時にフレアの HP・MP を回復（戦闘不能なら復活）。所持者が生きている間のみ
+    passive: { flareSupport: { hp: 3, mp: 3 } },
   },
   '白茨': {
     act: 'attack', tgt: 'ENEMY_ONE', rose: true,
