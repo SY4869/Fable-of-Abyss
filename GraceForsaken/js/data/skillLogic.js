@@ -606,6 +606,22 @@ const SKILL_LOGIC = {
     atk: { base: 'atkMag', mod: -3, dmg: 'MAG' },
     then: [{ act: 'buff', tgt: 'ENEMY_AREA', buff: { dur: 2, stats: { speed: -2 } } }],
   },
+  // ---------------- No.31 花渕なずな ----------------
+  'フラワーアレンジメント': {
+    act: 'passive',
+    passive: {
+      costReduce: 1, regen: { hp: 1, mp: 1 },
+      cosmosStats: { speed: 3, atkPhys: 3, atkMag: 3, defPhys: 3, defMag: 3 },
+    },
+  },
+  '魔力の力線': {
+    act: 'buff', tgt: 'SELF', quick: true,
+    buff: { dur: 2, flags: { manaLine: true } },
+  },
+  '流れ星の奇跡': {
+    act: 'special', tgt: 'NONE', custom: 'shootingStar',
+  },
+
   // ---------------- ネストル 第3話 ボス: 神の器となった大司教 ----------------
   '久遠の祝福': {
     act: 'passive',

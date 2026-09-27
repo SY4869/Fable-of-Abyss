@@ -146,7 +146,25 @@ const FIELD_LOCATION = {
   WATERSIDE: { name: '水辺',   desc: '水属性以外の速度 -2' },
   PLAINS:    { name: '草原',   desc: '風属性の速度・物理防御力 +1' },
   MOUNTAIN:  { name: '山脈',   desc: '雷属性の速度・魔法防御力 +1' },
+  // 特殊フィールド（通常の抽選には出ない）
+  COSMOS:    { name: 'コスモスの花畑', desc: 'ラウンド終了時に全キャラクターのMP +1', special: true },
 };
+
+// コスモスの花畑: このキャラクターが敵味方どちらかにいる場合のみ、50% で選ばれる
+const COSMOS_FIELD = { character: '花渕なずな', rate: 0.5, mpPerRound: 1 };
+
+/**
+ * 対戦のフィールドを抽選する。
+ *   rand  … 0 以上 1 未満を返す関数
+ *   names … 戦闘に参加するキャラクター名（敵味方）
+ */
+function rollField(rand, names) {
+  const times = Object.keys(FIELD_TIME);
+  const normal = Object.keys(FIELD_LOCATION).filter(k => !FIELD_LOCATION[k].special);
+  const time = times[Math.floor(rand() * times.length)];
+  const cosmos = (names || []).indexOf(COSMOS_FIELD.character) >= 0 && rand() < COSMOS_FIELD.rate;
+  return { time: time, location: cosmos ? 'COSMOS' : normal[Math.floor(rand() * normal.length)] };
+}
 
 function fieldName(field) {
   return FIELD_TIME[field.time].name + 'の' + FIELD_LOCATION[field.location].name;

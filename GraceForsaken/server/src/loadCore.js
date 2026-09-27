@@ -28,7 +28,7 @@ const FILES = [
 
 // vm では const / class がコンテキストのプロパティにならないため、明示的に取り出す
 const EXPORTS = [
-  'CONFIG', 'ELEMENTS', 'FIELD_TIME', 'FIELD_LOCATION', 'AREA_LABEL',
+  'CONFIG', 'ELEMENTS', 'FIELD_TIME', 'FIELD_LOCATION', 'AREA_LABEL', 'rollField', 'COSMOS_FIELD',
   'SKILL_MASTER', 'CHARACTER_MASTER', 'SKILL_LOGIC',
   'Battle', 'AI', 'BattleActions', 'Ghost', 'PVP_PROTOCOL',
   'makeRng', 'getSkill', 'getLogic', 'getCharacter', 'unitFromMaster', 'unitMob',

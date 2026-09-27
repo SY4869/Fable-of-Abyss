@@ -129,9 +129,9 @@ const SCENE_BG_FILES = {
   '道場': '背景_道場.jpg', '薔薇園': '背景_薔薇園.jpg', '異界の門': '背景_異界の門.jpg',
   '世界樹': '背景_世界樹.jpg', '地下水路': '背景_地下水路.jpg', '洞窟': '背景_洞窟.jpg',
   '森のダンジョン': '背景_森のダンジョン.jpg', 'ダンジョン内部': '背景_ダンジョン内部.jpg',
-  '玉座': '背景_玉座.jpg',
+  '玉座': '背景_玉座.jpg', 'コスモスの花畑': '背景_コスモスの花畑.png',
 };
-const FIELD_PLACE = { PLAINS: '草原', WATERSIDE: '水辺', MOUNTAIN: '山脈', BLAZE: '火事場' };
+const FIELD_PLACE = { PLAINS: '草原', WATERSIDE: '水辺', MOUNTAIN: '山脈', BLAZE: '火事場', COSMOS: 'コスモスの花畑' };
 
 function sceneBackground(place, night) {
   if (night && SCENE_BG_FILES['夜の' + place]) return { file: SCENE_BG_FILES['夜の' + place], dim: false };

@@ -170,6 +170,10 @@ class Battle {
   }
 
   endRound() {
+    if (this.field.location === 'COSMOS') {
+      this.say('コスモスの花畑に風が吹き、全員のMPが ' + COSMOS_FIELD.mpPerRound + ' 回復した', 'system');
+      this.allUnits().forEach(u => { if (u.alive) this.restoreMp(u, COSMOS_FIELD.mpPerRound, 'コスモスの花畑', true); });
+    }
     // ラウンド終了時パッシブ
     this.allUnits().forEach(u => {
       if (!u.alive) return;
@@ -676,6 +680,8 @@ class Battle {
       return false;
     }
     if (this.ignoresDamage(target, dmg)) return false;
+    dmg = this.manaLine(target, dmg);
+    if (dmg <= 0) return false;
     if (target.shield > 0) {
       const absorbed = Math.min(target.shield, dmg);
       target.shield -= absorbed;
@@ -705,12 +711,32 @@ class Battle {
   dealRawDamage(target, dmg, label, source) {
     if (!target.alive) return;
     if (this.ignoresDamage(target, dmg)) return;
+    dmg = this.manaLine(target, dmg);
+    if (dmg <= 0) return;
     target.hp -= dmg;
     target.tookDamageThisRound = true;
     this.say('→ ' + target.displayName + 'は【' + label + '】で ' + dmg + ' ダメージ', 'damage');
     this.emit('rawDamage', { target: target, amount: dmg });
     if (target.hp <= 0) this.tryEndure(target, source);
     else this.checkHalfHp(target);
+  }
+
+  /**
+   * 魔力の力線: 1度だけダメージを無効化し、その半分の MP を失う。
+   * MP が足りない場合、払えなかった分（MP 1 = ダメージ 2）は HP へのダメージになる。
+   * 戻り値: HP に通るダメージ
+   */
+  manaLine(target, dmg) {
+    const buff = dmg > 0 && target.buffs.find(b => b.flags && b.flags.manaLine);
+    if (!buff) return dmg;
+    target.buffs = target.buffs.filter(b => b !== buff);
+    const need = Math.floor(dmg / 2);
+    const paid = Math.min(target.mp, need);
+    target.mp -= paid;
+    const rest = need > paid ? dmg - paid * 2 : 0;
+    this.say('→ ' + target.displayName + 'の【' + buff.name + '】！ ' + dmg + ' ダメージを無効化し、MPが ' + paid + ' 減った' +
+      (rest > 0 ? '（MP不足のため ' + rest + ' ダメージが通る）' : ''), rest > 0 ? 'bad' : 'good');
+    return rest;
   }
 
   /** 星の落とし子: HPが半分以下になった時、1度だけ能力が変わる */
@@ -847,12 +873,12 @@ class Battle {
     if (done > 0 && !silentIfZero) this.emit('heal', { target: unit, amount: done });
   }
 
-  restoreMp(unit, amount, label) {
+  restoreMp(unit, amount, label, silent) {
     if (!unit.alive || amount <= 0) return;
     const before = unit.mp;
     unit.mp = Math.min(unit.maxMp, unit.mp + amount);
     const done = unit.mp - before;
-    if (done > 0) this.say('→ ' + unit.displayName + 'のMPが ' + done + ' 回復（' + label + '）', 'good');
+    if (done > 0 && !silent) this.say('→ ' + unit.displayName + 'のMPが ' + done + ' 回復（' + label + '）', 'good');
   }
 
   /** 戦闘中の永続ステータス上昇 */
@@ -945,6 +971,13 @@ class Battle {
           t.doom = lg.rounds;
           this.say('→ ' + t.displayName + 'に死の刻限が刻まれた（残り ' + lg.rounds + 'ラウンド）', 'bad');
         });
+        break;
+      }
+
+      case 'shootingStar': {
+        this.field = Object.assign({}, this.field, { time: 'NIGHT', location: 'COSMOS' });
+        this.say('→ フィールドが『' + fieldName(this.field) + '』に変わった！', 'system');
+        this.heal(actor, actor.maxHp, sk ? sk.name : '流れ星の奇跡');
         break;
       }
 

@@ -149,6 +149,7 @@ const AI = {
           if (b.flags.endure) score += hpRatio(unit) < 0.5 ? 20 : 6;
           if (b.flags.allPierce) score += 14;
           if (b.flags.retreatOnce) score += 8;
+          if (b.flags.manaLine) score += unit.mp >= 6 ? 10 : 3;
           if (b.flags.poisonKingdom) score += 18;
           if (b.flags.nextAtkBonus) score += 12;
           if (b.flags.nextDefReduce) score += 8;
@@ -175,6 +176,13 @@ const AI = {
           case 'fableOfAbyss': {
             const dead = battle.teamOf(unit.side).filter(u => !u.alive).length;
             return dead >= 2 ? 90 : 0;
+          }
+          case 'shootingStar': {
+            // HPが減っている時、または花畑でなければ花畑にして強化を得る
+            const missing = 1 - hpRatio(unit);
+            const toCosmos = battle.field.location !== 'COSMOS' || battle.field.time !== 'NIGHT';
+            if (missing < 0.4 && !toCosmos) return 0;
+            return missing * 60 + (toCosmos ? 14 : 0) - cost.mp;
           }
           case 'hangon': {
             const amount = Math.max(0, s.atkMag - 4);

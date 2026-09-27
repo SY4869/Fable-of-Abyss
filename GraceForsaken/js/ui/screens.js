@@ -216,7 +216,7 @@ const Screens = {
       el('div', { class: 'menu-foot' }, [
         el('button', { class: 'btn small ghost', 'data-se': 'cancel', text: 'タイトルへ', onclick: () => { App.stack = []; App.show(Screens.title, []); } }),
         el('div', { class: 'spacer' }),
-        el('span', { class: 'faint', text: 'Ver. 1.2.3' }),
+        el('span', { class: 'faint', text: 'Ver. 1.2.4' }),
       ]),
     ]);
   },
@@ -455,7 +455,8 @@ const Screens = {
 
   startPvp(ghost) {
     const rng = makeRng(ghost.seed);
-    const field = { time: rng.pick(Object.keys(FIELD_TIME)), location: rng.pick(Object.keys(FIELD_LOCATION)) };
+    const names = ghost.members.map(m => getCharacter(m.charId)).concat(Save.partyMasters()).filter(Boolean).map(c => c.name);
+    const field = rollField(rng.next, names);
     const enemies = ghost.members.map(m => unitFromMaster(getCharacter(m.charId), m.skills, 'ENEMY', 1));
     AI.autoPlace(enemies);
 

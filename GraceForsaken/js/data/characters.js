@@ -244,4 +244,12 @@ const CHARACTER_MASTER = [
     storyText: "大戦の始まりの戦いから最後の戦いまで参戦し続けた魔王。\n圧倒的な破壊の力を持ち、数多の国を亡ぼした。",
     portrait: "Chaos",
   },
+  {
+    id: 31, name: "花渕なずな", element: "WIND", range: 2, power: 74,
+    baseStats: { hp: 8, mp: 14, speed: 11, atkPhys: 5, atkMag: 15, defPhys: 5, defMag: 12 },
+    passiveSkillId: "フラワーアレンジメント",
+    skillPool: ["黒きヤギの祝福", "魔力の力線", "ソウルマキシマイザー", "即応反撃", "戦略的撤退", "流れ星の奇跡"],
+    storyText: "花渕生花店を営む高校生。妹にべったりのシスコン。\n意外と行動派で病気の妹を救うためやんちゃをしたこともあるが、今は比較的落ち着いている。",
+    portrait: "Nazuna",
+  },
 ];

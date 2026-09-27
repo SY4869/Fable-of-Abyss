@@ -35,12 +35,13 @@ class Room {
     this.matchId = randomId('m_', 8);
     this.createdAt = Date.now();
     this.isBot = opt.players.some(p => p.isBot);
-    const times = Object.keys(this.core.FIELD_TIME);
-    const locs = Object.keys(this.core.FIELD_LOCATION);
-    this.field = {
-      time: times[Math.floor(this.rng() * times.length)],
-      location: locs[Math.floor(this.rng() * locs.length)],
-    };
+    // 花渕なずながいればコスモスの花畑が出ることがある
+    const names = [];
+    opt.players.forEach(p => (p.party || []).forEach(m => {
+      const c = this.core.getCharacter(m.charId);
+      if (c) names.push(c.name);
+    }));
+    this.field = this.core.rollField(() => this.rng(), names);
     this.players = opt.players.map(p => ({
       userId: p.userId, name: p.name, isBot: !!p.isBot, party: p.party,
       socketId: p.socketId || null, connected: !p.isBot && !!p.socketId,

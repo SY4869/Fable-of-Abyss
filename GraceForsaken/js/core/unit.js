@@ -190,6 +190,7 @@ function stats(unit, field) {
     }
     if (night) add(p.nightStats);
     if (p.statsUnlessNight && !night) add(p.statsUnlessNight);
+    if (p.cosmosStats && field.location === 'COSMOS') add(p.cosmosStats);
   }
 
   // --- バフ・デバフ ---

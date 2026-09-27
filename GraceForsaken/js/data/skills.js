@@ -104,4 +104,7 @@ const SKILL_MASTER = [
   { id: "終わりの始まり", name: "終わりの始まり", typeRaw: "パッシブ", category: "PASSIVE", element: null, costMp: 0, desc: "ラウンド終了時に敵全体に1点の貫通ダメージを与える。" },
   { id: "メギドの火", name: "メギドの火", typeRaw: "火", category: "ATTACK", element: "FIRE", costMp: 8, desc: "魔法攻撃力-2点の貫通ダメージを1エリアの敵全体に与える。" },
   { id: "終焉", name: "終焉", typeRaw: "無", category: "ATTACK", element: "NONE", costMp: 3, desc: "経過ターンと同じ値の貫通ダメージを敵全体に与える。" },
+  { id: "フラワーアレンジメント", name: "フラワーアレンジメント", typeRaw: "パッシブ", category: "PASSIVE", element: null, costMp: 0, desc: "自身が発動するスキルのコストを1点軽減し、毎ラウンドHPとMPが1点回復する。更にフィールドがコスモスの花畑の場合、速度、物攻撃、魔攻撃、物防御、魔防御を+3する。" },
+  { id: "魔力の力線", name: "魔力の力線", typeRaw: "バフ・デバフ", category: "BUFF_DEBUFF", element: null, costMp: 2, desc: "2ラウンドの間、ダメージを受けた時、1度だけダメージ無効化しその半分の値のMPが減少する。(クイックスキル)" },
+  { id: "流れ星の奇跡", name: "流れ星の奇跡", typeRaw: "バフ・デバフ", category: "BUFF_DEBUFF", element: null, costMp: 10, desc: "フィールドを夜のコスモスの花畑に変更し、自身のHPを全回復する。" },
 ];
