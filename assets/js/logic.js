@@ -246,13 +246,20 @@ function aimP(x,y){
   if(B.active&&B.kind==='grim'&&B.decoy) return ang(x,y,B.decoy.x,B.decoy.y);
   return ang(x,y,P.x,P.y);
 }
-function edgePoint(m){
-  m=m||25; var s=rnd(0,2*(W+H));
+/* u (0〜1) を渡すと外周上の位置をその値で決める。省略時はランダム */
+function edgePoint(m,u){
+  m=m||25; var s=(u===undefined?Math.random():u)*2*(W+H);
   if(s<W) return {x:s,y:-m};
   if(s<W+H) return {x:W+m,y:s-W};
   if(s<2*W+H) return {x:2*W+H-s,y:H+m};
   return {x:-m,y:2*(W+H)-s};
 }
+/* ナイトクイーンの外周弾の出現位置。ランダムに見えるが毎回同じ並びで、32発（約6秒）で一巡する */
+var NQ_SEQ=(function(){
+  var s=3483, a=[];
+  for(var i=0;i<32;i++){ s=(s*16807)%2147483647; a.push((s-1)/2147483646); }
+  return a;
+})();
 function burst(b){
   if(b.burst){ var q=b.burst; ring(b.x,b.y,q.n,q.spd,rnd(TAU),q.r,q.color,q.o); }
   addFx('boom',b.x,b.y,b.color,b.r*1.6);
@@ -1528,7 +1535,7 @@ var BOSSES=[
       if(t%3===0){ for(var i=0;i<2;i++) bul(b.x,b.y,b.rot+i*Math.PI,2.05,6,'#8a6ad8'); b.rot+=0.142; }
       if(t%92===0) ring(b.x,b.y,32,1.55,aimP(b.x,b.y)+Math.PI/32,5,'#5a3a9a',{acc:0.019,maxspd:3.6});
       if(t%46===0) fan(b.x,b.y,3,0.26,aimP(b.x,b.y),4.5,5,'#d0b8ff');
-      if(t%11===0){ var p=edgePoint(20); bul(p.x,p.y,aimP(p.x,p.y),3.05,4.5,'#a88ae8'); }
+      if(t%11===0){ var p=edgePoint(20,NQ_SEQ[(t/11)%NQ_SEQ.length]); bul(p.x,p.y,aimP(p.x,p.y),3.05,4.5,'#a88ae8'); }
     }},
   /* 弾幕を纏ったまま自機へ一直線に突っ込む。壁で跳ね返り、体当たりにも判定がある */
   { name:'ムーンフィスト', hp:10600, time:60, nolimit:true, body:true,
