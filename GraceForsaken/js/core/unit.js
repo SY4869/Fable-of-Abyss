@@ -91,10 +91,15 @@ function unitFromMaster(master, skills, side, area, opt) {
  * 敵の立ち絵を名前から探す（「星蝕の根獣A」→「星蝕の根獣」）。無ければ魔人の立ち絵。
  * 一覧は tools/build_faces.py が js/data/portraits.js に書き出す。
  */
+// 名前と立ち絵名が一致しない敵の対応表
+const PORTRAIT_ALIAS = {
+  '神の器となった大司教': '怪しい神父',
+};
 function enemyPortrait(name) {
   const list = typeof PORTRAIT_LIST !== 'undefined' ? PORTRAIT_LIST : [];
   const base = String(name || '').replace(/[A-H]$/, '');
   if (list.indexOf(base) >= 0) return base;
+  if (PORTRAIT_ALIAS[base] && list.indexOf(PORTRAIT_ALIAS[base]) >= 0) return PORTRAIT_ALIAS[base];
   // 名前の一部が立ち絵名と一致すれば使う（「角より這い出る猟犬」→「猟犬」）。長く一致するものを優先
   const hit = list.filter(k => /[^\x00-\x7f]/.test(k) && k !== '魔人' && base.indexOf(k) >= 0)
     .sort((a, b) => b.length - a.length)[0];
@@ -209,7 +214,6 @@ function stats(unit, field) {
 
   // --- 加算系パッシブ（他ステータス参照） ---
   if (p && p.magicBow) s.atkPhys += Math.floor(s.atkMag / 2);
-  if (p && p.singingMuscle && !unit.tookDamageLastRound) s.atkPhys += Math.floor(s.defPhys / 2);
 
   // --- 下限1（HP/MPを除く） ---
   STAT_KEYS.forEach(k => { if (s[k] < 1) s[k] = 1; });

@@ -216,7 +216,7 @@ const Screens = {
       el('div', { class: 'menu-foot' }, [
         el('button', { class: 'btn small ghost', 'data-se': 'cancel', text: 'タイトルへ', onclick: () => { App.stack = []; App.show(Screens.title, []); } }),
         el('div', { class: 'spacer' }),
-        el('span', { class: 'faint', text: 'Ver. 1.2.1' }),
+        el('span', { class: 'faint', text: 'Ver. 1.2.2' }),
       ]),
     ]);
   },
@@ -331,8 +331,8 @@ const Screens = {
         guests: setup.guests,
         winCondition: setup.winCondition,
         winText: ep.battle.winText,
-        // 沖田雫の最終話は専用BGM
-        bgm: charName === '沖田雫' && epNo === lastEp ? 'battleOkita' : 'battle',
+        // 沖田雫・レイアの最終話は専用BGM
+        bgm: epNo !== lastEp ? 'battle' : charName === '沖田雫' ? 'battleOkita' : charName === 'レイア' ? 'battleLeia' : 'battle',
         onEnd: finish,
       });
     };
@@ -353,7 +353,9 @@ const Screens = {
         acquired = Save.acquire(master.id, makeRng(Date.now()));
       }
       // クリア後パート → 結果
-      Novel.play(post, () => Screens.showStoryResult(charName, epNo, r, acquired), { character: master });
+      // 最終話のクリア後（エピローグ）は専用BGM
+      Novel.play(post, () => Screens.showStoryResult(charName, epNo, r, acquired),
+        { character: master, bgm: epNo === lastEp ? 'chapterClear' : 'story' });
     };
 
     // 戦闘前パート
@@ -938,7 +940,7 @@ const Novel = {
   play(scenes, done, opt) {
     opt = opt || {};
     if (!scenes || !scenes.length) { done(); return; }
-    Sound.playBgm('story');
+    Sound.playBgm(opt.bgm || 'story');
     const chara = opt.character || null;
     let si = 0, li = 0;
     let auto = false, autoTimer = null;

@@ -249,6 +249,14 @@ function openOptions() {
           onclick: () => { close(); askPlayerName(() => App.refresh()); },
         }),
       ]),
+      el('div', { class: 'row', style: 'margin-top:12px' }, [
+        el('span', { class: 'muted', text: '属性相性・状態の説明' }),
+        el('div', { class: 'spacer' }),
+        el('button', {
+          class: 'btn small', text: '相性・状態を見る',
+          onclick: () => { close(); BattleHelp.openGuide(); },
+        }),
+      ]),
       el('div', { class: 'row end', style: 'margin-top:22px' }, [
         el('button', { class: 'btn', 'data-se': 'cancel', text: '閉じる', onclick: close }),
       ]),

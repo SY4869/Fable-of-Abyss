@@ -665,6 +665,10 @@ class Battle {
     target.buffs.forEach(b => {
       if (b.flags && b.flags.onDamagedPerm) this.gainPerm(target, b.flags.onDamagedPerm, b.name);
     });
+    const tp = passiveOf(target);
+    if (tp && tp.onAttackedDebuff && source && source.alive && source.side !== target.side) {
+      this.applyBuff(source, Object.assign({ stack: true }, tp.onAttackedDebuff), target.passiveId, target);
+    }
     if (target.hp <= 0) return this.tryEndure(target, source);
     this.checkHalfHp(target);
     return false;
@@ -723,8 +727,13 @@ class Battle {
         return false;
       }
     }
-    // 不死なる魔王
     const p = passiveOf(target);
+    if (p && p.endure && this.rng.chance(p.endure)) {
+      target.hp = 1;
+      this.say('→ ' + target.displayName + 'は【' + target.passiveId + '】でHP1で耐えた！', 'good');
+      return false;
+    }
+    // 不死なる魔王
     if (p && p.undying && !target.undyingUsed) {
       target.undyingUsed = true;
       target.hp = 1;
@@ -757,6 +766,18 @@ class Battle {
     }
     // 優鬼（味方が倒されるたびに強化）
     this.teamOf(target.side).forEach(a => { if (a.alive) a.alliesLost++; });
+    // 久遠の祝福（味方が倒れるたびに最大HPと能力が上がる）
+    this.teamOf(target.side).forEach(a => {
+      const ap = a.alive && passiveOf(a);
+      if (!ap || !ap.onAllyDeath) return;
+      if (ap.onAllyDeath.maxHp) {
+        a.maxHp += ap.onAllyDeath.maxHp;
+        a.hp += ap.onAllyDeath.maxHp;
+        this.say('→ ' + a.displayName + 'の【' + a.passiveId + '】で最大HPが ' + ap.onAllyDeath.maxHp + ' 増えた', 'skill');
+        this.emit('heal', { target: a, amount: ap.onAllyDeath.maxHp });
+      }
+      if (ap.onAllyDeath.perm) this.gainPerm(a, ap.onAllyDeath.perm, a.passiveId);
+    });
 
     if (source && source.alive) {
       source.kills++;
@@ -841,7 +862,8 @@ class Battle {
       this.say('→ ' + unit.displayName + 'に ' + amount + ' のシールドを展開（' + name + '）', 'good');
       if (!buff.stats && !buff.flags && !buff.regen && !buff.acc && !buff.eva) return;
     }
-    unit.buffs = unit.buffs.filter(b => b.name !== name); // 同名は重ね掛け不可
+    // 同名は重ね掛け不可（spec.stack のものは重複可）
+    if (!spec.stack) unit.buffs = unit.buffs.filter(b => b.name !== name);
     unit.buffs.push(buff);
 
     const desc = [];
@@ -934,8 +956,8 @@ class Battle {
       }
 
       case 'drainHeal':
-        // 命の吸い上げ: 与えたダメージの半分だけ自身のHPを回復
-        if (lastDamage > 0) this.heal(actor, Math.floor(lastDamage / 2), sk ? sk.name : '吸収');
+        // 命の吸い上げ: 与えたダメージの半分 / 命の徴収: 与えたダメージ分（ratio）だけ自身のHPを回復
+        if (lastDamage > 0) this.heal(actor, Math.floor(lastDamage * (lg.ratio || 0.5)), sk ? sk.name : '吸収');
         break;
 
       case 'summon': {

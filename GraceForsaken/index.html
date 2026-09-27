@@ -10,50 +10,59 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Shippori+Mincho:wght@500;700&display=swap">
 <!-- ?v= は公開後の更新時のキャッシュ対策。ファイルを更新したらこの版数をまとめて上げる -->
-<link rel="stylesheet" href="css/style.css?v=1.2.1">
+<link rel="stylesheet" href="css/style.css?v=1.2.2">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#128302;</text></svg>">
 </head>
 <body>
 
 <div id="bg" class="bg-title"></div>
 <div id="app"></div>
+<!-- スマホを縦に持っているときの案内（CSS の @media で表示） -->
+<div id="rotate-hint" aria-live="polite">
+  <div class="rotate-box">
+    <div class="rotate-phone" aria-hidden="true"></div>
+    <p class="rotate-title">スマートフォンを横向きにしてください</p>
+    <p class="rotate-sub">このゲームは横画面でお楽しみいただけます。</p>
+    <button type="button" id="rotate-lock" class="btn small" hidden>全画面・横向きで表示する</button>
+  </div>
+</div>
 
 <!-- 調整用パラメータ -->
-<script src="js/core/config.js?v=1.2.1"></script>
+<script src="js/core/config.js?v=1.2.2"></script>
 
 <!-- 自動生成データ（データ一覧.xlsx / ストーリー*.md / 立ち絵 より） -->
-<script src="js/data/skills.js?v=1.2.1"></script>
-<script src="js/data/characters.js?v=1.2.1"></script>
-<script src="js/data/stories.js?v=1.2.1"></script>
-<script src="js/data/portraits.js?v=1.2.1"></script>
+<script src="js/data/skills.js?v=1.2.2"></script>
+<script src="js/data/characters.js?v=1.2.2"></script>
+<script src="js/data/stories.js?v=1.2.2"></script>
+<script src="js/data/portraits.js?v=1.2.2"></script>
 
 <!-- スキル効果ロジック（手書き） -->
-<script src="js/data/skillLogic.js?v=1.2.1"></script>
+<script src="js/data/skillLogic.js?v=1.2.2"></script>
 
 <!-- コア -->
-<script src="js/core/util.js?v=1.2.1"></script>
-<script src="js/core/unit.js?v=1.2.1"></script>
-<script src="js/core/battle.js?v=1.2.1"></script>
-<script src="js/core/ai.js?v=1.2.1"></script>
-<script src="js/core/actions.js?v=1.2.1"></script>
-<script src="js/core/storyBattle.js?v=1.2.1"></script>
-<script src="js/core/save.js?v=1.2.1"></script>
-<script src="js/core/audio.js?v=1.2.1"></script>
+<script src="js/core/util.js?v=1.2.2"></script>
+<script src="js/core/unit.js?v=1.2.2"></script>
+<script src="js/core/battle.js?v=1.2.2"></script>
+<script src="js/core/ai.js?v=1.2.2"></script>
+<script src="js/core/actions.js?v=1.2.2"></script>
+<script src="js/core/storyBattle.js?v=1.2.2"></script>
+<script src="js/core/save.js?v=1.2.2"></script>
+<script src="js/core/audio.js?v=1.2.2"></script>
 
 <!-- リアルタイム対戦の通信（socket.io はサーバーと同じ 4.8.4 を同梱） -->
 <script src="js/lib/socket.io.min.js?v=4.8.4"></script>
-<script src="js/net/protocol.js?v=1.2.1"></script>
-<script src="js/net/pvpClient.js?v=1.2.1"></script>
+<script src="js/net/protocol.js?v=1.2.2"></script>
+<script src="js/net/pvpClient.js?v=1.2.2"></script>
 
 <!-- UI -->
-<script src="js/ui/common.js?v=1.2.1"></script>
-<script src="js/ui/battleUi.js?v=1.2.1"></script>
-<script src="js/ui/battleHelp.js?v=1.2.1"></script>
-<script src="js/ui/screens.js?v=1.2.1"></script>
-<script src="js/ui/pvpScreens.js?v=1.2.1"></script>
+<script src="js/ui/common.js?v=1.2.2"></script>
+<script src="js/ui/battleUi.js?v=1.2.2"></script>
+<script src="js/ui/battleHelp.js?v=1.2.2"></script>
+<script src="js/ui/screens.js?v=1.2.2"></script>
+<script src="js/ui/pvpScreens.js?v=1.2.2"></script>
 
 <!-- 起動 -->
-<script src="js/main.js?v=1.2.1"></script>
+<script src="js/main.js?v=1.2.2"></script>
 
 </body>
 </html>

@@ -280,8 +280,8 @@ const SKILL_LOGIC = {
 
   // ---------------- No.12 ネストル ----------------
   '生への執着': {
-    act: 'buff', tgt: 'SELF', quick: true,
-    buff: { dur: 3, flags: { endure: 50, endureStoryFirstGuaranteed: true } },
+    act: 'passive',
+    passive: { endure: 60 },     // 何度でも発動する
   },
   'カースミュージック': {
     act: 'buff', tgt: 'ENEMY_AREA',
@@ -313,15 +313,16 @@ const SKILL_LOGIC = {
   // ---------------- アレクトロス ----------------
   '歌う筋肉': {
     act: 'passive',
-    passive: { singingMuscle: true },
+    // 攻撃を受けた場合、相手の物攻・魔攻を -3（2ラウンド・重複可）
+    passive: { onAttackedDebuff: { dur: 2, stats: { atkPhys: -3, atkMag: -3 } } },
   },
   '愉快な合唱団': {
     act: 'buff', tgt: 'SELF',
-    buff: { dur: 6, regen: { hp: 1, mp: 1 } },
+    buff: { dur: 6, regen: { hp: 2, mp: 2 } },
   },
   '踊り狂う酔っ払い': {
     act: 'buff', tgt: 'SELF',
-    buff: { dur: 3, acc: -15, eva: 15 },
+    buff: { dur: 3, acc: -20, eva: 20 },
   },
 
   // ---------------- No.15 ミリア / No.27 フレア ----------------
@@ -457,7 +458,7 @@ const SKILL_LOGIC = {
   // ---------------- No.27 フレア ----------------
   '咲き誇る薔薇園': {
     act: 'passive',
-    passive: { roseBonus: 3 },
+    passive: { roseBonus: 7 },
   },
 
   // ---------------- No.28 鬼羅瑠 ----------------
@@ -603,6 +604,36 @@ const SKILL_LOGIC = {
     atk: { base: 'atkMag', mod: -3, dmg: 'MAG' },
     then: [{ act: 'buff', tgt: 'ENEMY_AREA', buff: { dur: 2, stats: { speed: -2 } } }],
   },
+  // ---------------- ネストル 第3話 ボス: 神の器となった大司教 ----------------
+  '久遠の祝福': {
+    act: 'passive',
+    passive: { onAllyDeath: { maxHp: 5, perm: { atkMag: 1 } } },
+  },
+  '命の徴収': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkMag', mod: 0, dmg: 'MAG' },
+    then: [{ act: 'special', custom: 'drainHeal', ratio: 1 }],
+  },
+  '黒き聖歌': {
+    act: 'attack', tgt: 'ENEMY_AREA',
+    atk: { base: 'atkMag', mod: -2, dmg: 'MAG' },
+  },
+  '神の触腕': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkMag', mod: 2, dmg: 'MAG' },
+    then: [{ act: 'buff', tgt: 'TARGET', buff: { dur: 2, stats: { defMag: -3 } } }],
+  },
+  '永劫の微睡み': {
+    act: 'buff', tgt: 'ENEMY_ONE',
+    buff: { dur: 3, stats: { speed: -4 }, acc: -10 },
+  },
+  '偽りの福音': {
+    act: 'special', tgt: 'ENEMY_ONE', custom: 'charm',
+  },
+  '信徒の招集': {
+    act: 'special', tgt: 'NONE', custom: 'summon', summonName: '久遠の信徒',
+  },
+
   '命の吸い上げ': {
     act: 'attack', tgt: 'ENEMY_ONE',
     atk: { base: 'atkMag', mod: 0, dmg: 'MAG' },
