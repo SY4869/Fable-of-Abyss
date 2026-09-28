@@ -21,7 +21,7 @@ const SKILL_MASTER = [
   { id: "黒い森の乙女", name: "黒い森の乙女", typeRaw: "パッシブ", category: "PASSIVE", element: null, costMp: 0, desc: "魔法防御力を+3する。更にフィールドが夜の場合、物理攻撃力が-2され、魔法攻撃力を+6する。" },
   { id: "クリムゾンインパクト", name: "クリムゾンインパクト", typeRaw: "火", category: "ATTACK", element: "FIRE", costMp: 4, desc: "物理攻撃力+1点の物理ダメージを1体に防御力を半減して与える。" },
   { id: "炎舞", name: "炎舞", typeRaw: "火", category: "ATTACK", element: "FIRE", costMp: 2, desc: "物理攻撃力+2点の物理ダメージを1体に与える。" },
-  { id: "黒きヤギの祝福", name: "黒きヤギの祝福", typeRaw: "バフ・デバフ", category: "BUFF_DEBUFF", element: null, costMp: 5, desc: "5ラウンドの間、速度、物攻撃+3する。更に毎ラウンドHPとMPを1点回復する。(クイックスキル)" },
+  { id: "黒きヤギの祝福", name: "黒きヤギの祝福", typeRaw: "バフ・デバフ", category: "BUFF_DEBUFF", element: null, costMp: 5, desc: "5ラウンドの間、速度、物攻撃、魔攻撃+2する。更に毎ラウンドHPとMPを1点回復する。(クイックスキル)" },
   { id: "紅眼閃舞", name: "紅眼閃舞", typeRaw: "バフ・デバフ", category: "BUFF_DEBUFF", element: null, costMp: 2, desc: "HPを2点消費して、2ラウンドの間、速度を+8する。(クイックスキル)" },
   { id: "鏡よ鏡", name: "鏡よ鏡", typeRaw: "パッシブ", category: "PASSIVE", element: null, costMp: 0, desc: "隠密状態の効果を受けない。更にフィールドが夜の場合、魔法攻撃力を+2する。" },
   { id: "アズールスピア", name: "アズールスピア", typeRaw: "水", category: "ATTACK", element: "WATER", costMp: 4, desc: "物理攻撃力+1点の物理ダメージを1体に必中で与える。" },

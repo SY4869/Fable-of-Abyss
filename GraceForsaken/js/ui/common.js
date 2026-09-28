@@ -361,6 +361,28 @@ function charTile(master, opt) {
   ]);
 }
 
+// キャラクターの並べ替え（ステータスは高い順）
+const CHAR_SORTS = [
+  ['NO', 'No.順'], ['HP', 'HP順', m => m.baseStats.hp], ['MP', 'MP順', m => m.baseStats.mp],
+  ['SPEED', '速度順', m => m.baseStats.speed],
+  ['ATK_PHYS', '物理攻撃力順', m => m.baseStats.atkPhys], ['ATK_MAG', '魔法攻撃力順', m => m.baseStats.atkMag],
+  ['DEF_PHYS', '物理防御力順', m => m.baseStats.defPhys], ['DEF_MAG', '魔法防御力順', m => m.baseStats.defMag],
+  ['RANGE', '射程順', m => m.range],
+];
+function sortCharacters(list, key) {
+  const def = CHAR_SORTS.find(s => s[0] === key);
+  const out = list.slice();
+  if (!def || !def[2]) return out.sort((a, b) => a.id - b.id);
+  return out.sort((a, b) => def[2](b) - def[2](a) || a.id - b.id);
+}
+function sortSelect(current, onChange) {
+  const s = el('select', { class: 'select', 'aria-label': '並べ替え' },
+    CHAR_SORTS.map(d => el('option', { value: d[0], text: d[1] })));
+  s.value = current;
+  s.addEventListener('change', () => onChange(s.value));
+  return s;
+}
+
 /** 属性フィルタのタブ。onChange(key) */
 function elementTabs(current, onChange) {
   const keys = ['ALL', 'FIRE', 'WATER', 'WIND', 'THUNDER', 'LIGHT', 'DARK'];
@@ -422,13 +444,30 @@ function charDetail(master, opt) {
 // ドラッグ＆ドロップ（マウス・タッチ共通）
 //   node をドラッグして [data-drop] 要素に落とすと onDrop(dropEl) を呼ぶ。
 //   ほとんど動かさずに離した場合は通常のクリックとして扱う。
+//   opt.touchHold: タッチ操作では長押ししてからドラッグ開始（一覧のスクロールを妨げない）
 // -------------------------------------------------------------------
+const TOUCH_HOLD_MS = 280;
 function makeDraggable(node, opt) {
-  node.classList.add('draggable');
+  node.classList.add(opt.touchHold ? 'draggable-hold' : 'draggable');
+  // 長押しで出るメニュー（画像の保存など）を出さない
+  if (opt.touchHold) node.addEventListener('contextmenu', (e) => e.preventDefault());
   node.addEventListener('pointerdown', (e) => {
     if (e.button !== undefined && e.button !== 0) return;
     const startX = e.clientX, startY = e.clientY;
     let ghost = null, hover = null;
+    // 長押し待ち（タッチのみ）。待っている間に指が動いたらスクロールとみなして中止
+    let armed = !(opt.touchHold && e.pointerType === 'touch');
+    let holdTimer = null;
+    const stopScroll = (te) => { if (armed) te.preventDefault(); };
+    if (!armed) {
+      holdTimer = setTimeout(() => { armed = true; node.classList.add('hold-ready'); }, TOUCH_HOLD_MS);
+      node.addEventListener('touchmove', stopScroll, { passive: false });
+    }
+    const cleanupHold = () => {
+      clearTimeout(holdTimer);
+      node.classList.remove('hold-ready');
+      node.removeEventListener('touchmove', stopScroll);
+    };
 
     const dropAt = (x, y) => {
       const under = document.elementFromPoint(x, y);
@@ -437,6 +476,13 @@ function makeDraggable(node, opt) {
     const move = (ev) => {
       if (!ghost) {
         if (Math.abs(ev.clientX - startX) + Math.abs(ev.clientY - startY) < 8) return;
+        if (!armed) {   // 長押し前に動いた = スクロール
+          cleanupHold();
+          window.removeEventListener('pointermove', move);
+          window.removeEventListener('pointerup', up);
+          window.removeEventListener('pointercancel', up);
+          return;
+        }
         const r = node.getBoundingClientRect();
         ghost = node.cloneNode(true);
         ghost.classList.add('drag-ghost');
@@ -460,6 +506,7 @@ function makeDraggable(node, opt) {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', up);
+      cleanupHold();
       if (!ghost) return;
       ghost.remove();
       node.classList.remove('dragging');

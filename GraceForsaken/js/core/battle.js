@@ -631,9 +631,9 @@ class Battle {
 
     let dmg = Math.max(CONFIG.DAMAGE_MIN, power - def);
 
-    // 属性相性
+    // 属性相性（貫通攻撃は属性相性の影響を受けない）
     const el = meta.element || actor.element;
-    const mult = elementMultiplier(el, target.element);
+    const mult = pierce ? 1 : elementMultiplier(el, target.element);
     if (mult !== 1) dmg = Math.floor(dmg * mult);
 
     // 抜刀《防》

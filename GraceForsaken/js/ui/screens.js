@@ -216,7 +216,7 @@ const Screens = {
       el('div', { class: 'menu-foot' }, [
         el('button', { class: 'btn small ghost', 'data-se': 'cancel', text: 'タイトルへ', onclick: () => { App.stack = []; App.show(Screens.title, []); } }),
         el('div', { class: 'spacer' }),
-        el('span', { class: 'faint', text: 'Ver. 1.2.4' }),
+        el('span', { class: 'faint', text: 'Ver. 1.2.5' }),
       ]),
     ]);
   },
@@ -486,6 +486,7 @@ const Screens = {
     let party = Save.data.party.slice();
     let focus = getCharacter(party[0]) || owned[0] || null;
     let filter = 'ALL';
+    let sort = 'NO';
 
     const leftBox = el('div', { class: 'party-focus panel frame' });
     const formation = el('div', { class: 'formation' });
@@ -493,6 +494,40 @@ const Screens = {
     const tabsBox = el('div');
 
     const commit = () => { Save.setParty(party); };
+
+    /**
+     * ドラッグ＆ドロップの落とし先を解釈して編成を変える。
+     *   'list' … キャラクター一覧（編成から外す）
+     *   'm:ID' … 編成中のメンバー（その位置へ。4体のときは入れ替え）
+     *   '1'〜'3' … 前衛・中衛・後衛の列
+     */
+    const dropTo = (id, target) => {
+      const inParty = party.indexOf(id) >= 0;
+      if (target === 'list') {
+        if (inParty) { party = party.filter(x => x !== id); commit(); }
+        render(); return;
+      }
+      let area, swapWith = null;
+      if (target.indexOf('m:') === 0) {
+        swapWith = Number(target.slice(2));
+        if (swapWith === id) return;
+        area = Save.placementOf(swapWith);
+      } else {
+        area = Number(target);
+      }
+      if (!inParty) {
+        if (party.length >= CONFIG.PARTY_SIZE) {
+          if (swapWith === null) { App.toast(CONFIG.PARTY_SIZE + '体までです。メンバーに重ねると入れ替えできます'); return; }
+          party[party.indexOf(swapWith)] = id;   // 入れ替え（同じ配置に入る）
+        } else {
+          party.push(id);
+        }
+        commit();
+      }
+      Save.setPlacement(id, area);
+      focus = getCharacter(id);
+      render();
+    };
 
     const render = () => {
       // --- 選択中キャラ ---
@@ -533,11 +568,12 @@ const Screens = {
           const m = getCharacter(id);
           const node = el('div', {
             class: 'form-member' + (m === focus ? ' selected' : ''),
+            'data-drop': 'm:' + id,
             onclick: () => { focus = m; render(); },
           }, [faceIcon(m), elementIcon(m.element), el('span', { class: 'fm-name', text: m.name }),
             el('span', { class: 'fm-range', text: '射程' + m.range })]);
           makeDraggable(node, {
-            onDrop: (d) => { Save.setPlacement(id, Number(d.getAttribute('data-drop'))); render(); },
+            onDrop: (d) => dropTo(id, d.getAttribute('data-drop')),
           });
           members.appendChild(node);
         });
@@ -555,16 +591,23 @@ const Screens = {
 
       // --- 所持キャラ一覧 ---
       clear(tabsBox);
+      tabsBox.appendChild(el('div', { class: 'row list-sort' }, [
+        el('span', { class: 'drop-note', text: 'ドラッグで編成欄へ（スマホは長押し）。編成中のキャラをここへドラッグすると外れます。' }),
+        el('div', { class: 'spacer' }),
+        sortSelect(sort, v => { sort = v; render(); }),
+      ]));
       tabsBox.appendChild(elementTabs(filter, k => { filter = k; render(); }));
       clear(gridBox);
-      owned.filter(m => filter === 'ALL' || m.element === filter).forEach(m => {
+      sortCharacters(owned.filter(m => filter === 'ALL' || m.element === filter), sort).forEach(m => {
         const idx = party.indexOf(m.id);
-        gridBox.appendChild(charTile(m, {
+        const tile = charTile(m, {
           selected: m === focus,
           inParty: idx >= 0,
           badge: idx >= 0 ? AREA_LABEL[Save.placementOf(m.id)] : null,
           onClick: () => { focus = m; render(); },
-        }));
+        });
+        makeDraggable(tile, { touchHold: true, onDrop: (d) => dropTo(m.id, d.getAttribute('data-drop')) });
+        gridBox.appendChild(tile);
       });
     };
     render();
@@ -583,7 +626,7 @@ const Screens = {
             el('p', { class: 'faint', style: 'margin:8px 0 0', text:
               '距離 = 自陣マス番号 + 敵陣マス番号 − 1。射程以内の敵にしか攻撃が届きません（射程1なら前衛から敵の前衛のみ）。' }),
           ]),
-          el('div', { class: 'panel frame' }, [
+          el('div', { class: 'panel frame party-list-drop', 'data-drop': 'list' }, [
             el('div', { class: 'panel-head' }, [
               el('span', { class: 'jp-head', text: 'キャラクター一覧' }),
               el('span', { class: 'faint', text: owned.length + ' 体所持' }),
@@ -614,7 +657,7 @@ const Screens = {
     const render = () => {
       let list = showAll ? CHARACTER_MASTER.slice() : Save.ownedList();
       list = list.filter(m => filter === 'ALL' || m.element === filter);
-      if (sort === 'RANGE') list.sort((a, b) => b.range - a.range || a.id - b.id);
+      list = sortCharacters(list, sort);
 
       clear(controls);
       controls.appendChild(el('div', { class: 'row' }, [
@@ -630,15 +673,7 @@ const Screens = {
           })(),
           el('span', { text: '未所持も表示' }),
         ]),
-        (() => {
-          const s = el('select', { class: 'select' }, [
-            el('option', { value: 'NO', text: 'No.順' }),
-            el('option', { value: 'RANGE', text: '射程順' }),
-          ]);
-          s.value = sort;
-          s.addEventListener('change', () => { sort = s.value; render(); });
-          return s;
-        })(),
+        sortSelect(sort, v => { sort = v; render(); }),
       ]));
       controls.appendChild(elementTabs(filter, k => { filter = k; render(); }));
 

@@ -602,6 +602,10 @@ body { background: transparent; }
 }
 
 .draggable { touch-action: none; }
+.draggable-hold { -webkit-touch-callout: none; user-select: none; }
+.hold-ready { box-shadow: 0 0 0 2px #c8b8ff, 0 0 18px var(--glow); }
+.party-list-drop.drop-hover { box-shadow: inset 0 0 0 2px #ff9fae, 0 0 18px rgba(255, 120, 140, .35); }
+.drop-note { font-size: 11.5px; color: var(--ink-faint); }
 .dragging { opacity: .35; }
 .drag-ghost { position: fixed; z-index: 500; pointer-events: none; opacity: .9; transform: scale(1.05); box-shadow: 0 0 22px var(--glow); }
 

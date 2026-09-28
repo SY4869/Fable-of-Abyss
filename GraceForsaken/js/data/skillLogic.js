@@ -107,7 +107,7 @@ const SKILL_LOGIC = {
   },
   '黒きヤギの祝福': {
     act: 'buff', tgt: 'SELF', quick: true,
-    buff: { dur: 5, stats: { speed: 3, atkPhys: 3 }, regen: { hp: 1, mp: 1 } },
+    buff: { dur: 5, stats: { speed: 2, atkPhys: 2, atkMag: 2 }, regen: { hp: 1, mp: 1 } },
   },
   '紅眼閃舞': {
     act: 'buff', tgt: 'SELF', quick: true, costHp: 2,
