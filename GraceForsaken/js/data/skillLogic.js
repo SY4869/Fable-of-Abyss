@@ -622,6 +622,35 @@ const SKILL_LOGIC = {
     act: 'special', tgt: 'NONE', custom: 'shootingStar',
   },
 
+  // ---------------- 緋天飛鳥 第3話 ボス: 六刀の剣鬼 ----------------
+  '六刀流': {
+    act: 'passive',
+    passive: { afterPhysSkillHit: { mod: -4 } },
+  },
+  '六連斬': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkPhys', mod: -3, dmg: 'PHYS', hits: 3 },
+  },
+  '旋刃': {
+    act: 'attack', tgt: 'ENEMY_AREA',
+    atk: { base: 'atkPhys', mod: -2, dmg: 'PHYS' },
+  },
+  '人ならざる抜刀': {
+    act: 'buff', tgt: 'SELF',
+    buff: { dur: 99, flags: { nextAtkBonus: 8 } },
+  },
+  '触腕の盾': {
+    act: 'buff', tgt: 'SELF', quick: true,
+    buff: { dur: 99, shield: { base: 'defPhys', div: 1 } },
+  },
+  '未来視': {
+    act: 'buff', tgt: 'SELF', quick: true,
+    buff: { dur: 3, eva: 20 },
+  },
+  '堕落の誘い': {
+    act: 'special', tgt: 'ENEMY_ONE', custom: 'charm',
+  },
+
   // ---------------- ネストル 第3話 ボス: 神の器となった大司教 ----------------
   '久遠の祝福': {
     act: 'passive',

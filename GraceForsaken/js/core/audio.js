@@ -23,6 +23,7 @@ const SE_FILES = {
   cancel: 'CancelButton_SE.mp3',
   slash: 'SlashingAttack_SE.mp3',
   dodge: 'Dodge_SE.mp3',
+  fail: 'Fail_SE.mp3',
   heal: 'Heal_SE.mp3',
   fire: 'Fire_SE.mp3',
   ice: 'Ice_SE.mp3',

@@ -40,6 +40,7 @@ const Screens = {
         ]),
       ]),
       el('div', { class: 'title-foot', text: '4vs4 マス目・間合い配置型 ターン制コマンドバトルRPG' }),
+      el('nav', { class: 'sitenav', 'aria-label': 'サイト内リンク' }, SITE_LINKS.map(l => el('a', { href: l[1], text: l[0] }))),
     ]);
   },
 
@@ -72,8 +73,12 @@ const Screens = {
       });
       clear(detailBox);
       const inPick = picked.indexOf(focus.id) >= 0;
-      detailBox.appendChild(charDetail(focus, {
-        actions: [el('button', {
+      // スクロールせずに押せるよう、キャラクター画像の上に置く
+      detailBox.appendChild(el('div', { class: 'row pick-top' }, [
+        el('b', { text: focus.name }),
+        el('div', { class: 'spacer' }),
+        el('span', { class: 'muted', text: picked.length + ' / ' + CONFIG.PARTY_SIZE }),
+        el('button', {
           class: 'btn ' + (inPick ? 'ghost' : 'primary'),
           'data-se': inPick ? 'cancel' : 'confirm',
           text: inPick ? '選択を外す' : 'パーティに加える',
@@ -83,8 +88,9 @@ const Screens = {
             else picked.push(focus.id);
             render();
           },
-        })],
-      }));
+        }),
+      ]));
+      detailBox.appendChild(charDetail(focus, {}));
       clear(footer);
       footer.appendChild(el('div', { class: 'pick-faces' }, [0, 1, 2, 3].map(i => {
         const m = getCharacter(picked[i]);
@@ -215,8 +221,9 @@ const Screens = {
       ]),
       el('div', { class: 'menu-foot' }, [
         el('button', { class: 'btn small ghost', 'data-se': 'cancel', text: 'タイトルへ', onclick: () => { App.stack = []; App.show(Screens.title, []); } }),
+        el('a', { class: 'site-home', href: SITE_LINKS[0][1], text: 'ゲーム選択へ（SY GAMES）' }),
         el('div', { class: 'spacer' }),
-        el('span', { class: 'faint', text: 'Ver. 1.2.5' }),
+        el('span', { class: 'faint', text: 'Ver. 1.2.6' }),
       ]),
     ]);
   },
@@ -253,7 +260,6 @@ const Screens = {
             el('span', { class: 'ep-no', text: '第' + ep.no + '話' }),
             el('span', { class: 'ep-title' }, [
               el('b', { text: ep.title }),
-              el('small', { text: ep.battle ? '勝利条件: ' + (ep.battle.winText || '敵の全滅') : '戦闘なし' }),
             ]),
             el('span', { class: 'tag' + (done ? ' hl' : ''), text: done ? 'CLEAR' : (unlocked ? '挑戦可能' : '未解放') }),
           ]));

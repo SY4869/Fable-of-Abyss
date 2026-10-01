@@ -155,6 +155,7 @@ class Battle {
     const flare = this.teamOf(owner.side).find(u => u !== owner && u.name === 'フレア');
     if (!flare) return;
     if (!flare.alive) {
+      if (hasFlag(flare, 'noHeal')) { this.say('→ ' + flare.displayName + 'は蘇生できない（アンチヒール）', 'bad'); return; }
       flare.alive = true;
       flare.hp = Math.min(flare.maxHp, amount.hp);
       flare.mp = Math.min(flare.maxMp, amount.mp);
@@ -474,7 +475,17 @@ class Battle {
     this.say(actor.displayName + 'の【' + sk.name + '】！' + (lg.quick ? '（クイック）' : ''), 'skill');
     this.emit('action', { actor: actor, name: sk.name, element: sk.element || actor.element, quick: !!lg.quick });
 
+    const hitTargets = lg.act === 'attack' ? this.resolveEffectTargets(actor, lg, action) : [];
     this.applyEffect(actor, lg, action, sk);
+    // 六刀流: 物理ダメージのスキルの後、当たった対象それぞれに追加で物理ダメージ
+    const ap = passiveOf(actor);
+    if (ap && ap.afterPhysSkillHit && lg.act === 'attack' && lg.atk.dmg === 'PHYS' && actor.alive && !this.finished) {
+      hitTargets.filter(t => t.alive).forEach(t => {
+        this.say('→ 【' + actor.passiveId + '】の追撃！', 'skill');
+        this.resolveAttack(actor, t, { base: 'atkPhys', mod: ap.afterPhysSkillHit.mod, dmg: 'PHYS' },
+          { name: actor.passiveId, element: actor.element });
+      });
+    }
     this.checkEnd();
   }
 
@@ -803,7 +814,8 @@ class Battle {
     if (!target.alive) return;
     target.alive = false;
     target.hp = 0;
-    target.buffs = [];
+    // アンチヒールは戦闘不能になっても残す（蘇生を防ぐため）
+    target.buffs = target.buffs.filter(b => b.flags && b.flags.noHeal);
     target.shield = 0;
     this.say('※ ' + target.displayName + ' は戦闘不能になった！', 'death');
     this.emit('death', { target: target });

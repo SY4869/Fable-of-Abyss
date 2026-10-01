@@ -110,6 +110,7 @@ function createBattleView(cfg) {
     mine: false, legal: null, waitText: '', finished: false,
   };
   const POPUP_MS = 2200;             // css の .popup のアニメーション時間と合わせる
+  const DYING_MS = 900;              // css の .token.dying のアニメーション時間と合わせる
   const popups = [];                 // 次の描画で貼るダメージ数値
   const activePopups = [];           // 表示中のダメージ数値
   const sounds = [];                 // 次の描画で鳴らす効果音
@@ -201,7 +202,16 @@ function createBattleView(cfg) {
         cell.classList.add('selectable');
         cell.addEventListener('click', () => commit({ area: c.area }));
       }
-      state.units.filter(u => u.alive && u.side === c.side && u.area === c.area).forEach(u => {
+      const nowMs = Date.now();
+      const isDying = u => !u.alive && dying[u.uid] && nowMs - dying[u.uid] < DYING_MS;
+      state.units.filter(u => (u.alive || isDying(u)) && u.side === c.side && u.area === c.area).forEach(u => {
+        if (isDying(u)) {
+          // 倒れたキャラはその場でフェードアウトしてから消える（再描画しても続きから）
+          const t = unitToken(u, { cls: 'dying' });
+          t.style.animationDelay = -(nowMs - dying[u.uid]) + 'ms';
+          units.appendChild(t);
+          return;
+        }
         const cls = [];
         if (u.uid === state.actorUid) cls.push('active');
         if (ui.mode === 'TARGET_UNIT' && ui.units.indexOf(u.uid) >= 0) cls.push('targetable');
@@ -460,6 +470,7 @@ function createBattleView(cfg) {
    * events: BattleActions の演出イベント列、apply(): 盤面の状態を最新にする処理。
    * カットイン → 盤面更新（ダメージ数値・効果音・ログ）→ done() の順に進む。
    */
+  const dying = {};          // 戦闘不能の演出中のユニット uid → 開始時刻
   const play = (events, apply, done) => {
     busy = true;
     const cutin = events.find(e => e.t === 'cutin');
@@ -476,6 +487,11 @@ function createBattleView(cfg) {
           case 'healCast': sounds.push(() => Sound.se('heal')); break;
           case 'heal': popups.push({ uid: e.unitId, text: '+' + e.value, cls: 'heal' }); break;
           case 'auto': popups.push({ uid: e.unitId, text: 'TIME UP', cls: 'miss' }); break;
+          case 'ko':
+            sounds.push(() => Sound.se('fail'));
+            dying[e.unitId] = Date.now();
+            setTimeout(() => { if (root.isConnected && !busy) render(); }, DYING_MS + 30);
+            break;
           case 'log': appendLog(e.text, e.kind); break;
         }
       });
@@ -648,6 +664,10 @@ const BattleFlow = {
       }
     };
     render();
+    if (opts.tutorial) {
+      opts.guide = opts.guide || TutorialGuide.create();
+      setTimeout(() => opts.guide.run(['placement']), 350);
+    }
 
     const startFn = () => {
       const run = () => App.show(BattleFlow.battleScreen, [opts, allies], { replace: true });
@@ -708,8 +728,18 @@ const BattleFlow = {
       order: BattleActions.remainingOrder(battle),
     });
 
+    const guide = opts.tutorial ? (opts.guide || TutorialGuide.create()) : null;
+    // 行動の結果から、まだ見せていない解説を選ぶ
+    const tutorialAfter = (events) => {
+      if (!guide) return [];
+      const keys = [];
+      if (events.some(e => e.t === 'hit' && e.value > 0)) keys.push('element');
+      if (battle.allUnits().some(u => u.alive && (u.buffs.length || u.shield > 0 || u.brainwashed || u.doom))) keys.push('status');
+      return keys;
+    };
     const playResult = (res) => {
-      view.play(res.events, () => Object.assign(view.state, snapshot()), step);
+      view.play(res.events, () => Object.assign(view.state, snapshot()),
+        () => guide ? guide.run(tutorialAfter(res.events), step) : step());
     };
 
     // ---------- 進行 ----------
@@ -729,7 +759,12 @@ const BattleFlow = {
         legal: mine ? BattleActions.legal(battle, actor, { allowWait: true }) : null,
         waitText: actor.displayName + (actor.isGuest ? '（ゲスト）が行動中…' : ' が行動中…'),
       }));
-      if (mine) { aiGuard = 0; return; }
+      if (mine) {
+        aiGuard = 0;
+        // チュートリアル: 最初の手番でコマンドとクイックスキル、2ラウンド目以降は残りの解説
+        if (guide) guide.run(['command', 'quick'].concat(battle.round >= 2 ? ['element', 'status'] : []));
+        return;
+      }
 
       if (++aiGuard > 200) { battle.say('（AIの行動が収束しませんでした）', 'system'); battle.finishAction(); }
       setTimeout(() => {
@@ -754,7 +789,8 @@ const BattleFlow = {
     const start = BattleActions.capture(battle, () => battle.start());
     start.events.forEach(e => { if (e.t === 'log') view.appendLog(e.text, e.kind); });
     Object.assign(view.state, snapshot());
-    setTimeout(step, 0);
+    if (guide) setTimeout(() => guide.run(['start'], step), 300);
+    else setTimeout(step, 0);
     return view.root;
   },
 };

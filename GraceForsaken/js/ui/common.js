@@ -361,6 +361,18 @@ function charTile(master, opt) {
   ]);
 }
 
+// タイトル画面に並べるサイト内リンク（他の作品と同じ並び）
+const SITE_LINKS = [
+  ['SY GAMES', '../index.html'],
+  ['作品紹介', '../grace-about.html'],
+  ['遊び方', '../grace-howto.html'],
+  ['制作記録', '../devlog.html'],
+  ['このサイトについて', '../about.html'],
+  ['クレジット', '../credits.html'],
+  ['プライバシーポリシー', '../privacy.html'],
+  ['お問い合わせ', '../contact.html'],
+];
+
 // キャラクターの並べ替え（ステータスは高い順）
 const CHAR_SORTS = [
   ['NO', 'No.順'], ['HP', 'HP順', m => m.baseStats.hp], ['MP', 'MP順', m => m.baseStats.mp],
