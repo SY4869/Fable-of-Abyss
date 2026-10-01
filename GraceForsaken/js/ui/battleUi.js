@@ -191,6 +191,8 @@ function createBattleView(cfg) {
   };
 
   const renderField = () => {
+    // カットインで遅れないよう、戦場にいるキャラクターの立ち絵を先に読んでおく（読み込み済みなら何もしない）
+    ArtStore.preload(state.units);
     clear(fieldBox);
     let rangeCells = [];
     if (ui.mode === 'TARGET_AREA') rangeCells = ui.areas.map(a => cellKey(ui.targetSide, a));

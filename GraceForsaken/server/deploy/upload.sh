@@ -13,8 +13,8 @@ HOST="${GF_SSH_HOST:-ubuntu@52.198.114.237}"
 STEP="${1:-gf_01_deploy.sh}"
 TMP="$(mktemp -d)"
 
-echo "----- アプリ一式をまとめる（js/ と server/。node_modules・.env は含めない） -----"
-tar czf - --exclude=server/node_modules --exclude=server/.env js server > "$TMP/gf-pvp.tar.gz"
+echo "----- アプリ一式をまとめる（js/ と server/。node_modules・.env・立ち絵データ js/art は含めない） -----"
+tar czf - --exclude=server/node_modules --exclude=server/.env --exclude=js/art js server > "$TMP/gf-pvp.tar.gz"
 ls -la "$TMP/gf-pvp.tar.gz"
 
 echo "----- 転送する -----"

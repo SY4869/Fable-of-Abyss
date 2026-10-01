@@ -602,6 +602,8 @@ body { background: transparent; }
 }
 
 .draggable { touch-action: none; }
+/* 立ち絵データの読み込み中は表示しない */
+img.art-loading { visibility: hidden; }
 
 /* 戦闘不能: その場で暗くなりながら沈んで消える（DYING_MS と合わせる） */
 .token.dying { pointer-events: none; animation: token-down .9s ease-in forwards; }

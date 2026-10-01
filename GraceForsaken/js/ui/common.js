@@ -97,30 +97,61 @@ function portraitKey(x) {
   if (!x) return '';
   return typeof x === 'string' ? x : (x.portrait || '');
 }
-/** 表示用の立ち絵（余白を切り取り高さを揃えたもの。tools/build_faces.py が生成） */
-function portraitUrl(x) {
-  const k = portraitKey(x);
-  return k ? 'img/stand/' + k + '.webp' + portraitVer() : '';
-}
+// 立ち絵は単独の画像ファイルとして公開せず、データとして JS に埋め込んでいる（tools/build_faces.py が生成）。
+//   顔アイコン … js/art/faces.js（起動時に全員分を読み込む）
+//   全身の立ち絵 … js/art/stand/<id>.js（表示するときに1人分ずつ読み込む）
 function faceUrl(x) {
   const k = portraitKey(x);
-  return k ? 'img/face/' + k + '.webp' + portraitVer() : '';
+  return k && typeof ART_FACES !== 'undefined' && ART_FACES[k] ? ART_FACES[k] : '';
 }
-/** 画像を作り直すと変わる番号（ブラウザに古い画像を使わせない） */
-function portraitVer() {
-  return typeof PORTRAIT_VER !== 'undefined' ? '?v=' + PORTRAIT_VER : '';
-}
+
+/** 全身の立ち絵の読み込み。一度読んだものは覚えておく */
+const ArtStore = {
+  stands: {},
+  waiting: {},
+  /** 立ち絵データの JS から呼ばれる */
+  put(key, url) {
+    this.stands[key] = url;
+    (this.waiting[key] || []).forEach(fn => fn(url));
+    delete this.waiting[key];
+  },
+  /** 読み込み済みなら cb をすぐ呼び、まだなら読み込んでから呼ぶ */
+  stand(key, cb) {
+    if (!key) return;
+    if (this.stands[key]) { cb(this.stands[key]); return; }
+    const file = typeof PORTRAIT_STAND_FILE !== 'undefined' ? PORTRAIT_STAND_FILE[key] : null;
+    if (!file) return;
+    if (this.waiting[key]) { this.waiting[key].push(cb); return; }
+    this.waiting[key] = [cb];
+    const s = document.createElement('script');
+    s.src = 'js/art/stand/' + file + '.js?v=' + (typeof PORTRAIT_VER !== 'undefined' ? PORTRAIT_VER : '');
+    s.async = true;
+    s.onerror = () => { delete this.waiting[key]; };
+    document.head.appendChild(s);
+  },
+  /** 戦闘のカットインなど、すぐ表示したいものを先に読んでおく */
+  preload(list) {
+    (list || []).forEach(x => this.stand(portraitKey(x), () => {}));
+  },
+};
 
 /**
  * 立ち絵の <img>。高さを揃えて表示し、横に広い絵は顔が中央に来るようにずらす（CSS の --fx）。
+ * データの読み込みが終わってから表示する。
  */
 function standImg(x, cls) {
   const k = portraitKey(x);
   const focus = typeof PORTRAIT_FOCUS !== 'undefined' && PORTRAIT_FOCUS[k] !== undefined ? PORTRAIT_FOCUS[k] : 0.5;
-  return el('img', {
-    class: cls || null, src: portraitUrl(k), alt: (x && x.name) || '', draggable: 'false',
+  const img = el('img', {
+    class: (cls ? cls + ' ' : '') + 'art-loading', alt: '', draggable: 'false',
     style: '--fx:' + focus,
   });
+  ArtStore.stand(k, url => {
+    img.src = url;
+    img.alt = (x && x.name) || '';
+    img.classList.remove('art-loading');
+  });
+  return img;
 }
 
 // 背景画像。昼夜の差分が無い場所は昼の画像を暗くして夜にする

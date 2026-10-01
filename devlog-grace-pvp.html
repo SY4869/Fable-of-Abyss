@@ -4,12 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#050409">
-<title>リアルタイム対戦のために、サーバーを1台借りた｜制作記録</title>
-<meta name="description" content="『GraceForsaken』にオンラインのリアルタイム対戦を入れるため、対戦用のサーバーを用意しました。勝敗をサーバー側で決める理由、時間切れや通信切れの扱い、自動対戦のテストでつまずいた話を書きました。">
+<title>対戦の勝敗は、サーバーが決める｜制作記録</title>
+<meta name="description" content="『GraceForsaken』にオンラインのリアルタイム対戦を入れました。カオスソードガーデンのランキングで使っていたサーバーを流用し、勝敗をサーバー側で決める理由、時間切れや通信切れの扱い、自動対戦のテストでつまずいた話を書きました。">
 <link rel="canonical" href="https://sygames.net/devlog-grace-pvp.html">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="SY GAMES">
-<meta property="og:title" content="リアルタイム対戦のために、サーバーを1台借りた｜制作記録">
+<meta property="og:title" content="対戦の勝敗は、サーバーが決める｜制作記録">
 <meta property="og:description" content="『GraceForsaken』のリアルタイム対戦をどう作ったか書きました。">
 <meta property="og:url" content="https://sygames.net/devlog-grace-pvp.html">
 <meta property="og:image" content="https://sygames.net/assets/images/grace/thumb.webp">
@@ -19,7 +19,7 @@
 {
   "@context": "https://schema.org",
   "@type": "BlogPosting",
-  "headline": "リアルタイム対戦のために、サーバーを1台借りた",
+  "headline": "対戦の勝敗は、サーバーが決める",
   "description": "『GraceForsaken』のリアルタイム対戦をどう作ったか書きました。",
   "url": "https://sygames.net/devlog-grace-pvp.html",
   "image": "https://sygames.net/assets/images/grace/thumb.webp",
@@ -48,10 +48,10 @@
 </header>
 
 <main class="page">
-<p class="crumbs"><a href="index.html">トップ</a><span class="sep">›</span><a href="devlog.html">制作記録</a><span class="sep">›</span>リアルタイム対戦のために、サーバーを1台借りた</p>
+<p class="crumbs"><a href="index.html">トップ</a><span class="sep">›</span><a href="devlog.html">制作記録</a><span class="sep">›</span>対戦の勝敗は、サーバーが決める</p>
 <p class="eyebrow">DEV LOG &mdash; GRACE 02</p>
-<h1>リアルタイム対戦のために、<br>サーバーを1台借りた</h1>
-<p class="lede">これまでの2作は、ブラウザの中だけで完結するゲームでした。<br>『GraceForsaken』では初めて、<b>今いるプレイヤーどうしで1手ずつ指し合う対戦</b>を入れています。そのためにサーバーを用意しました。</p>
+<h1>対戦の勝敗は、<br>サーバーが決める</h1>
+<p class="lede">『GraceForsaken』には、<b>今いるプレイヤーどうしで1手ずつ指し合う対戦</b>があります。<br>対戦の計算はすべてサーバーで行っていて、そのサーバーは<a href="chaos.html">カオスソードガーデン</a>のランキングで使っていたものを流用しています。</p>
 <p class="stamp">2026年10月2日 &middot; GraceForsaken</p>
 
 <div class="divider"></div>
@@ -60,11 +60,11 @@
   <h2><span class="num">Ⅰ</span>最初はゴースト対戦だけだった</h2>
   <p>対戦モードは、もともと<b>ゴースト対戦</b>だけでした。他のプレイヤーが設定した防衛パーティを、AIが動かして相手をしてくれる形です。これなら通信がいらないので、サーバーがなくても作れます。</p>
   <p>ただ、AI相手だとどうしても読み合いが薄くなります。こっちが並べた隊列を見て、相手が考えて動かしてくる。それをやりたくて、<b>リアルタイム対戦</b>を足すことにしました。</p>
-  <p>ここで初めて、個人開発でサーバーが必要になりました。いきなり作らずに、まず対戦の流れ・時間切れ・通信切れの扱いを<b>設計書に書き出してから</b>着手しています。前の記事で書いた「表に起こしてから渡す」と同じ考え方です。</p>
+  <p>ストーリーやゴースト対戦と違って、これは通信なしには作れません。いきなり作らずに、まず対戦の流れ・時間切れ・通信切れの扱いを<b>設計書に書き出してから</b>着手しています。前の記事で書いた「表に起こしてから渡す」と同じ考え方です。</p>
 </section>
 
 <section class="clause">
-  <h2><span class="num">Ⅱ</span>勝敗はサーバーが決める</h2>
+  <h2><span class="num">Ⅱ</span>ブラウザには計算させない</h2>
   <p>いちばん最初に決めたのがこれでした。<b>戦闘の計算は、プレイヤーのブラウザではなくサーバーで行います。</b></p>
   <p>ブラウザ側で計算して結果だけ送る形にすると、送る結果を書き換えれば何でも通ってしまいます。なので、ブラウザは「誰が何をするか」だけを送って、ダメージも命中も勝敗も、全部サーバーが計算して両方に配ります。</p>
   <p>面白かったのは、<b>サーバーで動かしている戦闘のプログラムが、ストーリーやゴースト対戦で使っているものとまったく同じ</b>なことです。1つのコードをブラウザでもサーバーでも読み込んでいます。スキルの仕様を1か所直せば、ストーリーにも対戦にも同じように反映される。2つ作って食い違う心配がありません。</p>
@@ -86,8 +86,9 @@
 </section>
 
 <section class="clause">
-  <h2><span class="num">Ⅳ</span>サーバーの準備も任せた</h2>
-  <p>サーバーは、クラウドの小さなものを1台借りています。じつはここには、<a href="chaos.html">カオスソードガーデン</a>のランキングがすでに乗っていました。なので条件は<b>「既存のランキングを止めないこと」</b>です。</p>
+  <h2><span class="num">Ⅳ</span>ランキングのサーバーに相乗りさせた</h2>
+  <p>サーバーは新しく借りていません。<a href="chaos.html">カオスソードガーデン</a>の全プレイヤー共通のランキングを動かしている、クラウドの小さなサーバーをそのまま流用して、同じ1台に同居させています。</p>
+  <p>そのぶん条件ははっきりしていて、<b>「既存のランキングを止めないこと」</b>です。対戦用のプログラムはランキングとは別に動かして、更新のたびにランキングが生きているかも確認しています。</p>
   <p>作業そのものは、Claude Code にサーバーへ接続してもらって進めました。自分がやったのは、ドメインの管理画面で対戦用のアドレスを追加したことくらい。暗号化通信の証明書の取得と自動更新の確認、ランキングが生きているかの確認まで、手順ごとにやってもらっています。</p>
   <p>ただ、<b>公開に関わる操作だけは、毎回こちらが確認してから</b>にしています。サイトへの反映もサーバーの更新も、「進めてください」と言うまでは手元で止めてもらう。止まった状態で中身を見て、良ければ進める。この線引きは最後まで変えませんでした。</p>
 </section>
