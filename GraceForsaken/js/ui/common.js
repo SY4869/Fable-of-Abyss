@@ -100,11 +100,15 @@ function portraitKey(x) {
 /** 表示用の立ち絵（余白を切り取り高さを揃えたもの。tools/build_faces.py が生成） */
 function portraitUrl(x) {
   const k = portraitKey(x);
-  return k ? 'img/stand/' + k + '.webp' : '';
+  return k ? 'img/stand/' + k + '.webp' + portraitVer() : '';
 }
 function faceUrl(x) {
   const k = portraitKey(x);
-  return k ? 'img/face/' + k + '.webp' : '';
+  return k ? 'img/face/' + k + '.webp' + portraitVer() : '';
+}
+/** 画像を作り直すと変わる番号（ブラウザに古い画像を使わせない） */
+function portraitVer() {
+  return typeof PORTRAIT_VER !== 'undefined' ? '?v=' + PORTRAIT_VER : '';
 }
 
 /**
