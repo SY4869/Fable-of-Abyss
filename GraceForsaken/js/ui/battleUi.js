@@ -111,6 +111,7 @@ function createBattleView(cfg) {
   };
   const POPUP_MS = 2200;             // css の .popup のアニメーション時間と合わせる
   const DYING_MS = 900;              // css の .token.dying のアニメーション時間と合わせる
+  const FAIL_SE_DELAY_MS = 600;      // 戦闘不能のSEを攻撃のSEから遅らせる時間
   const popups = [];                 // 次の描画で貼るダメージ数値
   const activePopups = [];           // 表示中のダメージ数値
   const sounds = [];                 // 次の描画で鳴らす効果音
@@ -488,7 +489,8 @@ function createBattleView(cfg) {
           case 'heal': popups.push({ uid: e.unitId, text: '+' + e.value, cls: 'heal' }); break;
           case 'auto': popups.push({ uid: e.unitId, text: 'TIME UP', cls: 'miss' }); break;
           case 'ko':
-            sounds.push(() => Sound.se('fail'));
+            // 攻撃のSEと重ならないよう、少し遅らせて鳴らす
+            sounds.push(() => setTimeout(() => { if (root.isConnected) Sound.se('fail'); }, FAIL_SE_DELAY_MS));
             dying[e.unitId] = Date.now();
             setTimeout(() => { if (root.isConnected && !busy) render(); }, DYING_MS + 30);
             break;
