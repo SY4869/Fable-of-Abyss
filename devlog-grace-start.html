@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050409">
+<title>型のあるジャンルを、表から作る｜制作記録</title>
+<meta name="description" content="3作目の『GraceForsaken』は、前作の反省から「型のあるジャンル」を選び、仕様を要件定義書とデータの表に起こしてから作り始めました。6マスの間合い、隊列の繰り上げ、修正案と質問のやり取りについて書きました。">
+<link rel="canonical" href="https://sygames.net/devlog-grace-start.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="SY GAMES">
+<meta property="og:title" content="型のあるジャンルを、表から作る｜制作記録">
+<meta property="og:description" content="『GraceForsaken』を、仕様を表に起こすところから作り始めた話を書きました。">
+<meta property="og:url" content="https://sygames.net/devlog-grace-start.html">
+<meta property="og:image" content="https://sygames.net/assets/images/grace/thumb.webp">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/css/site.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "型のあるジャンルを、表から作る",
+  "description": "『GraceForsaken』を、仕様を要件定義書とデータの表に起こすところから作り始めた話を書きました。",
+  "url": "https://sygames.net/devlog-grace-start.html",
+  "image": "https://sygames.net/assets/images/grace/thumb.webp",
+  "datePublished": "2026-10-02",
+  "inLanguage": "ja",
+  "author": { "@type": "Person", "name": "SY4869" },
+  "publisher": { "@type": "Person", "name": "SY4869" }
+}
+</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6058664157090890"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="inner">
+    <a class="mark" href="index.html"><strong>SY GAMES</strong><span>SYGAMES.NET</span></a>
+    <nav class="topnav">
+      <a href="index.html">トップ</a>
+      <a href="index.html#games">ゲーム</a>
+      <a href="devlog.html" aria-current="page">制作記録</a>
+      <a href="about.html">このサイトについて</a>
+      <a href="contact.html">お問い合わせ</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+<p class="crumbs"><a href="index.html">トップ</a><span class="sep">›</span><a href="devlog.html">制作記録</a><span class="sep">›</span>型のあるジャンルを、表から作る</p>
+<p class="eyebrow">DEV LOG &mdash; GRACE 01</p>
+<h1>型のあるジャンルを、<br>表から作る</h1>
+<p class="lede">3作目の『GraceForsaken』は、4人と4人が6マスの戦場で向かい合うターン制のコマンドバトル RPG です。<br>前作で懲りたので、今回は<b>作り始める前に仕様を表に起こす</b>ところから始めました。</p>
+<p class="stamp">2026年10月2日 &middot; GraceForsaken</p>
+
+<div class="divider"></div>
+
+<section class="clause">
+  <h2><span class="num">Ⅰ</span>前作の反省から始まった</h2>
+  <p><a href="devlog-chaos-struggle.html">カオスソードガーデンの制作記録</a>の最後に、「しばらくは<b>ジャンルとしてベースが固まっているもの</b>を作ったほうがいい」と書きました。ゼロから形を探すのは、Claude Code に任せようがなかったからです。</p>
+  <p>ターン制のコマンドバトルは、まさに型のあるジャンルです。ラウンドがあって、速い順に行動して、攻撃かスキルを選ぶ。何を作ればいいかは最初から見えています。</p>
+  <p>もうひとつの反省は、<b>仕様を散文で渡すと抜けが抜けたまま通ってしまう</b>ことでした。なので今回は、書き始める前に2つの資料を用意しています。</p>
+  <ul>
+    <li><b>要件定義書</b> … フィールド、距離、行動、モードの決まりごと。手元で第5版まで書き直しました</li>
+    <li><b>データ一覧</b> … キャラクターとスキルを表計算ソフトの表にまとめたもの。キャラクター31人、スキルは100種類を超えています</li>
+  </ul>
+  <p>データは表から自動でゲームに取り込まれるようにしてあります。数値を直したいときは表を保存し直すだけ。これは最後までかなり楽でした。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅱ</span>それでも最初に4つ聞き返された</h2>
+  <p>表まで用意すれば足りるだろうと思っていたんですが、作り始める前に Claude Code から質問が4つ返ってきました。</p>
+  <table class="spec">
+    <tr><th>ダメージの計算式<span class="lat">DAMAGE</span></th><td>要件定義書に<b>書いていませんでした。</b>「威力 − 防御（最低1）」の引き算にして、属性が有利なら最後に ×1.5。</td></tr>
+    <tr><th>通常攻撃の仕様<span class="lat">ATTACK</span></th><td>「自身の属性で計算する」としか書いていなかったので、物理攻撃力と魔法攻撃力の<b>高い方</b>を使うことにしました。</td></tr>
+    <tr><th>ストーリーの範囲<span class="lat">STORY</span></th><td>本文がある2人ぶんだけ作り、残りは文章を置けば自動で開放される形にしました。</td></tr>
+    <tr><th>作り方<span class="lat">BUILD</span></th><td>ビルド不要の HTML と JavaScript だけの構成にしました。</td></tr>
+  </table>
+  <p>ダメージの計算式が抜けていたのは、さすがに笑いました。<b>RPG でいちばん大事な式</b>なんですけどね。自分の頭のなかでは当たり前すぎて、書く対象だと思っていなかったんです。</p>
+  <p>ただ、前作と違うのはここで止まってくれたことでした。それらしい式で勝手に作られていたら、あとで数字の違和感から逆算することになっていたはずです。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅲ</span>6マスで間合いを作る</h2>
+  <p>戦場は横一列の6マスです。自陣の後衛・中衛・前衛と、敵陣の前衛・中衛・後衛。距離は<b>「自分のマスの番号 ＋ 相手のマスの番号 − 1」</b>で決まります（前衛が1、後衛が3）。</p>
+  <p>前衛どうしなら距離1、後衛どうしなら距離5。射程1の剣士は前衛から相手の前衛にしか届きませんが、射程の長い魔法使いは後ろに下がったまま撃てます。<b>誰をどこに立たせるかが、スキル選びと同じくらい勝敗に効く</b>ようにしたかったんです。</p>
+  <p>前作で「間合いがないと単調になる」と思い知ったので、ターン制でも間合いは最初から入れました。そのかわり、操作は複雑にしていません。キャラクターをマスへドラッグするだけです。</p>
+  <p>もうひとつ、<b>相手が習得しているスキルは見えない</b>ようにしています。使われて初めて分かる。並び方から何をしてくるか読む余地を残したかったからです。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅳ</span>前衛がいなくなったらどうするか</h2>
+  <p>修正を始めてすぐ、「前衛が全員倒れたらどうしますか？」と聞かれました。これも要件定義書に書いていなかったところです。</p>
+  <p>答えは<b>「残った全員を1マスずつ前へ出す」</b>にしました。後ろに控えていた魔法使いが、いつの間にか最前線に立たされる。隊列が崩れていく感じが出るので、気に入っています。敵にも同じルールが適用されます。</p>
+  <p>で、このルールを入れたことで、別のところに矛盾が出ました。アリシアの第2話の勝利条件を「前衛の撃破」と書いていたんですが、<b>前衛を倒すと後ろが繰り上がってくるので、結局は全滅させるのと同じ</b>になってしまう。これは単純に自分の書き間違いだったので、「敵の全滅」に直しました。</p>
+  <p>ルールを1つ足すと、その影響は書いた本人も気づかない場所に出ます。指摘してもらわなければ、そのまま公開していたと思います。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅴ</span>修正案を書いて、先に質問してもらう</h2>
+  <p>今回の作り方で、いちばん効いたのはこれでした。直したいことは<b>「修正案」というテキストに箇条書きで書いて</b>、毎回こう頼んでいます。</p>
+  <div class="aside"><p>修正案の内容を確認してゲームを修正してください。不明点などがあれば修正を行う前に確認してください。</p></div>
+  <p>こうしておくと、解釈が分かれるところで手が止まって、選択肢つきで質問が返ってきます。実際に聞かれたのは、たとえばこんなことです。</p>
+  <table class="spec">
+    <tr><th>生への執着<span class="lat">ENDURE</span></th><td>「60%でHP1で耐える」は1戦闘に何回まで？ ── 推奨は「1回だけ」でしたが、<b>何度でも発動</b>にしました。しぶとさがこのキャラクターの持ち味なので。</td></tr>
+    <tr><th>心頭滅却<span class="lat">SPEED</span></th><td>「1ラウンドの速度が+3」は、1ラウンドの間なのか、1ラウンド目なのか ── <b>1ラウンド目だけ</b>。</td></tr>
+    <tr><th>魔力の力線<span class="lat">MANA</span></th><td>ダメージを無効化して半分のMPを失うとき、MPが足りなかったら？ ── <b>足りない分はHPで受ける</b>。</td></tr>
+    <tr><th>六刀流<span class="lat">BOSS</span></th><td>物理スキルの後に追撃する固有スキル。範囲攻撃の後は誰に？ ── <b>当たった全員</b>。</td></tr>
+  </table>
+  <p>どれも、自分では「書いた通りでしょ」と思っていた文章です。でも読み直すと、確かにどちらとも取れる。前作ではこういう箇所が、それらしい実装のまま通っていました。</p>
+  <p>質問されると、一度だけ立ち止まって決めることになります。手間に見えて、実際は<b>あとで不具合として見つけるより、ずっと早かった</b>です。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅵ</span>物語は、文章を置くだけで増える</h2>
+  <p>ストーリーはキャラクター1人につき全3話です。公開時は8人ぶんでしたが、そのあとレイア、ネストル、緋天飛鳥と増やして、いまは11人ぶんあります。</p>
+  <p>シナリオは決まった書式の文章で書いていて、置けばそのままゲームに入るようにしています。背景も、本文に出てくる言葉から自動で選んでいます。「酒場」と書けば酒場、「玉座」と書けば玉座の間。墓地の背景だけはまだ用意できていないので、夜の街並みで代用しています。</p>
+  <p>ボス戦だけは、シナリオの中にHP・能力値・専用スキルの表を書くようにしました。最初は雑魚と同じ能力値に「HP3倍、各能力+2」を掛ける補正で済ませていたんですが、それだとボスごとの個性が出ません。<b>表の数値をそのまま使う</b>ことにして、専用スキルもボスごとに用意しています。</p>
+  <p>あと、公開後に直したのが<b>ゲストの扱い</b>です。物語の途中で一時的に仲間になるキャラクターは、最初はAIが勝手に動かしていました。でも、物語の主役を自分で動かせないのはおかしいですよね。いまはゲストもプレイヤーが配置して操作できます。</p>
+</section>
+
+<div class="pager">
+  <a href="devlog-chaos-struggle.html"><span class="lat">PREV</span>‹ 画面を見ても気づけない不具合にやられた</a>
+  <a href="devlog-grace-pvp.html"><span class="lat">NEXT</span>リアルタイム対戦のために、サーバーを1台借りた ›</a>
+</div>
+
+<div class="divider"></div>
+<p><a class="cta" href="GraceForsaken/">ゲームを始める</a>　<a class="cta quiet" href="grace-about.html">作品紹介を読む</a>　<a class="cta quiet" href="devlog.html">制作記録の一覧へ</a></p>
+
+</main>
+
+<div id="ad-inline"></div>
+
+<footer class="colophon">
+  <div class="inner">
+    <nav>
+      <a href="index.html">トップ</a>
+      <a href="index.html#games">ゲーム</a>
+      <a href="devlog.html">制作記録</a>
+      <a href="about.html">このサイトについて</a>
+      <a href="credits.html">クレジット</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+      <a href="contact.html">お問い合わせ</a>
+    </nav>
+    <p class="sig">SY4869 &middot; SYGAMES.NET</p>
+  </div>
+</footer>
+
+<script src="assets/js/ads.js"></script>
+</body>
+</html>

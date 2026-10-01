@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050409">
+<title>倒れた瞬間に、状態がぜんぶ消えていた｜制作記録</title>
+<meta name="description" content="『GraceForsaken』の公開後に見つかった不具合と、遊びやすくするために直したことを書きました。貫通攻撃と絶対領域、アンチヒールと蘇生、戦闘不能の演出と効果音、チュートリアルの作り直しなど。">
+<link rel="canonical" href="https://sygames.net/devlog-grace-fixes.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="SY GAMES">
+<meta property="og:title" content="倒れた瞬間に、状態がぜんぶ消えていた｜制作記録">
+<meta property="og:description" content="『GraceForsaken』の公開後に直した不具合と、遊びやすさの調整について書きました。">
+<meta property="og:url" content="https://sygames.net/devlog-grace-fixes.html">
+<meta property="og:image" content="https://sygames.net/assets/images/grace/thumb.webp">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="assets/css/site.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "倒れた瞬間に、状態がぜんぶ消えていた",
+  "description": "『GraceForsaken』の公開後に直した不具合と、遊びやすさの調整について書きました。",
+  "url": "https://sygames.net/devlog-grace-fixes.html",
+  "image": "https://sygames.net/assets/images/grace/thumb.webp",
+  "datePublished": "2026-10-02",
+  "inLanguage": "ja",
+  "author": { "@type": "Person", "name": "SY4869" },
+  "publisher": { "@type": "Person", "name": "SY4869" }
+}
+</script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6058664157090890"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="inner">
+    <a class="mark" href="index.html"><strong>SY GAMES</strong><span>SYGAMES.NET</span></a>
+    <nav class="topnav">
+      <a href="index.html">トップ</a>
+      <a href="index.html#games">ゲーム</a>
+      <a href="devlog.html" aria-current="page">制作記録</a>
+      <a href="about.html">このサイトについて</a>
+      <a href="contact.html">お問い合わせ</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+<p class="crumbs"><a href="index.html">トップ</a><span class="sep">›</span><a href="devlog.html">制作記録</a><span class="sep">›</span>倒れた瞬間に、状態がぜんぶ消えていた</p>
+<p class="eyebrow">DEV LOG &mdash; GRACE 03</p>
+<h1>倒れた瞬間に、<br>状態がぜんぶ消えていた</h1>
+<p class="lede">公開してからも、遊びながら気づいたことを修正案に書いて直し続けています。<br>今回もやっぱり、<b>画面を見ただけでは分からない不具合</b>がいくつかありました。</p>
+<p class="stamp">2026年10月2日 &middot; GraceForsaken</p>
+
+<div class="divider"></div>
+
+<section class="clause">
+  <h2><span class="num">Ⅰ</span>貫通しているはずなのに、無効化された</h2>
+  <p>公開してすぐに見つけたものです。沖田雫の【ブルーリコレクション】を使うと、そのあいだの攻撃は<b>貫通攻撃</b>になります。貫通は防御力を無視して、ダメージの無効化も通り抜ける、という決まりです。</p>
+  <p>ところが、物理ダメージを無効化する【絶対領域】を持つ相手に撃つと、ダメージが0になっていました。</p>
+  <p>原因は<b>判定の順番</b>でした。ダメージの計算では「この相手は無効化を持っているか」を先に調べて、そこで0にして終わっていたんです。貫通かどうかを見るのは、そのあと。なので貫通の確認までたどり着いていませんでした。順番を入れ替えて、貫通なら無効化を通り抜けるように直しています。</p>
+  <p>このとき「貫通」の意味をもう一度考え直して、あとから<b>貫通攻撃は属性相性の影響も受けない</b>ことにしました。防御を無視する攻撃なら、相性の倍率も乗らないほうが筋が通るので。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅱ</span>アンチヒールをかけたのに蘇った</h2>
+  <p>今回いちばん気づきにくかったのがこれです。</p>
+  <p>【アンチヒール】をかけた相手は、回復も蘇生も受けられません。ところが、その相手を倒したあとに【フェイブル・オブ・アビス】（倒れた味方をまとめて蘇らせるスキル）を使われると、<b>普通に蘇ってきました。</b></p>
+  <p>理由は、<b>戦闘不能になった瞬間に、そのキャラクターにかかっていた状態をすべて消していた</b>ことでした。倒れたキャラクターに攻撃力アップが残っていても意味がないので、まとめて消す。それ自体は自然な処理です。でもその「すべて」の中に、アンチヒールも入っていた。蘇生の判定をするころには、もうアンチヒールが残っていなかったんです。</p>
+  <p>いまは、戦闘不能になってもアンチヒールだけは残すようにしています。ほかの復活の手段（フレアを毎ラウンド蘇らせる【剣と薔薇の物語】など）も、同じように蘇生できなくなります。</p>
+  <div class="aside"><p><a href="devlog-chaos-struggle.html">前作の記事</a>で「キャラクターが取りうる状態を先に書き出しておけばよかった」と書きました。今回も、<b>「戦闘不能のときに残る状態」という欄</b>を、自分が一度も考えていませんでした。</p></div>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅲ</span>急に消えるのは、倒れたように見えない</h2>
+  <p>戦闘不能になったキャラクターは、最初は<b>マスからパッと消えるだけ</b>でした。仕様としては間違っていません。でも遊んでいると、何が起きたのか一瞬分からないんです。</p>
+  <p>そこで、その場で暗くなりながら少し沈んで、0.9秒かけて消えるようにしました。派手な演出は入れていません。倒れたことが伝われば十分なので。合わせて、倒れたときの効果音も鳴らすようにしています。</p>
+  <p>入れてみたら、今度は<b>倒れる音と攻撃の音が重なって</b>聞こえました。とどめの一撃の音と同時に鳴るので、どちらもはっきりしない。攻撃の効果音は0.7〜2.8秒あって、いちばん大きい音は鳴り始めにあります。なので倒れる音を<b>0.6秒だけ遅らせて</b>、攻撃の音が落ち着いてから、キャラクターが消えていく途中で鳴るようにしました。</p>
+  <p>こういう調整は、文章で仕様を書いている段階ではまず気づけません。実際に音を出して遊んでみて、初めて分かりました。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅳ</span>チュートリアルが、ただの戦闘だった</h2>
+  <p>最初のチュートリアルは、異形3体と1回戦うだけでした。ルールを知らない人にとっては、何も説明されないまま戦わされる場面です。</p>
+  <p>作り直すときに迷ったのは、説明の出し方でした。戦闘の前にまとめて読ませるか、場面ごとに出すか。最終的に<b>その場面になったら1回だけ解説を出す</b>形にしています。</p>
+  <table class="spec">
+    <tr><th>配置画面<span class="lat">PLACEMENT</span></th><td>マスと距離と射程のこと。</td></tr>
+    <tr><th>戦闘開始<span class="lat">START</span></th><td>ラウンドと行動順、勝利条件のこと。</td></tr>
+    <tr><th>最初の手番<span class="lat">COMMAND</span></th><td>コマンドの種類と、行動を消費しないクイックスキルのこと。</td></tr>
+    <tr><th>最初の攻撃のあと<span class="lat">ELEMENT</span></th><td>属性相性のこと。</td></tr>
+    <tr><th>最初に状態が付いたとき<span class="lat">STATUS</span></th><td>状態のことと、タグをタップすれば説明が出ること。</td></tr>
+  </table>
+  <p>まとめて読ませると、たぶん半分も覚えていられません。実際に目の前でそれが起きたときに説明されるほうが、頭に入りやすいと考えました。</p>
+  <p>属性相性と状態は、チュートリアルのあとも見られるようにしています。戦闘画面の「相性・状態」ボタンと、オプションの中から一覧を開けます。</p>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅴ</span>小さな不便を、ひとつずつ</h2>
+  <p>ほかにも、遊んでいて引っかかったところを順番に直しています。</p>
+  <ul>
+    <li>パーティ編成で、いちいち「編成する」ボタンを押さなくても、<b>ドラッグだけで</b>出し入れできるようにした</li>
+    <li>キャラクター一覧を、HPや速度など<b>能力値の順に並べ替え</b>られるようにした</li>
+    <li>最初のパーティを選ぶ画面で、「パーティに加える」ボタンが画面のかなり下にあったので、<b>キャラクター画像の上</b>に移した</li>
+    <li>スマートフォンでは<b>横画面で遊ぶ</b>ようにして、縦に持っているときは向きを変える案内を出すようにした（iPhone のブラウザでは、画面の向きを強制的に固定できないため）</li>
+    <li>ゲーム画面からこのサイトのトップへ戻る道がなかったので、他の2作と同じように<b>リンクを並べた</b></li>
+  </ul>
+  <p>どれも大きな仕様変更ではありません。ただ、自分で遊んでみないと出てこない種類の直しでした。</p>
+  <p>『GraceForsaken』は、シナリオもキャラクターもまだ増やしていく予定です。遊んでいて気になったことがあれば、<a href="contact.html">お問い合わせ</a>から教えてください。</p>
+</section>
+
+<div class="pager">
+  <a href="devlog-grace-pvp.html"><span class="lat">PREV</span>‹ リアルタイム対戦のために、サーバーを1台借りた</a>
+  <a href="devlog.html"><span class="lat">INDEX</span>制作記録の一覧へ ›</a>
+</div>
+
+<div class="divider"></div>
+<p><a class="cta" href="GraceForsaken/">ゲームを始める</a>　<a class="cta quiet" href="grace-howto.html">遊び方を読む</a>　<a class="cta quiet" href="devlog.html">制作記録の一覧へ</a></p>
+
+</main>
+
+<div id="ad-inline"></div>
+
+<footer class="colophon">
+  <div class="inner">
+    <nav>
+      <a href="index.html">トップ</a>
+      <a href="index.html#games">ゲーム</a>
+      <a href="devlog.html">制作記録</a>
+      <a href="about.html">このサイトについて</a>
+      <a href="credits.html">クレジット</a>
+      <a href="privacy.html">プライバシーポリシー</a>
+      <a href="contact.html">お問い合わせ</a>
+    </nav>
+    <p class="sig">SY4869 &middot; SYGAMES.NET</p>
+  </div>
+</footer>
+
+<script src="assets/js/ads.js"></script>
+</body>
+</html>

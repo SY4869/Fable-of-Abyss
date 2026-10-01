@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#050409">
 <title>制作記録｜SY GAMES</title>
-<meta name="description" content="個人でブラウザゲームを作った記録を置いています。『フェイブル・オブ・アビス』の構想と弾幕の作り方、ゲームシステムの設計、『カオスソードガーデン』の戦闘システムと、Claude Code に任せるうえで苦労したことを書きました。">
+<meta name="description" content="個人でブラウザゲームを作った記録を置いています。『フェイブル・オブ・アビス』の構想と弾幕の作り方、ゲームシステムの設計、『カオスソードガーデン』の戦闘システムと、Claude Code に任せるうえで苦労したこと、『GraceForsaken』の仕様の決め方とリアルタイム対戦の作り方を書きました。">
 <link rel="canonical" href="https://sygames.net/devlog.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="SY GAMES">
@@ -78,14 +78,34 @@
 </section>
 
 <section class="clause">
-  <h2><span class="num">Ⅲ</span>これから書く予定のこと</h2>
+  <h2><span class="num">Ⅲ</span>GraceForsaken</h2>
+  <ul class="postlist">
+    <li>
+      <span class="post-date">2026.10.02</span>
+      <h3><a href="devlog-grace-start.html">型のあるジャンルを、表から作る</a></h3>
+      <p>前作の反省から、仕様を要件定義書とデータの表に起こしてから作り始めました。それでも最初に4つ聞き返されて、ダメージの計算式を書き忘れていたことに気づきました。</p>
+    </li>
+    <li>
+      <span class="post-date">2026.10.02</span>
+      <h3><a href="devlog-grace-pvp.html">リアルタイム対戦のために、サーバーを1台借りた</a></h3>
+      <p>勝敗はサーバーが決める。時間切れと通信切れの決まりを先に書き出して、自動対戦のテストを回しました。そのテストが一度、ゲームではなく自分自身の前提で失敗した話も。</p>
+    </li>
+    <li>
+      <span class="post-date">2026.10.02</span>
+      <h3><a href="devlog-grace-fixes.html">倒れた瞬間に、状態がぜんぶ消えていた</a></h3>
+      <p>アンチヒールをかけたのに蘇る。貫通しているのに無効化される。公開後に見つけた不具合と、倒れる演出やチュートリアルの作り直しについて書きました。</p>
+    </li>
+  </ul>
+</section>
+
+<section class="clause">
+  <h2><span class="num">Ⅳ</span>これから書く予定のこと</h2>
   <p>公開して終わりにはせず、遊んで気づいたことを直しながら続けています。今後はこんな話を足していくつもりです。</p>
   <ul>
     <li>エクストラ難易度の調整が、どこで決着したか</li>
-    <li>ターン制コマンドバトル RPG の制作</li>
     <li>個人開発でバックエンドが必要になったときの選び方</li>
   </ul>
-  <p>各ゲームの仕様そのものは<a href="fable-about.html">フェイブル・オブ・アビスの作品紹介</a>と<a href="chaos-about.html">カオスソードガーデンの作品紹介</a>に、運営者と使っている技術は<a href="about.html">このサイトについて</a>にまとめてあります。</p>
+  <p>各ゲームの仕様そのものは<a href="fable-about.html">フェイブル・オブ・アビスの作品紹介</a>と<a href="chaos-about.html">カオスソードガーデンの作品紹介</a>、<a href="grace-about.html">GraceForsakenの作品紹介</a>に、運営者と使っている技術は<a href="about.html">このサイトについて</a>にまとめてあります。</p>
 </section>
 
 <div class="divider"></div>
