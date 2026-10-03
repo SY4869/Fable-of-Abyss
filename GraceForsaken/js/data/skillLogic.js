@@ -624,10 +624,10 @@ const SKILL_LOGIC = {
   },
 
   // ---------------- ブラド 第3話 ボス: ブラド ----------------
-  // ブラッド○○系（blood）を HP 消費なしで使え、毎ラウンド開始時に HP・MP +2
+  // ブラッド○○系（blood）を HP 消費なしで使え、毎ラウンド開始時に HP +2
   '星喰いの血': {
     act: 'passive',
-    passive: { bloodNoHpCost: true, regen: { hp: 2, mp: 2 } },
+    passive: { bloodNoHpCost: true, regen: { hp: 2 } },
   },
 
   // ---------------- 鬼羅瑠 第3話 ボス: 鬼神の髑髏 ----------------

@@ -223,7 +223,7 @@ const Screens = {
         el('button', { class: 'btn small ghost', 'data-se': 'cancel', text: 'タイトルへ', onclick: () => { App.stack = []; App.show(Screens.title, []); } }),
         el('a', { class: 'site-home', href: SITE_LINKS[0][1], text: 'ゲーム選択へ（SY GAMES）' }),
         el('div', { class: 'spacer' }),
-        el('span', { class: 'faint', text: 'Ver. 1.2.11' }),
+        el('span', { class: 'faint', text: 'Ver. 1.2.12' }),
       ]),
     ]);
   },
@@ -1068,13 +1068,19 @@ const Novel = {
     };
 
     let shownScene = null;
+    let shownBg = null;
     const show = () => {
       const sc = scenes[si];
       const line = sc.lines[li];
       sceneNode.textContent = sc.title;
-      if (shownScene !== sc) {
+      // 背景（場面の背景、または bgSteps で行ごとに切り替え）
+      let bg = sc.bg || null;
+      (sc.bgSteps || []).forEach(st => { if (st[0] <= li) bg = st[1]; });
+      const bgKey = bg ? bg.place + (bg.night ? '@night' : '') : '';
+      if (shownScene !== sc || bgKey !== shownBg) {
         shownScene = sc;
-        App.setBackground('story', sc.bg || null);
+        shownBg = bgKey;
+        App.setBackground('story', bg);
       }
       const pl = parseLine(line);
       const who = pl.who;
