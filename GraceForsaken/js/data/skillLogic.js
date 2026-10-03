@@ -117,7 +117,7 @@ const SKILL_LOGIC = {
   // ---------------- No.4 ソフィア ----------------
   '鏡よ鏡': {
     act: 'passive',
-    passive: { flags: { ignoreStealth: true }, nightStats: { atkMag: 2 } },
+    passive: { flags: { ignoreStealth: true }, nightStats: { atkMag: 3 } },
   },
   'アズールスピア': {
     act: 'attack', tgt: 'ENEMY_ONE',
@@ -356,7 +356,7 @@ const SKILL_LOGIC = {
   },
   'マキシマムストリーム': {
     act: 'attack', tgt: 'ENEMY_ONE',
-    atk: { base: 'atkPhys', mod: 8, dmg: 'PHYS', pierce: true },
+    atk: { base: 'atkPhys', mod: 4, dmg: 'PHYS', pierce: true },
   },
 
   // ---------------- No.17 アネシア ----------------
@@ -409,7 +409,8 @@ const SKILL_LOGIC = {
   // ---------------- No.22 イレイナ ----------------
   '魂転': {
     act: 'passive',
-    passive: { flags: { ignoreStealth: true, alwaysHit: true } },
+    // 隠密状態の相手へのダメージ +4（最終ダメージに加算）
+    passive: { flags: { ignoreStealth: true, alwaysHit: true }, vsStealthBonus: 4 },
   },
   '食魂': {
     act: 'attack', tgt: 'ENEMY_ONE',
@@ -480,7 +481,7 @@ const SKILL_LOGIC = {
   },
   'インドラの矢': {
     act: 'attack', tgt: 'ENEMY_ONE',
-    atk: { base: 'atkMag', mod: 8, dmg: 'MAG', pierce: true },
+    atk: { base: 'atkMag', mod: 4, dmg: 'MAG', pierce: true },
   },
 
   // ---------------- No.30 カオス ----------------
@@ -620,6 +621,38 @@ const SKILL_LOGIC = {
   },
   '流れ星の奇跡': {
     act: 'special', tgt: 'NONE', custom: 'shootingStar',
+  },
+
+  // ---------------- リリアーネ 第3話 ボス: 運命を射る眼 ----------------
+  '確定の未来': {
+    act: 'passive',
+    passive: { flags: { ignoreStealth: true, alwaysHit: true } },
+  },
+  '運命の矢': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkPhys', mod: 3, dmg: 'PHYS' },
+  },
+  '確定の雨': {
+    act: 'attack', tgt: 'ENEMY_AREA',
+    atk: { base: 'atkPhys', mod: -2, dmg: 'PHYS' },
+  },
+  '凝視': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkMag', mod: 2, dmg: 'MAG' },
+    then: [{ act: 'buff', tgt: 'TARGET', buff: { dur: 2, stats: { speed: -3 } } }],
+  },
+  '未来の書き換え': {
+    act: 'buff', tgt: 'ENEMY_AREA', quick: true,
+    buff: { dur: 3, eva: -20 },
+  },
+  '執行者の招集': {
+    act: 'special', tgt: 'NONE', custom: 'summon', summonName: '刻印の執行者',
+  },
+  // 使ったラウンドから数えて3ラウンド目の終わりに、敵全体へ魔攻+4の貫通ダメージ。
+  // 最初の手番で必ず使い、1戦闘に1回だけ
+  '終焉の宣告': {
+    act: 'buff', tgt: 'SELF', oncePerBattle: true, aiFirstTurn: true,
+    buff: { dur: 3, flags: { delayedBlast: { base: 'atkMag', mod: 4, pierce: true } } },
   },
 
   // ---------------- 緋天飛鳥 第3話 ボス: 六刀の剣鬼 ----------------

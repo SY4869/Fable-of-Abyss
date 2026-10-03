@@ -205,17 +205,32 @@ class Battle {
     if (this.checkEnd()) return;
 
     // バフの持続ターンを減らす
+    const blasts = [];
     this.allUnits().forEach(u => {
       u.buffs = u.buffs.filter(b => {
         if (b.dur === Infinity) return true;
         b.dur--;
         if (b.dur <= 0) {
+          if (b.flags && b.flags.delayedBlast) { blasts.push({ unit: u, name: b.name, spec: b.flags.delayedBlast }); return false; }
           this.say(u.displayName + 'の【' + b.name + '】の効果が切れた。', 'minor');
           return false;
         }
         return true;
       });
     });
+
+    // 時間差で発動する効果（終焉の宣告）
+    blasts.forEach(bl => {
+      if (!bl.unit.alive) return;
+      const amount = stats(bl.unit, this.field)[bl.spec.base] + (bl.spec.mod || 0);
+      this.say(bl.unit.displayName + 'の【' + bl.name + '】の刻限が来た！', 'skill');
+      this.emit('action', { actor: bl.unit, name: bl.name, element: bl.unit.element, quick: false });
+      this.enemiesOf(bl.unit).forEach(t => {
+        if (t.alive) this.resolveAttack(bl.unit, t, { power: amount, dmg: 'MAG', pierce: !!bl.spec.pierce, sure: true },
+          { name: bl.name, element: bl.unit.element });
+      });
+    });
+    if (this.checkEnd()) return;
 
     this.beginRound();
   }
@@ -646,6 +661,10 @@ class Battle {
     const el = meta.element || actor.element;
     const mult = pierce ? 1 : elementMultiplier(el, target.element);
     if (mult !== 1) dmg = Math.floor(dmg * mult);
+
+    // 魂転: 隠密状態の相手へのダメージを加算
+    const sp = passiveOf(actor);
+    if (sp && sp.vsStealthBonus && isStealthed(target)) dmg += sp.vsStealthBonus;
 
     // 抜刀《防》
     const guard = target.buffs.find(b => b.flags && b.flags.nextDefReduce);

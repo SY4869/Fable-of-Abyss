@@ -116,6 +116,8 @@ const AI = {
     if (!lg || !sk) return 0;
     const s = stats(unit, battle.field);
     const cost = skillCost(unit, id);
+    // 終焉の宣告など「最初の手番で必ず使う」スキル（1戦闘1回）
+    if (lg.aiFirstTurn) return unit._usedOnce && unit._usedOnce[id] ? 0 : 999;
 
     switch (lg.act) {
       case 'attack': {
