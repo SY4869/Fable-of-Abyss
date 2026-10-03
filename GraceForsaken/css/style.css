@@ -504,6 +504,11 @@ body { background: transparent; }
   animation: heroIn .6s ease;
 }
 .novel-art.dim { filter: drop-shadow(0 0 30px rgba(0, 0, 0, .8)) brightness(.55); }
+/* 敵（話者）の立ち絵は主人公と同じ位置で入れ替える */
+.novel-art { transition: filter .3s, opacity .35s; }
+.novel-art.hidden { opacity: 0; }
+.novel-art.novel-other { opacity: 0; animation: none; pointer-events: none; }
+.novel-art.novel-other.shown { opacity: 1; }
 .novel-scene {
   position: absolute; top: 16px; left: 20px; font-family: var(--serif); font-size: 12.5px; letter-spacing: .2em;
   color: var(--silver-dim); padding: 4px 16px; border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft);

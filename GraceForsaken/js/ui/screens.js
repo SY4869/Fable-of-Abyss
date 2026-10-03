@@ -223,7 +223,7 @@ const Screens = {
         el('button', { class: 'btn small ghost', 'data-se': 'cancel', text: 'タイトルへ', onclick: () => { App.stack = []; App.show(Screens.title, []); } }),
         el('a', { class: 'site-home', href: SITE_LINKS[0][1], text: 'ゲーム選択へ（SY GAMES）' }),
         el('div', { class: 'spacer' }),
-        el('span', { class: 'faint', text: 'Ver. 1.2.10' }),
+        el('span', { class: 'faint', text: 'Ver. 1.2.11' }),
       ]),
     ]);
   },
@@ -325,6 +325,10 @@ const Screens = {
     });
 
     const toList = () => { App.stack = []; App.show(Screens.storyCharacters, [charName]); };
+    // ノベルで敵の立ち絵を出すための敵の一覧（ボスを先頭に）
+    const novelEnemies = ep.battle ? ep.battle.enemies.slice()
+      .sort((a, b) => (b.boss ? 1 : 0) - (a.boss ? 1 : 0)).map(e => e.name)
+      .filter(n => n !== charName && n !== ep.battle.guest) : [];
 
     const runBattle = () => {
       if (!ep.battle) { finish('WIN'); return; }
@@ -361,11 +365,11 @@ const Screens = {
       // クリア後パート → 結果
       // 最終話のクリア後（エピローグ）は専用BGM
       Novel.play(post, () => Screens.showStoryResult(charName, epNo, r, acquired),
-        { character: master, bgm: epNo === lastEp ? 'chapterClear' : 'story' });
+        { character: master, enemies: novelEnemies, bgm: epNo === lastEp ? 'chapterClear' : 'story' });
     };
 
     // 戦闘前パート
-    setTimeout(() => Novel.play(pre, runBattle, { character: master }), 0);
+    setTimeout(() => Novel.play(pre, runBattle, { character: master, enemies: novelEnemies }), 0);
     return el('div', { class: 'screen' });
   },
 
@@ -977,7 +981,15 @@ function resultModal(result, body, buttons) {
 const Novel = {
   /**
    * scenes: [{title, lines[]}] を1行ずつ表示し、終わったら done()
-   * opt: { character } … 立ち絵と話者名に使うキャラクター
+   * opt: { character, enemies } … 立ち絵と話者名に使うキャラクター／その話の敵の名前（ボスが先頭）
+   *
+   * 行の書き方
+   *   「…」          … そのキャラクターのセリフ
+   *   『…』          … 正体不明の声（その話の敵の立ち絵を出す）
+   *   @名前「…」     … 話者を指定したセリフ（名前の立ち絵と名前を出す）
+   *   @名前(立ち絵)「…」 … 表示名と立ち絵を別に指定する（例: @大司教(神の器となった大司教)「…」）
+   *   @名前(-)「…」  … 立ち絵を出さずに名前だけ出す
+   *   地の文          … 敵の名前が出てくる行は、その敵の立ち絵を出す
    */
   play(scenes, done, opt) {
     opt = opt || {};
@@ -989,6 +1001,32 @@ const Novel = {
     const history = [];
 
     const art = chara ? standImg(chara, 'novel-art') : null;
+    // 敵（話者）の立ち絵。必要になったものから作り、同じ位置で入れ替える
+    const sideArts = {};
+    const artFor = (key) => {
+      if (!key) return null;
+      if (!sideArts[key]) {
+        sideArts[key] = standImg(key, 'novel-art novel-other');
+        screen.insertBefore(sideArts[key], sceneNode);
+      }
+      return sideArts[key];
+    };
+    /** 名前から立ち絵キーを得る（味方キャラ → 敵の立ち絵 の順に探す） */
+    const portraitFor = (name) => {
+      if (!name) return '';
+      const m = CHARACTER_MASTER.find(c => c.name === name);
+      if (m) return m.portrait || '';
+      return enemyPortrait(name);
+    };
+    // 地の文で敵を見分ける言葉（「神の器となった大司教」なら「大司教」も）
+    const enemyNames = (opt.enemies || []).filter(n => !chara || n !== chara.name);
+    const enemyTerms = [];
+    enemyNames.forEach(n => {
+      enemyTerms.push({ term: n, name: n });
+      const tail = n.split(/[のた]/).pop();
+      if (tail && tail !== n && tail.length >= 2) enemyTerms.push({ term: tail, name: n });
+    });
+    enemyTerms.sort((a, b) => b.term.length - a.term.length);
     const sceneNode = el('div', { class: 'novel-scene' });
     const nameNode = el('div', { class: 'novel-name' });
     const textNode = el('div', { class: 'novel-text' });
@@ -1011,11 +1049,22 @@ const Novel = {
       done();
     };
 
-    // 「」はそのキャラクター、『』は正体不明の声、それ以外は地の文として扱う
-    const speakerOf = (line) => {
-      if (/^「/.test(line)) return chara ? chara.name : '';
-      if (/^『/.test(line)) return '？？？';
-      return '';
+    /** 行を解釈する: { who: 表示する話者名, text: 本文, portrait: 出す立ち絵（主人公なら ''）, enemy: 敵の場面か } */
+    const parseLine = (line) => {
+      const m = /^@([^「『(（]+)(?:[(（]([^)）]+)[)）])?(?=[「『])/.exec(line);
+      if (m) {
+        const who = m[1].trim();
+        const key = m[2] ? m[2].trim() : who;
+        const isChara = chara && key === chara.name;
+        // (-) は立ち絵を出さない（正体を伏せたい場面など）
+        if (key === '-') return { who: who, text: line.slice(m[0].length), portrait: '', enemy: false };
+        return { who: who, text: line.slice(m[0].length), portrait: isChara ? '' : portraitFor(key), enemy: !isChara };
+      }
+      if (/^「/.test(line)) return { who: chara ? chara.name : '', text: line, portrait: '', enemy: false };
+      if (/^『/.test(line)) return { who: '？？？', text: line, portrait: portraitFor(enemyNames[0]), enemy: true };
+      const hit = enemyTerms.find(t => line.indexOf(t.term) >= 0);
+      if (hit) return { who: '', text: line, portrait: portraitFor(hit.name), enemy: true };
+      return { who: '', text: line, portrait: '', enemy: false };
     };
 
     let shownScene = null;
@@ -1027,15 +1076,23 @@ const Novel = {
         shownScene = sc;
         App.setBackground('story', sc.bg || null);
       }
-      const who = speakerOf(line);
+      const pl = parseLine(line);
+      const who = pl.who;
       nameNode.textContent = who;
       nameNode.style.visibility = who ? 'visible' : 'hidden';
-      textNode.textContent = line;
+      textNode.textContent = pl.text;
       textNode.classList.remove('in');
       void textNode.offsetWidth;
       textNode.classList.add('in');
-      if (art) art.classList.toggle('dim', !who || who !== chara.name);
-      history.push({ who: who, line: line });
+      // 敵（話者）の場面ではその立ち絵に入れ替え、主人公の立ち絵は隠す
+      const other = pl.enemy ? artFor(pl.portrait) : null;
+      Object.keys(sideArts).forEach(k => sideArts[k].classList.toggle('shown', sideArts[k] === other));
+      if (art) {
+        art.classList.toggle('hidden', !!other);
+        art.classList.toggle('dim', !who || !chara || who !== chara.name);
+      }
+      if (other) other.classList.toggle('dim', !who);
+      history.push({ who: who, line: pl.text });
       if (auto) {
         clearTimeout(autoTimer);
         autoTimer = setTimeout(advance, 1400 + line.length * 45);

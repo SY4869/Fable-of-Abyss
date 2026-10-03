@@ -623,6 +623,41 @@ const SKILL_LOGIC = {
     act: 'special', tgt: 'NONE', custom: 'shootingStar',
   },
 
+  // ---------------- ブラド 第3話 ボス: ブラド ----------------
+  // ブラッド○○系（blood）を HP 消費なしで使え、毎ラウンド開始時に HP・MP +2
+  '星喰いの血': {
+    act: 'passive',
+    passive: { bloodNoHpCost: true, regen: { hp: 2, mp: 2 } },
+  },
+
+  // ---------------- 鬼羅瑠 第3話 ボス: 鬼神の髑髏 ----------------
+  '怒りを喰らう': {
+    act: 'passive',
+    passive: { onAllyDeath: { perm: { atkPhys: 2, defPhys: 2 } } },
+  },
+  '鬼神の剛腕': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkPhys', mod: 3, dmg: 'PHYS' },
+  },
+  '地砕き': {
+    act: 'attack', tgt: 'ENEMY_AREA',
+    atk: { base: 'atkPhys', mod: -2, dmg: 'PHYS' },
+  },
+  '怨嗟の鬼火': {
+    act: 'attack', tgt: 'ENEMY_AREA',
+    atk: { base: 'atkMag', mod: -2, dmg: 'MAG' },
+  },
+  '憤怒の咆哮': {
+    act: 'buff', tgt: 'SELF', quick: true,
+    buff: { dur: 3, stats: { atkPhys: 3, defPhys: -2 } },
+  },
+  '鬼憑かせ': {
+    act: 'special', tgt: 'ENEMY_ONE', custom: 'charm',
+  },
+  '鬼憑き招来': {
+    act: 'special', tgt: 'NONE', custom: 'summon', summonName: '鬼憑きの町人',
+  },
+
   // ---------------- リリアーネ 第3話 ボス: 運命を射る眼 ----------------
   '確定の未来': {
     act: 'passive',
