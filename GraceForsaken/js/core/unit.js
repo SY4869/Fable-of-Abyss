@@ -109,7 +109,7 @@ function enemyPortrait(name) {
 
 /** 「魔人ベース」のモブ敵を生成 */
 function unitMob(flavorName, side, area, rng) {
-  const pool = SKILL_MASTER.filter(s => s.category !== 'PASSIVE');
+  const pool = SKILL_MASTER.filter(s => s.category !== 'PASSIVE' && !s.bossOnly);   // ボス専用スキルは除く
   const picked = rng.sample(pool, CONFIG.MOB.skillCount).map(s => s.id);
   const m = CONFIG.MOB;
   return createUnit({

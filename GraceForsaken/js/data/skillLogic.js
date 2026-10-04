@@ -623,6 +623,46 @@ const SKILL_LOGIC = {
     act: 'special', tgt: 'NONE', custom: 'shootingStar',
   },
 
+  // ---------------- アン 第3話 ボス: 人喰い迷宮の核 ----------------
+  // 毎ラウンド開始時に、敵1体（ランダム）へ物理攻撃力-4の物理ダメージ
+  '生きている迷宮': {
+    act: 'passive',
+    passive: { roundStartStrike: { base: 'atkPhys', mod: -4, dmg: 'PHYS' } },
+  },
+  '石壁の圧殺': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkPhys', mod: 3, dmg: 'PHYS' },
+  },
+  '消化液': {
+    act: 'attack', tgt: 'ENEMY_AREA',
+    atk: { base: 'atkMag', mod: -2, dmg: 'MAG' },
+    then: [{ act: 'buff', tgt: 'ENEMY_AREA', buff: { dur: 2, stats: { defPhys: -2 } } }],
+  },
+  '落とし穴': {
+    act: 'buff', tgt: 'ENEMY_ONE',
+    buff: { dur: 3, stats: { speed: -4 } },
+  },
+  '宝の幻影': {
+    act: 'special', tgt: 'ENEMY_ONE', custom: 'charm',
+  },
+  '迷宮の再構築': {
+    act: 'buff', tgt: 'SELF', quick: true,
+    buff: { dur: 99, shield: { base: 'defPhys', div: 1 } },
+  },
+  '番人の招集': {
+    act: 'special', tgt: 'NONE', custom: 'summon', summonName: '迷宮の番人',
+  },
+
+  // ---------------- リサ 第3話 ボス: リサ ----------------
+  // ダメージを受けるたびに MP・物攻・魔攻 +2。HPが0になる攻撃を1度だけHP1で耐え、物防・魔防+10、以後1以下のダメージを無効化
+  '不死なる復讐者': {
+    act: 'passive',
+    passive: {
+      onDamagedPerm: { mp: 2, atkPhys: 2, atkMag: 2 },
+      undying: { defPhys: 10, defMag: 10, ignoreDamageUpTo: 1 },
+    },
+  },
+
   // ---------------- ブラド 第3話 ボス: ブラド ----------------
   // ブラッド○○系（blood）を HP 消費なしで使え、毎ラウンド開始時に HP +2
   '星喰いの血': {

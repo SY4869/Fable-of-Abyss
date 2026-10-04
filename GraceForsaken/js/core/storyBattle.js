@@ -20,7 +20,8 @@ function hashString(s) {
     const bd = ep.battle && ep.battle.bossData;
     if (!bd) return;
     Object.keys(bd).forEach(name => (bd[name].skillDefs || []).forEach(def => {
-      if (!SKILL_MASTER.some(s => s.id === def.id)) SKILL_MASTER.push(def);
+      // ボス専用（雑魚敵がランダムに覚えるスキルの候補には入れない）
+      if (!SKILL_MASTER.some(s => s.id === def.id)) SKILL_MASTER.push(Object.assign({}, def, { bossOnly: true }));
       if (!SKILL_LOGIC[def.id] && typeof console !== 'undefined') {
         console.warn('ボス専用スキル『' + def.id + '』の効果が skillLogic.js にありません');
       }
@@ -99,7 +100,7 @@ const StoryBattle = {
           u = unitMob(label, 'ENEMY', 1, rng);
           if (entry.boss) {
             // ボスモブにはスキルを多めに与える
-            const pool = SKILL_MASTER.filter(s => s.category !== 'PASSIVE');
+            const pool = SKILL_MASTER.filter(s => s.category !== 'PASSIVE' && !s.bossOnly);
             u.skills = rng.sample(pool, CONFIG.BOSS.skillCount).map(s => s.id);
           }
         }

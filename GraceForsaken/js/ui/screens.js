@@ -223,7 +223,7 @@ const Screens = {
         el('button', { class: 'btn small ghost', 'data-se': 'cancel', text: 'タイトルへ', onclick: () => { App.stack = []; App.show(Screens.title, []); } }),
         el('a', { class: 'site-home', href: SITE_LINKS[0][1], text: 'ゲーム選択へ（SY GAMES）' }),
         el('div', { class: 'spacer' }),
-        el('span', { class: 'faint', text: 'Ver. 1.2.13' }),
+        el('span', { class: 'faint', text: 'Ver. 1.2.14' }),
       ]),
     ]);
   },
@@ -325,6 +325,8 @@ const Screens = {
     });
 
     const toList = () => { App.stack = []; App.show(Screens.storyCharacters, [charName]); };
+    // 主人公が登場したか（ストーリーパートで登場したら、クリア後パートは最初から表示）
+    const appearance = { shown: false };
     // ノベルで敵の立ち絵を出すための敵の一覧（ボスを先頭に）
     const novelEnemies = ep.battle ? ep.battle.enemies.slice()
       .sort((a, b) => (b.boss ? 1 : 0) - (a.boss ? 1 : 0)).map(e => e.name)
@@ -365,11 +367,11 @@ const Screens = {
       // クリア後パート → 結果
       // 最終話のクリア後（エピローグ）は専用BGM
       Novel.play(post, () => Screens.showStoryResult(charName, epNo, r, acquired),
-        { character: master, enemies: novelEnemies, bgm: epNo === lastEp ? 'chapterClear' : 'story' });
+        { character: master, enemies: novelEnemies, appearance: appearance, bgm: epNo === lastEp ? 'chapterClear' : 'story' });
     };
 
     // 戦闘前パート
-    setTimeout(() => Novel.play(pre, runBattle, { character: master, enemies: novelEnemies }), 0);
+    setTimeout(() => Novel.play(pre, runBattle, { character: master, enemies: novelEnemies, appearance: appearance }), 0);
     return el('div', { class: 'screen' });
   },
 
@@ -978,6 +980,11 @@ function resultModal(result, body, buttons) {
 // ===================================================================
 // ノベルパート再生
 // ===================================================================
+// 本文で名字を省いて呼ばれる主人公（ノベルで登場を見分けるのに使う）
+const NOVEL_SHORT_NAMES = {
+  '双海隆二': ['隆二'], '沖田雫': ['雫'], '瞬瞑龍斗': ['龍斗'], '緋天飛鳥': ['飛鳥'], '連炎華凛': ['華凛'],
+};
+
 const Novel = {
   /**
    * scenes: [{title, lines[]}] を1行ずつ表示し、終わったら done()
@@ -1027,6 +1034,25 @@ const Novel = {
       if (tail && tail !== n && tail.length >= 2) enemyTerms.push({ term: tail, name: n });
     });
     enemyTerms.sort((a, b) => b.term.length - a.term.length);
+
+    // 主人公が初めて登場する行（セリフ・名前が出る行。その直前が姿の描写ならそこから）
+    const appearance = opt.appearance || { shown: !chara };
+    const flatLines = [].concat.apply([], scenes.map(sc => sc.lines));
+    const LOOKS = /のは、|姿|少女|少年|青年|女性|女が|男が|人影|髪|身を包|まとった/;
+    // 本文で名字を省いて呼ばれる主人公（「隆二」「雫」など）
+    const calledAs = chara ? [chara.name].concat(NOVEL_SHORT_NAMES[chara.name] || []) : [];
+    let appearAt = 0;
+    if (chara && !appearance.shown) {
+      appearAt = flatLines.findIndex(l => {
+        const m = /^@([^「『(（]+)/.exec(l);
+        if (m) return m[1].trim() === chara.name;
+        return /^「/.test(l) || calledAs.some(n => l.indexOf(n) >= 0);
+      });
+      if (appearAt < 0) appearAt = flatLines.length;
+      const before = flatLines[appearAt - 1];
+      if (appearAt > 0 && before && !/^[「『@]/.test(before) && LOOKS.test(before)) appearAt--;
+    }
+    let lineNo = -1;   // 全場面を通した行番号
     const sceneNode = el('div', { class: 'novel-scene' });
     const nameNode = el('div', { class: 'novel-name' });
     const textNode = el('div', { class: 'novel-text' });
@@ -1082,6 +1108,8 @@ const Novel = {
         shownBg = bgKey;
         App.setBackground('story', bg);
       }
+      lineNo = flatLines.indexOf(line, Math.max(0, lineNo));
+      if (lineNo >= appearAt) appearance.shown = true;
       const pl = parseLine(line);
       const who = pl.who;
       nameNode.textContent = who;
@@ -1094,7 +1122,8 @@ const Novel = {
       const other = pl.enemy ? artFor(pl.portrait) : null;
       Object.keys(sideArts).forEach(k => sideArts[k].classList.toggle('shown', sideArts[k] === other));
       if (art) {
-        art.classList.toggle('hidden', !!other);
+        // 登場するまでは主人公の立ち絵を出さない
+        art.classList.toggle('hidden', !!other || !appearance.shown);
         art.classList.toggle('dim', !who || !chara || who !== chara.name);
       }
       if (other) other.classList.toggle('dim', !who);

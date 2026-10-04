@@ -95,6 +95,17 @@ class Battle {
       if (p && p.flareSupport) this.supportFlare(u, p.flareSupport);
     });
 
+    // 生きている迷宮（ラウンド開始時に敵1体へ攻撃）
+    this.allUnits().forEach(u => {
+      const p = u.alive && passiveOf(u);
+      if (!p || !p.roundStartStrike) return;
+      const t = this.rng.pick(this.enemiesOf(u).filter(e => e.alive));
+      if (!t) return;
+      this.say(u.displayName + 'の【' + u.passiveId + '】！', 'skill');
+      this.resolveAttack(u, t, Object.assign({ sure: true }, p.roundStartStrike), { name: u.passiveId, element: u.element });
+    });
+    if (this.checkEnd()) return;
+
     this.allUnits().forEach(u => {
       if (!u.alive) return;
       u.tookDamageLastRound = u.tookDamageThisRound;
@@ -728,6 +739,8 @@ class Battle {
     target.buffs.forEach(b => {
       if (b.flags && b.flags.onDamagedPerm) this.gainPerm(target, b.flags.onDamagedPerm, b.name);
     });
+    const dp = passiveOf(target);
+    if (dp && dp.onDamagedPerm && target.hp > 0) this.gainPerm(target, dp.onDamagedPerm, target.passiveId);
     const tp = passiveOf(target);
     if (tp && tp.onAttackedDebuff && source && source.alive && source.side !== target.side) {
       this.applyBuff(source, Object.assign({ stack: true }, tp.onAttackedDebuff), target.passiveId, target);
