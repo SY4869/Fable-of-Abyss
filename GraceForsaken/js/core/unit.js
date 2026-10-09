@@ -95,7 +95,7 @@ function unitFromMaster(master, skills, side, area, opt) {
 const PORTRAIT_ALIAS = {
   '神の器となった大司教': '怪しい神父',
 };
-function enemyPortrait(name) {
+function enemyPortrait(name, opt) {
   const list = typeof PORTRAIT_LIST !== 'undefined' ? PORTRAIT_LIST : [];
   const base = String(name || '').replace(/[A-H]$/, '');
   if (list.indexOf(base) >= 0) return base;
@@ -104,6 +104,8 @@ function enemyPortrait(name) {
   const hit = list.filter(k => /[^\x00-\x7f]/.test(k) && k !== '魔人' && base.indexOf(k) >= 0)
     .sort((a, b) => b.length - a.length)[0];
   if (hit) return hit;
+  // 戦闘では見た目の代わりとして魔人の立ち絵を使う（ノベルでは noFallback で「立ち絵なし」にする）
+  if (opt && opt.noFallback) return '';
   return list.indexOf('魔人') >= 0 ? '魔人' : '';
 }
 

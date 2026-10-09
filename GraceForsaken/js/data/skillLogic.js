@@ -623,6 +623,36 @@ const SKILL_LOGIC = {
     act: 'special', tgt: 'NONE', custom: 'shootingStar',
   },
 
+  // ---------------- セレス 第3話 ボス: 風に乗りて歩むもの ----------------
+  // 回避率+20%。毎ラウンド開始時に、敵が一番多いエリアの敵全体の速度を そのラウンドだけ -1
+  '吹き荒ぶ風': {
+    act: 'passive',
+    passive: { eva: 20, roundStartAreaDebuff: { dur: 1, stats: { speed: -1 } } },
+  },
+  '天への攫い': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkPhys', mod: 3, dmg: 'PHYS' },
+  },
+  '竜巻': {
+    act: 'attack', tgt: 'ENEMY_AREA',
+    atk: { base: 'atkPhys', mod: -2, dmg: 'PHYS' },
+  },
+  '凍てつく烈風': {
+    act: 'attack', tgt: 'ENEMY_AREA',
+    atk: { base: 'atkMag', mod: -2, dmg: 'MAG' },
+  },
+  '極寒の吐息': {
+    act: 'buff', tgt: 'ENEMY_AREA',
+    buff: { dur: 3, stats: { speed: -2, atkPhys: -2 } },
+  },
+  '嵐の眼': {
+    act: 'buff', tgt: 'SELF', quick: true,
+    buff: { dur: 3, eva: 20 },
+  },
+  '嵐の眷属招来': {
+    act: 'special', tgt: 'NONE', custom: 'summon', summonName: '嵐の眷属',
+  },
+
   // ---------------- アン 第3話 ボス: 人喰い迷宮の核 ----------------
   // 毎ラウンド開始時に、敵1体（ランダム）へ物理攻撃力-4の物理ダメージ
   '生きている迷宮': {

@@ -223,7 +223,7 @@ const Screens = {
         el('button', { class: 'btn small ghost', 'data-se': 'cancel', text: 'タイトルへ', onclick: () => { App.stack = []; App.show(Screens.title, []); } }),
         el('a', { class: 'site-home', href: SITE_LINKS[0][1], text: 'ゲーム選択へ（SY GAMES）' }),
         el('div', { class: 'spacer' }),
-        el('span', { class: 'faint', text: 'Ver. 1.2.14' }),
+        el('span', { class: 'faint', text: 'Ver. 1.2.15' }),
       ]),
     ]);
   },
@@ -1023,7 +1023,8 @@ const Novel = {
       if (!name) return '';
       const m = CHARACTER_MASTER.find(c => c.name === name);
       if (m) return m.portrait || '';
-      return enemyPortrait(name);
+      // 専用の立ち絵がない人物（討伐隊長・村の老人など）には出さない
+      return enemyPortrait(name, { noFallback: true });
     };
     // 地の文で敵を見分ける言葉（「神の器となった大司教」なら「大司教」も）
     const enemyNames = (opt.enemies || []).filter(n => !chara || n !== chara.name);

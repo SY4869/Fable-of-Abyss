@@ -95,6 +95,20 @@ class Battle {
       if (p && p.flareSupport) this.supportFlare(u, p.flareSupport);
     });
 
+    // 吹き荒ぶ風（ラウンド開始時に、敵が一番多いエリアへ1ラウンドの弱体）
+    this.allUnits().forEach(u => {
+      const p = u.alive && passiveOf(u);
+      if (!p || !p.roundStartAreaDebuff) return;
+      const foes = this.enemiesOf(u).filter(e => e.alive);
+      if (!foes.length) return;
+      const count = {};
+      foes.forEach(e => { count[e.area] = (count[e.area] || 0) + 1; });
+      const area = Object.keys(count).map(Number).sort((a, b) => count[b] - count[a] || a - b)[0];
+      this.say(u.displayName + 'の【' + u.passiveId + '】！', 'skill');
+      // 次の「効果切れ」の判定（ラウンド終了時）で消えるよう、残り1ラウンドとして付ける
+      foes.filter(e => e.area === area).forEach(e => this.applyBuff(e, p.roundStartAreaDebuff, u.passiveId, u));
+    });
+
     // 生きている迷宮（ラウンド開始時に敵1体へ攻撃）
     this.allUnits().forEach(u => {
       const p = u.alive && passiveOf(u);
