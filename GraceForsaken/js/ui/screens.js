@@ -223,7 +223,7 @@ const Screens = {
         el('button', { class: 'btn small ghost', 'data-se': 'cancel', text: 'タイトルへ', onclick: () => { App.stack = []; App.show(Screens.title, []); } }),
         el('a', { class: 'site-home', href: SITE_LINKS[0][1], text: 'ゲーム選択へ（SY GAMES）' }),
         el('div', { class: 'spacer' }),
-        el('span', { class: 'faint', text: 'Ver. 1.2.15' }),
+        el('span', { class: 'faint', text: 'Ver. 1.2.16' }),
       ]),
     ]);
   },
@@ -240,8 +240,14 @@ const Screens = {
 
     const left = el('div', { class: 'story-stage' });
     const list = el('div', { class: 'story-banners' });
+    const side = el('div', { class: 'story-side panel frame' }, [
+      el('div', { class: 'panel-head', text: 'キャラクターシナリオ' }),
+      list,
+    ]);
 
     const render = () => {
+      // 作り直してもバナー一覧のスクロール位置が上に戻らないようにする
+      const keepScroll = side.scrollTop;
       clear(left);
       clear(list);
       if (current) {
@@ -297,15 +303,13 @@ const Screens = {
           el('span', { class: 'banner-text' }, [el('b', { text: m.name }), el('small', { text: 'Coming Soon' })]),
         ]));
       });
+      side.scrollTop = keepScroll;
     };
     render();
 
     return el('div', { class: 'screen' }, [
       topbar('ストーリー', { en: 'STORY' }),
-      el('div', { class: 'story-layout' }, [left, el('div', { class: 'story-side panel frame' }, [
-        el('div', { class: 'panel-head', text: 'キャラクターシナリオ' }),
-        list,
-      ])]),
+      el('div', { class: 'story-layout' }, [left, side]),
     ]);
   },
 

@@ -230,6 +230,7 @@ function evasionRate(unit, field, isRangedAttack) {
   const p = passiveOf(unit);
   if (p && p.eva) eva += p.eva;
   if (p && p.evaVsRanged && isRangedAttack) eva += p.evaVsRanged;
+  if (p && p.evaVsMelee && !isRangedAttack) eva += p.evaVsMelee;   // 天上の加護
   unit.buffs.forEach(b => { if (b.eva) eva += b.eva; });
   return eva;
 }

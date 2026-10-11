@@ -476,6 +476,11 @@ function charDetail(master, opt) {
   return el('div', { class: 'char-detail' }, [
     el('div', { class: 'detail-art' }, [
       standImg(master),
+      // プロフィールは立ち絵の下の方に重ねる（スクロールしなくても読めるように）
+      master.storyText ? el('div', { class: 'art-profile' }, [
+        el('div', { class: 'art-profile-head', text: 'PROFILE' }),
+        el('p', { text: master.storyText }),
+      ]) : null,
     ]),
     el('div', { class: 'detail-info' }, [
       el('div', { class: 'detail-name' }, [
@@ -490,10 +495,6 @@ function charDetail(master, opt) {
       ]),
       statList(master.baseStats, master.range),
       skills,
-      master.storyText ? el('details', { class: 'lore' }, [
-        el('summary', { text: 'プロフィール' }),
-        el('p', { text: master.storyText }),
-      ]) : null,
       opt.actions && opt.actions.length ? el('div', { class: 'row end detail-actions' }, opt.actions) : null,
     ]),
   ]);

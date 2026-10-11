@@ -623,6 +623,39 @@ const SKILL_LOGIC = {
     act: 'special', tgt: 'NONE', custom: 'shootingStar',
   },
 
+  // ---------------- テレス 第3話 ボス: 神々の先触れ ----------------
+  // 遠距離攻撃（距離2以上）以外の攻撃に対して、回避率+40%
+  '天上の加護': {
+    act: 'passive',
+    passive: { evaVsMelee: 40 },
+  },
+  '鉤爪の一撃': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkPhys', mod: 3, dmg: 'PHYS' },
+  },
+  '星光の瞳': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkMag', mod: 2, dmg: 'MAG' },
+    then: [{ act: 'buff', tgt: 'TARGET', buff: { dur: 2, acc: -10 } }],
+  },
+  '雲海の帳': {
+    act: 'buff', tgt: 'ENEMY_AREA',
+    buff: { dur: 3, stats: { speed: -2, atkPhys: -2 } },
+  },
+  '命吸': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkMag', mod: 0, dmg: 'MAG' },
+    then: [{ act: 'special', custom: 'drainHeal', ratio: 0.5 }],
+  },
+  '天糸': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkMag', mod: -3, dmg: 'MAG' },
+    then: [{ act: 'buff', tgt: 'TARGET', buff: { dur: 3, stats: { speed: -3 } } }],
+  },
+  '眷属招来': {
+    act: 'special', tgt: 'NONE', custom: 'summon', summonName: '天より来たる鉤爪の眷属',
+  },
+
   // ---------------- セレス 第3話 ボス: 風に乗りて歩むもの ----------------
   // 回避率+20%。毎ラウンド開始時に、敵が一番多いエリアの敵全体の速度を そのラウンドだけ -1
   '吹き荒ぶ風': {

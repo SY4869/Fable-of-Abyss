@@ -225,7 +225,7 @@ const CHARACTER_MASTER = [
     baseStats: { hp: 8, mp: 11, speed: 11, atkPhys: 14, atkMag: 12, defPhys: 6, defMag: 8 },
     passiveSkillId: "魔弓撃",
     skillPool: ["瞑想", "アズールスピア", "風切", "ソウルマキシマイザー", "紅眼閃舞", "インドラの矢"],
-    storyText: "YAMA育ちで馬と弓の扱いにたけた女性。\n神々に奪われたYAMAを取り戻すために対邪神特殊部隊に加入した。",
+    storyText: "霊峰「アルセリア」育ちで馬と弓の扱いにたけた女性。\n神々に奪われたアルセリアを取り戻すために対邪神特殊部隊に加入した。",
     portrait: "Teles",
   },
   {
