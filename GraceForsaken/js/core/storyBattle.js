@@ -4,6 +4,13 @@
 
 const SUFFIX = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
+// ストーリー戦闘の敵の配置を指定する表（指定がない戦闘は自動配置。ボスは中衛）
+//   キャラクター名: { 敵の名前: [1体目のエリア, 2体目のエリア, …] }  … 1=前衛 2=中衛 3=後衛
+const STORY_PLACEMENT = {
+  // 切裂劣子 第3話: 劣子を前衛、黒きヤギの仔を前衛と中衛に1体ずつ
+  '切裂劣子': { '切裂劣子': [1], '黒きヤギの仔': [1, 2] },
+};
+
 function hashString(s) {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
@@ -87,6 +94,7 @@ const StoryBattle = {
           // ボスデータがある敵は、表の数値そのまま（ボス補正はかけない）
           u = this.unitFromBossData(entry.name, label, bossData, master, spec, entry.boss, rng);
           if (entry.boss && !bossUnit) bossUnit = u;
+          u.storyName = entry.name;
           enemies.push(u);
           continue;
         }
@@ -108,12 +116,23 @@ const StoryBattle = {
           applyBossScaling(u);
           if (!bossUnit) bossUnit = u;
         }
+        u.storyName = entry.name;   // 配置の指定（STORY_PLACEMENT）で使う
         enemies.push(u);
       }
     });
 
     AI.autoPlace(enemies);
     if (bossUnit) bossUnit.area = 2;   // ボスは中衛に据える
+    // 配置の指定がある敵は、指定どおりのエリアに置く
+    const placement = STORY_PLACEMENT[charName];
+    if (placement) {
+      spec.enemies.forEach(entry => {
+        const areas = placement[entry.name];
+        if (!areas) return;
+        enemies.filter(u => u.storyName === entry.name)
+          .forEach((u, i) => { if (areas[i]) u.area = areas[i]; });
+      });
+    }
     normalizeFront(enemies);
 
     // ゲストNPC

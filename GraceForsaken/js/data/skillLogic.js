@@ -685,15 +685,15 @@ const SKILL_LOGIC = {
   // 受けるダメージ-2。HPが半分以下になったら（1度だけ）物攻・魔攻+3
   '書き記された結末': {
     act: 'passive',
-    passive: { damageReduce: 2, halfHpOnce: { atkPhys: 3, atkMag: 3 } },
+    passive: { damageReduce: 3, halfHpOnce: { atkPhys: 3, atkMag: 3 } },
   },
   '茨の王剣': {
     act: 'attack', tgt: 'ENEMY_ONE',
-    atk: { base: 'atkPhys', mod: 3, dmg: 'PHYS' },
+    atk: { base: 'atkPhys', mod: 5, dmg: 'PHYS' },
   },
   '散りゆく花弁': {
     act: 'attack', tgt: 'ENEMY_AREA',
-    atk: { base: 'atkMag', mod: -2, dmg: 'MAG' },
+    atk: { base: 'atkMag', mod: 2, dmg: 'MAG' },
   },
   '枯死の呪い': {
     act: 'buff', tgt: 'ENEMY_ONE', quick: true,

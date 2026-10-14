@@ -2945,7 +2945,7 @@ const STORY_MASTER = [
           "bossData": {
             "白紙の魔王": {
               "stats": {
-                "hp": 68,
+                "hp": 72,
                 "mp": 42,
                 "speed": 9,
                 "atkPhys": 15,
@@ -2972,7 +2972,7 @@ const STORY_MASTER = [
                   "category": "PASSIVE",
                   "element": null,
                   "costMp": 0,
-                  "desc": "自身が受けるダメージを-2する。更に自身のHPが半分以下になると物攻撃と魔攻撃が+3される。"
+                  "desc": "自身が受けるダメージを-3する。更に自身のHPが半分以下になると物攻撃と魔攻撃が+3される。"
                 },
                 {
                   "id": "茨の王剣",
@@ -2981,7 +2981,7 @@ const STORY_MASTER = [
                   "category": "ATTACK",
                   "element": "DARK",
                   "costMp": 3,
-                  "desc": "物理攻撃力+3点の物理ダメージを1体に与える。"
+                  "desc": "物理攻撃力+5点の物理ダメージを1体に与える。"
                 },
                 {
                   "id": "散りゆく花弁",
@@ -2990,7 +2990,7 @@ const STORY_MASTER = [
                   "category": "ATTACK",
                   "element": "DARK",
                   "costMp": 5,
-                  "desc": "魔法攻撃力-2点の魔法ダメージを1エリアの敵全体に与える。"
+                  "desc": "魔法攻撃力+2点の魔法ダメージを1エリアの敵全体に与える。"
                 },
                 {
                   "id": "枯死の呪い",
