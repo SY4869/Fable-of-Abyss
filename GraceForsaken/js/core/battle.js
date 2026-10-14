@@ -234,6 +234,12 @@ class Battle {
     this.allUnits().forEach(u => {
       u.buffs = u.buffs.filter(b => {
         if (b.dur === Infinity) return true;
+        if (b.expire) {
+          // 使った人の手番が来なかった（倒れていた等）場合は、期限のラウンドの終わりに外す
+          if (this.round < b.expire.round) return true;
+          this.say(u.displayName + 'の【' + b.name + '】の効果が切れた。', 'minor');
+          return false;
+        }
         b.dur--;
         if (b.dur <= 0) {
           if (b.flags && b.flags.delayedBlast) { blasts.push({ unit: u, name: b.name, spec: b.flags.delayedBlast }); return false; }
@@ -305,6 +311,14 @@ class Battle {
     unit._turnStarted = this.round + ':' + this.orderIndex;
     // クイックスキルは「1ターンに複数種」使えるが、同じものの撃ち直しは不可
     unit._quickUsed = {};
+    // 「〇ラウンドの間」の効果は、〇ラウンド後のこの人（使った人）の手番で切れる
+    this.allUnits().forEach(u => {
+      u.buffs = u.buffs.filter(b => {
+        if (!b.expire || b.expire.uid !== unit.uid || this.round < b.expire.round) return true;
+        this.say(u.displayName + 'の【' + b.name + '】の効果が切れた。', 'minor');
+        return false;
+      });
+    });
     if (unit.brainwashed) {
       const rate = stats(unit, this.field).defMag * CONFIG.BRAINWASH_CURE_PER_DEFMAG;
       if (this.rng.chance(rate)) {
@@ -398,6 +412,9 @@ class Battle {
     if (lgq && lgq.oncePerBattle && actor._usedOnce && actor._usedOnce[skillId]) {
       return { ok: false, reason: '使用済み' };
     }
+    if (lgq && lgq.requiresHalfHp && actor.hp > actor.maxHp / 2) {
+      return { ok: false, reason: 'HPが半分以下の時だけ' };
+    }
     const c = skillCost(actor, skillId);
     if (actor.mp < c.mp) return { ok: false, reason: 'MP不足' };
     if (c.hp > 0 && actor.hp <= c.hp) return { ok: false, reason: 'HP不足' };
@@ -430,6 +447,15 @@ class Battle {
   execute(actor, action) {
     if (this.finished || !actor.alive) return false;
     this.onTurnStart(actor);
+    this.actingUnit = actor;
+    try {
+      return this.executeInner(actor, action);
+    } finally {
+      this.actingUnit = null;
+    }
+  }
+
+  executeInner(actor, action) {
 
     // 洗脳：70%で対象がランダムになる
     if (actor.brainwashed && (action.type === 'attack' || action.type === 'skill')) {
@@ -691,6 +717,10 @@ class Battle {
     const sp = passiveOf(actor);
     if (sp && sp.vsStealthBonus && isStealthed(target)) dmg += sp.vsStealthBonus;
 
+    // 書き記された結末: 受けるダメージを減らす
+    const rp = passiveOf(target);
+    if (rp && rp.damageReduce) dmg -= rp.damageReduce;
+
     // 抜刀《防》
     const guard = target.buffs.find(b => b.flags && b.flags.nextDefReduce);
     if (guard) {
@@ -894,6 +924,7 @@ class Battle {
       source.kills++;
       const sp = passiveOf(source);
       if (sp && sp.onKill) this.gainPerm(source, sp.onKill.perm, source.passiveId);
+      if (sp && sp.onKillHeal) this.heal(source, sp.onKillHeal, source.passiveId);
       source.buffs.forEach(b => {
         if (!b.flags) return;
         if (b.flags.onKillRestore) {
@@ -972,6 +1003,11 @@ class Battle {
       unit.shield += amount;
       this.say('→ ' + unit.displayName + 'に ' + amount + ' のシールドを展開（' + name + '）', 'good');
       if (!buff.stats && !buff.flags && !buff.regen && !buff.acc && !buff.eva) return;
+    }
+    // 行動中にかかった「〇ラウンドの間」の効果は、〇ラウンド後の使った人の手番で切れる。
+    // ラウンド開始時に自動でかかる効果や、時間差で発動する効果（終焉の宣告）は、今までどおりラウンドの終わりに数える
+    if (this.actingUnit && buff.dur < 90 && !(buff.flags && buff.flags.delayedBlast)) {
+      buff.expire = { round: this.round + buff.dur, uid: (source || this.actingUnit).uid };
     }
     // 同名は重ね掛け不可（spec.stack のものは重複可）
     if (!spec.stack) unit.buffs = unit.buffs.filter(b => b.name !== name);
@@ -1068,9 +1104,31 @@ class Battle {
         break;
 
       case 'summon': {
-        const mob = unitMob(lg.summonName || '魔人', actor.side, 1, this.rng);
-        this.teamOf(actor.side).push(mob);
-        this.say('→ ' + mob.displayName + 'が前衛に現れた！', 'skill');
+        for (let i = 0; i < (lg.count || 1); i++) {
+          const mob = unitMob(lg.summonName || '魔人', actor.side, 1, this.rng);
+          this.teamOf(actor.side).push(mob);
+          this.say('→ ' + mob.displayName + 'が前衛に現れた！', 'skill');
+        }
+        break;
+      }
+
+      case 'frontBlast': {
+        // 結末の宣告: 前衛にいる敵全員へ
+        this.enemiesOf(actor).filter(t => t.alive && t.area === 1).forEach(t =>
+          this.resolveAttack(actor, t, lg.atk, { name: sk ? sk.name : '', element: sk ? sk.element : actor.element }));
+        break;
+      }
+
+      case 'mpSteal': {
+        // 摘出: 対象の MP を奪う
+        const t = this.findUnit(action.targetUid);
+        if (!t || !t.alive) break;
+        const got = Math.min(t.mp, lg.amount);
+        t.mp -= got;
+        if (got > 0) {
+          this.say('→ ' + t.displayName + 'のMPを ' + got + ' 奪った', 'bad');
+          this.restoreMp(actor, got, sk ? sk.name : 'MP吸収');
+        }
         break;
       }
 

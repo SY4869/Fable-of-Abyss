@@ -118,15 +118,14 @@ const StoryBattle = {
 
     // ゲストNPC
     const guests = [];
-    if (spec.guest) {
-      const gm = getCharacter(spec.guest);
-      if (gm) {
-        const skills = this.listedSkills(spec, gm.name, false) || rng.sample(gm.skillPool, 3);
-        const g = unitFromMaster(gm, skills, 'ALLY', 1, { isGuest: true });
-        g.area = gm.range >= 3 ? 3 : (gm.range === 2 ? 2 : 1);
-        guests.push(g);
-      }
-    }
+    (spec.guests || (spec.guest ? [spec.guest] : [])).forEach(name => {
+      const gm = getCharacter(name);
+      if (!gm) return;
+      const skills = this.listedSkills(spec, gm.name, false) || rng.sample(gm.skillPool, 3);
+      const g = unitFromMaster(gm, skills, 'ALLY', 1, { isGuest: true });
+      g.area = gm.range >= 3 ? 3 : (gm.range === 2 ? 2 : 1);
+      guests.push(g);
+    });
 
     const winCondition = bossUnit
       ? { type: 'DEFEAT_TARGET', targetUid: bossUnit.uid }

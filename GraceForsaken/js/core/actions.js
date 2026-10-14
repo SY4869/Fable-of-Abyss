@@ -45,7 +45,7 @@ const BattleActions = {
       passiveId: u.passiveId || '',
       buffs: u.buffs.map(b => ({
         name: b.name,
-        dur: b.dur < 90 ? b.dur : null,
+        dur: b.dur >= 90 ? null : (b.expire ? Math.max(1, b.expire.round - battle.round) : b.dur),
         stealth: !!(b.flags && b.flags.stealth),
       })),
       stats: { speed: st.speed, atkPhys: st.atkPhys, atkMag: st.atkMag, defPhys: st.defPhys, defMag: st.defMag },

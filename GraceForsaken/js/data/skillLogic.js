@@ -623,6 +623,95 @@ const SKILL_LOGIC = {
     act: 'special', tgt: 'NONE', custom: 'shootingStar',
   },
 
+  // ---------------- ミリア 第3話 ボス: 結末なき戯曲 ----------------
+  '終わらない舞台': {
+    act: 'passive',
+    passive: { regen: { hp: 2 }, roundStartPerm: { atkMag: 1 } },
+  },
+  '配役': {
+    act: 'special', tgt: 'ENEMY_ONE', custom: 'charm',
+  },
+  '悲劇の独白': {
+    act: 'attack', tgt: 'ENEMY_AREA',
+    atk: { base: 'atkMag', mod: -2, dmg: 'MAG' },
+  },
+  '脚本の書き換え': {
+    act: 'buff', tgt: 'ENEMY_ONE',
+    buff: { dur: 3, stats: { atkPhys: -2, atkMag: -2 } },
+  },
+  '幕引きの刃': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkMag', mod: 2, dmg: 'MAG' },
+  },
+  '幕間の帳': {
+    act: 'buff', tgt: 'SELF', quick: true,
+    buff: { dur: 99, shield: { base: 'atkMag', div: 2 } },
+  },
+  '演者の招集': {
+    act: 'special', tgt: 'NONE', custom: 'summon', summonName: '戯曲に囚われた演者',
+  },
+
+  // ---------------- 切裂狂子 第3話 ボス: 脳を蒐集する星の外科医 ----------------
+  // 命中率+15%。自身の攻撃で敵を倒すと HP+5
+  '執刀者の精度': {
+    act: 'passive',
+    passive: { acc: 15, onKillHeal: 5 },
+  },
+  '切開': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkPhys', mod: 3, dmg: 'PHYS' },
+  },
+  '精密切除': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkPhys', mod: 1, dmg: 'PHYS', defHalf: true },
+  },
+  '摘出': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkMag', mod: 0, dmg: 'MAG' },
+    then: [{ act: 'special', custom: 'mpSteal', amount: 3 }],
+  },
+  '麻酔の胞子': {
+    act: 'buff', tgt: 'ENEMY_AREA',
+    buff: { dur: 3, stats: { speed: -2, atkPhys: -2 } },
+  },
+  '七色の明滅': {
+    act: 'special', tgt: 'ENEMY_ONE', custom: 'charm',
+  },
+  '助手の招集': {
+    act: 'special', tgt: 'NONE', custom: 'summon', summonName: '星より来たる甲殻の異形',
+  },
+
+  // ---------------- フレア 第3話 ボス: 白紙の魔王 ----------------
+  // 受けるダメージ-2。HPが半分以下になったら（1度だけ）物攻・魔攻+3
+  '書き記された結末': {
+    act: 'passive',
+    passive: { damageReduce: 2, halfHpOnce: { atkPhys: 3, atkMag: 3 } },
+  },
+  '茨の王剣': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkPhys', mod: 3, dmg: 'PHYS' },
+  },
+  '散りゆく花弁': {
+    act: 'attack', tgt: 'ENEMY_AREA',
+    atk: { base: 'atkMag', mod: -2, dmg: 'MAG' },
+  },
+  '枯死の呪い': {
+    act: 'buff', tgt: 'ENEMY_ONE', quick: true,
+    buff: { dur: 3, stats: { atkPhys: -2, atkMag: -2 } },
+  },
+  '白紙の盾': {
+    act: 'buff', tgt: 'SELF', quick: true,
+    buff: { dur: 99, shield: { base: 'defMag', div: 1 } },
+  },
+  '顔なき軍勢': {
+    act: 'special', tgt: 'NONE', custom: 'summon', summonName: '顔なき茨の騎士', count: 2,
+  },
+  // 前衛の敵全体へ魔攻+4の貫通ダメージ。自身のHPが半分以下の時だけ使える
+  '結末の宣告': {
+    act: 'special', tgt: 'NONE', custom: 'frontBlast', requiresHalfHp: true,
+    atk: { base: 'atkMag', mod: 4, dmg: 'MAG', pierce: true },
+  },
+
   // ---------------- テレス 第3話 ボス: 神々の先触れ ----------------
   // 遠距離攻撃（距離2以上）以外の攻撃に対して、回避率+40%
   '天上の加護': {

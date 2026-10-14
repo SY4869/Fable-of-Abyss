@@ -194,6 +194,12 @@ const AI = {
             // 1ラウンド目は威力が1しかないので使わない
             if (battle.round < 2) return 0;
             return battle.round * battle.enemiesOf(unit).length - cost.mp;
+          case 'frontBlast': {
+            const front = battle.enemiesOf(unit).filter(e => e.alive && e.area === 1).length;
+            return front ? (s.atkMag + 4) * front * 1.5 - cost.mp * 1.2 : 0;
+          }
+          case 'mpSteal':
+            return 6;
           case 'summon':
             return battle.alliesOf(unit).length < CONFIG.PARTY_SIZE ? 20 - cost.mp : 4;
           default:

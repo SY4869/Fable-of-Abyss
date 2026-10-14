@@ -223,7 +223,7 @@ const Screens = {
         el('button', { class: 'btn small ghost', 'data-se': 'cancel', text: 'タイトルへ', onclick: () => { App.stack = []; App.show(Screens.title, []); } }),
         el('a', { class: 'site-home', href: SITE_LINKS[0][1], text: 'ゲーム選択へ（SY GAMES）' }),
         el('div', { class: 'spacer' }),
-        el('span', { class: 'faint', text: 'Ver. 1.2.16' }),
+        el('span', { class: 'faint', text: 'Ver. 1.2.17' }),
       ]),
     ]);
   },
@@ -334,7 +334,7 @@ const Screens = {
     // ノベルで敵の立ち絵を出すための敵の一覧（ボスを先頭に）
     const novelEnemies = ep.battle ? ep.battle.enemies.slice()
       .sort((a, b) => (b.boss ? 1 : 0) - (a.boss ? 1 : 0)).map(e => e.name)
-      .filter(n => n !== charName && n !== ep.battle.guest) : [];
+      .filter(n => n !== charName && (ep.battle.guests || [ep.battle.guest]).indexOf(n) < 0) : [];
 
     const runBattle = () => {
       if (!ep.battle) { finish('WIN'); return; }

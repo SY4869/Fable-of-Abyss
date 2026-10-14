@@ -94,6 +94,7 @@ function unitFromMaster(master, skills, side, area, opt) {
 // 名前と立ち絵名が一致しない敵の対応表
 const PORTRAIT_ALIAS = {
   '神の器となった大司教': '怪しい神父',
+  '深淵のヤギ仔': '黒きヤギの仔',
 };
 function enemyPortrait(name, opt) {
   const list = typeof PORTRAIT_LIST !== 'undefined' ? PORTRAIT_LIST : [];
