@@ -690,12 +690,14 @@ class Battle {
 
     // ダメージ種別（変幻自在）
     let dmgType = spec.dmg;
-    if (unitFlags(target).allDamageAsPhys) dmgType = 'PHYS';
+    const asPhys = !!unitFlags(target).allDamageAsPhys;
+    if (asPhys) dmgType = 'PHYS';
 
     // 絶対領域（貫通攻撃は無効化されない。ブルーリコレクション中の攻撃や、刈り取りなどの貫通スキル）
+    // ただし変幻自在の間は、貫通攻撃も物理ダメージとして扱うので無効化する
     const pierce = !!(spec.pierce || flags.allPierce);
     const tPassive = passiveOf(target);
-    if (tPassive && tPassive.immune === dmgType && !pierce) {
+    if (tPassive && tPassive.immune === dmgType && (!pierce || asPhys)) {
       this.say('→ ' + target.displayName + 'の【' + target.passiveId + '】がダメージを無効化した！', 'good');
       this.emit('hit', { target: target, element: meta.element || actor.element, dmgType: dmgType, amount: 0 });
       return 0;
@@ -795,9 +797,17 @@ class Battle {
   }
 
   /** 防御・シールドを無視した固定ダメージ（毒・貫通効果など） */
-  dealRawDamage(target, dmg, label, source) {
+  dealRawDamage(target, dmg, label, source, opt) {
     if (!target.alive) return;
     if (this.ignoresDamage(target, dmg)) return;
+    // 攻撃として扱うダメージ（終焉の宣告）は、変幻自在＋絶対領域で無効化される
+    if (opt && opt.attack && unitFlags(target).allDamageAsPhys) {
+      const tp = passiveOf(target);
+      if (tp && tp.immune === 'PHYS') {
+        this.say('→ ' + target.displayName + 'の【' + target.passiveId + '】がダメージを無効化した！', 'good');
+        return;
+      }
+    }
     dmg = this.manaLine(target, dmg);
     if (dmg <= 0) return;
     target.hp -= dmg;
@@ -1134,7 +1144,7 @@ class Battle {
 
       case 'shuen': {
         const dmg = this.round;
-        this.enemiesOf(actor).forEach(t => this.dealRawDamage(t, dmg, '終焉', actor));
+        this.enemiesOf(actor).forEach(t => this.dealRawDamage(t, dmg, '終焉', actor, { attack: true }));
         break;
       }
     }
