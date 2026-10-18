@@ -424,9 +424,20 @@ const PvpScreens = {
       queue.shift()(() => { running = false; pump(); });
     };
 
+    // 変わったユニットの表示データを差し替える
+    const applyDiff = (diff) => {
+      if (!diff || !diff.length) return;
+      const map = {};
+      view.state.units.forEach(u => { map[u.uid] = u; });
+      diff.forEach(v => { map[v.uid] = rel(v); });
+      view.state.units = Object.keys(map).map(k => map[k]);
+    };
+
     const applyTurn = (t) => {
       turn = t;
       (t.preEvents || []).forEach(e => { if (e.t === 'log') view.appendLog(e.text, e.kind); });
+      // 手番開始時の変化（隠密などの効果切れ）を反映してから対象を選ばせる
+      applyDiff(t.diff);
       const actor = view.unitOf(t.actorId);
       view.setState({
         round: t.round, order: t.order, actorUid: t.actorId,
@@ -442,10 +453,7 @@ const PvpScreens = {
         view.setTimer(null);
         turn = null;
         view.play(r.events, () => {
-          const map = {};
-          view.state.units.forEach(u => { map[u.uid] = u; });
-          r.diff.forEach(v => { map[v.uid] = rel(v); });
-          view.state.units = Object.keys(map).map(k => map[k]);
+          applyDiff(r.diff);
           view.state.round = r.round;
           view.state.field = r.field;
           view.state.order = r.order;

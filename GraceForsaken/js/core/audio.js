@@ -14,6 +14,7 @@ const BGM_FILES = {
   battle: 'Battle_BGM.mp3',
   battleOkita: 'BattleOkita_BGM.mp3',
   battleLeia: 'BattleLeia.mp3',
+  battleKirisaki: 'BattleKirisaki_BGM.mp3',
   story: 'AcceptQuest_BGM.mp3',
   chapterClear: 'Chapter3Clear_BGM.mp3',
 };

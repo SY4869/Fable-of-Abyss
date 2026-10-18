@@ -63,6 +63,7 @@ class Room {
     this.turnContinued = false;
     this.turnRemainingMs = this.S.TURN_MS;
     this.preEvents = [];
+    this.preDiff = [[], []];
     this.legalCache = null;
     this.lastTurnEnds = true;
     this.lastActorId = null;
@@ -159,8 +160,12 @@ class Room {
     if (!actor) { this.finishFromBattle(); return; }
     const owner = this.session.sideOf(actor);
     this.preEvents = [];
+    this.preDiff = [[], []];
     if (!continued) {
+      // 手番開始時の変化（効果切れ・洗脳の解除など）も表示データの差分として送る
+      const before = [0, 1].map(s => this.session.views(s));
       this.preEvents = this.session.turnStart(actor);
+      this.preDiff = [0, 1].map(s => this.session.diff(before[s], this.session.views(s)));
       this.pushLog(this.preEvents);
       this.turnRemainingMs = this.S.TURN_MS;
     }
@@ -187,6 +192,7 @@ class Room {
       remainingMs: Math.round(this.turnTimer.running || this.turnTimer.paused ? this.turnTimer.remaining() : this.turnRemainingMs),
       order: this.session.order(),
       preEvents: this.preEvents,
+      diff: (this.preDiff && this.preDiff[i]) || [],
     };
     if (mine) payload.legalActions = this.legalCache;
     return payload;

@@ -177,10 +177,14 @@ const SCENE_BG_FILES = {
   '闘技場': '背景_闘技場.png', '村': '背景_村.jpg', '高原の村': '背景_高原の村.jpg',
   '雪の村': '背景_夜の雪が降る村.jpg', '夜の雪の村': '背景_夜の雪が降る村.jpg',
   '氷の湖': '背景_氷の湖.jpg',
+  '灰の平原': '背景_灰の平原.jpg',
 };
 const FIELD_PLACE = { PLAINS: '草原', WATERSIDE: '水辺', MOUNTAIN: '山脈', BLAZE: '火事場', COSMOS: 'コスモスの花畑' };
 
+// 夜でも暗くしない場所（夜の差分も使わない）
+const SCENE_NO_NIGHT = ['コスモスの花畑'];
 function sceneBackground(place, night) {
+  if (SCENE_NO_NIGHT.indexOf(place) >= 0) night = false;
   if (night && SCENE_BG_FILES['夜の' + place]) return { file: SCENE_BG_FILES['夜の' + place], dim: false };
   const file = SCENE_BG_FILES['昼の' + place] || SCENE_BG_FILES[place];
   return file ? { file: file, dim: !!night } : null;

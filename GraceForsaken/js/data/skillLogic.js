@@ -962,4 +962,34 @@ const SKILL_LOGIC = {
     act: 'attack', tgt: 'ENEMY_AREA',
     atk: { base: 'atkMag', mod: 4, dmg: 'MAG', pierce: true },
   },
+
+  // ---------------- シェリーニ 第3話 ボス: 百万の怨嗟 ----------------
+  '消えぬ無念': {
+    act: 'passive',
+    passive: { roundEndPierceAll: 1, onAllyDeath: { perm: { atkMag: 1 } } },
+  },
+  '怨嗟の業火': {
+    act: 'attack', tgt: 'ENEMY_AREA',
+    atk: { base: 'atkMag', mod: -2, dmg: 'MAG', pierce: true },
+  },
+  '灰の刃': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkPhys', mod: 3, dmg: 'PHYS' },
+  },
+  '道連れの炎': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkMag', mod: 0, dmg: 'MAG' },
+    then: [{ act: 'special', custom: 'drainHeal' }],
+  },
+  '灰の呪い': {
+    act: 'buff', tgt: 'ENEMY_AREA', quick: true,
+    buff: { dur: 3, stats: { speed: -2, defMag: -2 } },
+  },
+  '黒煙の帳': {
+    act: 'buff', tgt: 'SELF', quick: true,
+    buff: { dur: 99, shield: { base: 'atkMag', div: 2 } },
+  },
+  '亡兵の行軍': {
+    act: 'special', tgt: 'NONE', custom: 'summon', summonName: '灰より立つ亡兵',
+  },
 };
