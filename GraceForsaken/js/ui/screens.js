@@ -347,8 +347,8 @@ const Screens = {
         guests: setup.guests,
         winCondition: setup.winCondition,
         winText: ep.battle.winText,
-        // 沖田雫・レイア・切裂狂子の最終話は専用BGM
-        bgm: epNo !== lastEp ? 'battle' : ({ '沖田雫': 'battleOkita', 'レイア': 'battleLeia', '切裂狂子': 'battleKirisaki' })[charName] || 'battle',
+        // 沖田雫・レイア・切裂劣子の最終話は専用BGM
+        bgm: epNo !== lastEp ? 'battle' : ({ '沖田雫': 'battleOkita', 'レイア': 'battleLeia', '切裂劣子': 'battleKirisaki' })[charName] || 'battle',
         onEnd: finish,
       });
     };
