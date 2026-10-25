@@ -31,6 +31,8 @@ Environment=HOST=127.0.0.1
 Environment=PORT=3100
 Environment=ALLOWED_ORIGINS=https://sygames.net
 Environment=LOG_LEVEL=info
+# 非同期対戦の防衛パーティを /var/lib/gf-pvp/defense_parties.json に保存する（STATE_DIRECTORY として渡される）
+StateDirectory=gf-pvp
 
 # --- 権限を絞る ---
 NoNewPrivileges=true

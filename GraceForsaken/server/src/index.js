@@ -17,6 +17,7 @@ const { makeValidator } = require('./Validator');
 const RateLimiter = require('./RateLimiter');
 const RoomManager = require('./RoomManager');
 const MatchQueue = require('./MatchQueue');
+const DefenseStore = require('./DefenseStore');
 const log = require('./logger');
 
 // ---------- 設定 ----------
@@ -72,7 +73,7 @@ const server = http.createServer((req, res) => {
   if (req.url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
     res.end(JSON.stringify({
-      status: 'ok', rooms: rooms.activeCount(), queue: queue.size,
+      status: 'ok', rooms: rooms.activeCount(), queue: queue.size, defenses: defenses.size,
       connections: io.engine.clientsCount, draining: draining,
     }));
     return;
@@ -100,6 +101,10 @@ const queue = new MatchQueue({
   onMatch: (entries) => rooms.create(entries),
   onTimeout: (entry) => rooms.create([entry]),
 });
+// 防衛パーティの保存先: DEFENSE_DATA_DIR → systemd の StateDirectory → server/data
+const DATA_DIR = process.env.DEFENSE_DATA_DIR || process.env.STATE_DIRECTORY || path.join(__dirname, '..', 'data');
+const defenses = new DefenseStore({ file: path.join(DATA_DIR, 'defense_parties.json') });
+const OPPONENT_COUNT = 3;
 
 // ---------- 接続 ----------
 io.on('connection', (socket) => {
@@ -159,6 +164,20 @@ io.on('connection', (socket) => {
     if (queue.remove(me.userId)) return { ok: true };
     if (rooms.roomOfUser(me.userId)) return { ok: false, error: P.ERR.ALREADY_IN_ROOM };
     return { ok: true };
+  });
+
+  // ---------- 非同期対戦（防衛パーティ） ----------
+  on(P.EV.SET_DEFENSE, (payload, me) => {
+    const v = validator.defense(payload);
+    if (!v.ok) return v;
+    defenses.set(me.userId, me.name, v.party, v.winRate);
+    return { ok: true };
+  });
+
+  on(P.EV.FIND_OPPONENTS, (payload, me) => {
+    const v = validator.findOpponents(payload);
+    if (!v.ok) return v;
+    return { ok: true, opponents: defenses.findOpponents(me.userId, v.winRate, OPPONENT_COUNT) };
   });
 
   const roomFor = (payload, me) => {
@@ -243,6 +262,7 @@ function shutdown(sig) {
   stopping = true;
   log.info('shutting down', sig);
   rooms.voidAll();
+  defenses.flush();
   io.close();
   server.close(() => process.exit(0));
   setTimeout(() => process.exit(0), 3000).unref();

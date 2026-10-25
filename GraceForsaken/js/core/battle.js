@@ -205,8 +205,13 @@ class Battle {
       if (!u.alive) return;
       const p = passiveOf(u);
       if (p && p.roundEndPierceAll) {
-        this.enemiesOf(u).forEach(t =>
-          this.dealRawDamage(t, p.roundEndPierceAll, u.passiveId, u));
+        this.enemiesOf(u).forEach(t => {
+          if (unitFlags(t).pierceImmune) {
+            this.say('→ ' + t.displayName + 'の【' + t.passiveId + '】が【' + u.passiveId + '】を無効化した！', 'good');
+            return;
+          }
+          this.dealRawDamage(t, p.roundEndPierceAll, u.passiveId, u);
+        });
       }
       if (p && p.roundEndMpDrainAll) {
         this.enemiesOf(u).forEach(t => {
@@ -702,6 +707,12 @@ class Battle {
       this.emit('hit', { target: target, element: meta.element || actor.element, dmgType: dmgType, amount: 0 });
       return 0;
     }
+    // 歌う筋肉（ダメージを受けた後しばらく、貫通攻撃を無効化する）
+    if (pierce && unitFlags(target).pierceImmune) {
+      this.say('→ ' + target.displayName + 'の【' + target.passiveId + '】が貫通攻撃を無効化した！', 'good');
+      this.emit('hit', { target: target, element: meta.element || actor.element, dmgType: dmgType, amount: 0 });
+      return 0;
+    }
 
     // 防御
     let def = dmgType === 'PHYS' ? tS.defPhys : tS.defMag;
@@ -791,6 +802,7 @@ class Battle {
     if (tp && tp.onAttackedDebuff && source && source.alive && source.side !== target.side) {
       this.applyBuff(source, Object.assign({ stack: true }, tp.onAttackedDebuff), target.passiveId, target);
     }
+    if (tp && tp.onDamagedBuff && target.hp > 0) this.applyBuff(target, tp.onDamagedBuff, target.passiveId, target);
     if (target.hp <= 0) return this.tryEndure(target, source);
     this.checkHalfHp(target);
     return false;
@@ -928,6 +940,9 @@ class Battle {
         this.emit('heal', { target: a, amount: ap.onAllyDeath.maxHp });
       }
       if (ap.onAllyDeath.perm) this.gainPerm(a, ap.onAllyDeath.perm, a.passiveId);
+      // 魂の捕食者（味方が倒れるたびに回復して隠密になる）
+      if (ap.onAllyDeath.heal) this.heal(a, ap.onAllyDeath.heal, a.passiveId, true);
+      if (ap.onAllyDeath.buff) this.applyBuff(a, ap.onAllyDeath.buff, a.passiveId, a);
     });
 
     if (source && source.alive) {

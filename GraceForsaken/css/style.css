@@ -574,6 +574,8 @@ body { background: transparent; }
 .opp-art { aspect-ratio: 1; background-size: cover; background-position: center; border: 1px solid var(--line); }
 .opp-stats { display: flex; flex-direction: column; gap: 8px; }
 .ghost-tag { font-family: var(--cinzel); letter-spacing: .3em; font-size: 12px; text-align: center; padding: 3px; background: linear-gradient(90deg, rgba(60, 40, 150, .8), transparent); }
+.ghost-tag.player { background: linear-gradient(90deg, rgba(160, 120, 40, .85), transparent); }
+.opp-loading { grid-column: 1 / -1; padding: 40px 0; }
 .opp-rate { display: flex; align-items: baseline; gap: 12px; border-bottom: 1px solid var(--line-soft); }
 .opp-rate b { font-family: var(--cinzel); font-size: 26px; }
 .opp-party-label { font-family: var(--serif); font-size: 13px; color: var(--silver-dim); }

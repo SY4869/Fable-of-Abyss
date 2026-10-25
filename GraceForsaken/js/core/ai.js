@@ -15,7 +15,45 @@ const AI = {
   decide(battle, unit) {
     const quick = this.pickQuick(battle, unit);
     if (quick) return quick;
+    const scripted = this.pickScripted(battle, unit);
+    if (scripted) { unit._usedQuick = {}; return scripted; }
     return this.pickMain(battle, unit);
+  },
+
+  // -----------------------------------------------------------------
+  /**
+   * ストーリーのボス固有の行動ルール（ストーリー/*.md の注記）。
+   * 該当しなければ null を返し、通常のスコア評価に任せる。
+   */
+  pickScripted(battle, unit) {
+    if (!unit.isBoss || unit.side !== 'ENEMY' || battle.mode !== 'STORY') return null;
+    // ロナ 第3話: 1ラウンド目はリーサルカウント。以後、アレクのHPが8以上減っていればヒール、
+    // まだリーサルカウントがかかっていない敵だけのエリアがあればリーサルカウント
+    if (unit.storyName !== 'ロナ') return null;
+    const can = id => unit.skills.indexOf(id) >= 0 && battle.skillUsability(unit, id).ok;
+    const lethalArea = freshOnly => {
+      let best = null;
+      for (let a = 1; a <= CONFIG.AREA_COUNT; a++) {
+        if (!inRange(unit.range, areaDistance(unit.area, a))) continue;
+        const foes = battle.enemiesOf(unit).filter(t => t.alive && t.area === a);
+        if (!foes.length || (freshOnly && foes.some(t => t.doom))) continue;
+        if (!best || foes.length > best.count) best = { area: a, count: foes.length };
+      }
+      return best;
+    };
+    if (battle.round === 1 && can('リーサルカウント')) {
+      const a = lethalArea(false);
+      if (a) return { type: 'skill', skillId: 'リーサルカウント', area: a.area };
+    }
+    const alec = battle.alliesOf(unit).find(a => a.alive && a.storyName === 'アレクトロス');
+    if (alec && alec.maxHp - alec.hp >= 8 && can('ヒール')) {
+      return { type: 'skill', skillId: 'ヒール', targetUid: alec.uid, area: alec.area };
+    }
+    if (can('リーサルカウント')) {
+      const a = lethalArea(true);
+      if (a) return { type: 'skill', skillId: 'リーサルカウント', area: a.area };
+    }
+    return null;
   },
 
   // -----------------------------------------------------------------

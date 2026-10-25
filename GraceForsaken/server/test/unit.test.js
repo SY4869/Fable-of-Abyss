@@ -130,3 +130,36 @@ test('待機: PVPでも手動で選べる', () => {
   assert.ok(res && Array.isArray(res.events));
   assert.notStrictEqual(s.currentActor(), a);
 });
+
+// ---------- 非同期対戦（防衛パーティ） ----------
+const DefenseStore = require('../src/DefenseStore');
+
+test('Validator.defense: 1〜4体・勝率0〜100またはnull', () => {
+  assert.ok(V.defense({ party: party().slice(0, 2), winRate: 55.55 }).ok);
+  assert.strictEqual(V.defense({ party: party(), winRate: 55.55 }).winRate, 55.6);
+  assert.strictEqual(V.defense({ party: party(), winRate: null }).winRate, null);
+  assert.strictEqual(V.defense({ party: [], winRate: null }).ok, false);
+  assert.strictEqual(V.defense({ party: party().concat(party().slice(0, 1)), winRate: null }).ok, false);
+  assert.strictEqual(V.defense({ party: party(), winRate: 101 }).ok, false);
+  assert.strictEqual(V.defense({ party: party(), winRate: '50' }).ok, false);
+  const bad = party(); bad[0].skills = ['存在しないスキル', 'a', 'b'];
+  assert.strictEqual(V.defense({ party: bad, winRate: null }).ok, false);
+  assert.ok(V.findOpponents({ winRate: null }).ok);
+  assert.strictEqual(V.findOpponents({ winRate: -1 }).ok, false);
+});
+
+test('DefenseStore: 自分以外の、勝率の近い防衛パーティを返す', () => {
+  let now = 1000;
+  const store = new DefenseStore({ now: () => now });
+  for (let i = 0; i < 20; i++) store.set('u' + i, 'P' + i, party(), i * 5);
+  store.set('u3', 'P3改', party().slice(0, 2), 15);     // 上書き
+  assert.strictEqual(store.size, 20);
+  assert.strictEqual(store.get('u3').name, 'P3改');
+  const ops = store.findOpponents('u10', 50, 3, () => 0);
+  assert.strictEqual(ops.length, 3);
+  assert.ok(ops.every(o => o.id !== 'u10' && Math.abs(o.winRate - 50) <= 25));
+  // 60日更新のないものは候補から外れる
+  now += 61 * 24 * 60 * 60 * 1000;
+  store.set('fresh', 'F', party(), 50);
+  assert.deepStrictEqual(store.findOpponents('u10', 50, 3).map(o => o.id), ['fresh']);
+});

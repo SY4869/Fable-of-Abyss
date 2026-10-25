@@ -410,7 +410,6 @@ const Screens = {
     Sound.playBgm('menu');
     const base = seedBase || (Date.now() & 0x7fffffff);
     const myRate = Save.winRate();
-    const ghosts = [1, 2, 3].map(i => Ghost.generate(base * 7 + i, myRate));
     const myDef = Save.data.defenseParty.length ? Save.data.defenseParty : Save.data.party;
 
     const card = (g, i) => {
@@ -424,7 +423,7 @@ const Screens = {
         el('div', { class: 'opp-main' }, [
           el('div', { class: 'opp-art', style: 'background-image:url("' + faceUrl(lead) + '")' }),
           el('div', { class: 'opp-stats' }, [
-            el('span', { class: 'ghost-tag', text: 'GHOST' }),
+            el('span', { class: 'ghost-tag' + (g.player ? ' player' : ''), text: g.player ? 'PLAYER' : 'GHOST' }),
             el('div', { class: 'opp-rate' }, [el('small', { text: '勝率' }), el('b', { text: g.winRate.toFixed(1) + '%' })]),
           ]),
         ]),
@@ -434,6 +433,23 @@ const Screens = {
         ]))),
         el('button', { class: 'btn primary wide', text: '対戦する', onclick: () => Screens.startPvp(g) }),
       ]);
+    };
+
+    // 他プレイヤーの防衛パーティをサーバーから取得し、足りない分は疑似ゴーストで補う
+    const grid = el('div', { class: 'opp-grid' }, [
+      el('p', { class: 'muted center opp-loading', text: '対戦相手を探しています…' }),
+    ]);
+    PvpClient.findOpponents().catch(() => []).then(list => {
+      const players = list.map((op, i) => Ghost.fromPlayer(op, base * 7 + i + 1)).filter(Boolean);
+      const opponents = players.concat([1, 2, 3].map(i => Ghost.generate(base * 7 + i, myRate))).slice(0, 3);
+      clear(grid);
+      opponents.forEach((g, i) => grid.appendChild(card(g, i)));
+    });
+
+    const setDefense = () => {
+      Save.setDefenseParty(Save.data.party);
+      App.refresh();
+      PvpClient.uploadDefense().then(r => App.toast(r.ok ? '防衛パーティを設定しました' : '防衛パーティを設定しました（サーバーへの登録は次回接続時に行います）'));
     };
 
     return el('div', { class: 'screen' }, [
@@ -449,7 +465,7 @@ const Screens = {
         el('div', { class: 'spacer' }),
         el('span', { class: 'faint', text: '現在の勝率に近いプレイヤーから、3名を選出しています。' }),
       ]),
-      el('div', { class: 'opp-grid' }, ghosts.map(card)),
+      grid,
       el('div', { class: 'row pvp-foot' }, [
         el('button', { class: 'btn', text: '別の相手を探す', onclick: () => App.show(Screens.pvpMenu, [], { replace: true }) }),
         el('div', { class: 'spacer' }),
@@ -460,11 +476,12 @@ const Screens = {
         ]),
         el('button', {
           class: 'btn', text: '現在のパーティを防衛に設定',
-          onclick: () => { Save.setDefenseParty(Save.data.party); App.refresh(); App.toast('防衛パーティを設定しました'); },
+          onclick: setDefense,
         }),
       ]),
       el('p', { class: 'faint center', text:
-        '他プレイヤーが設定した防衛パーティ（AI操作のゴースト）と戦います。フィールドはランダム。' +
+        '他プレイヤーが設定した防衛パーティ（AI操作）と戦います。サーバーに繋がらない時や相手が足りない時は、' +
+        '自動生成の相手（GHOST）が入ります。フィールドはランダム。' +
         CONFIG.PVP_ROUND_LIMIT + 'ラウンドで決着がつかない場合は残りHP割合で判定します。' }),
     ]);
   },
@@ -473,8 +490,10 @@ const Screens = {
     const rng = makeRng(ghost.seed);
     const names = ghost.members.map(m => getCharacter(m.charId)).concat(Save.partyMasters()).filter(Boolean).map(c => c.name);
     const field = rollField(rng.next, names);
-    const enemies = ghost.members.map(m => unitFromMaster(getCharacter(m.charId), m.skills, 'ENEMY', 1));
-    AI.autoPlace(enemies);
+    // 他プレイヤーの防衛パーティは、そのプレイヤーが決めた配置で並べる
+    const enemies = ghost.members.map(m => unitFromMaster(getCharacter(m.charId), m.skills, 'ENEMY', m.area || 1));
+    if (ghost.player) normalizeFront(enemies);
+    else AI.autoPlace(enemies);
 
     BattleFlow.begin({
       title: ghost.name,

@@ -23,6 +23,31 @@ function cleanName(name) {
 function makeValidator(core) {
   const { PVP_PROTOCOL: P, getCharacter } = core;
 
+  /** 存在するキャラで重複なし／スキルが候補6種の中の重複なし3種／area 1〜3。不正なら null */
+  function members(list) {
+    const seen = new Set();
+    const party = [];
+    for (const m of list) {
+      if (!isObj(m) || !Number.isInteger(m.charId)) return null;
+      const master = getCharacter(m.charId);
+      if (!master || master.id !== m.charId || seen.has(m.charId)) return null;
+      seen.add(m.charId);
+      if (!Array.isArray(m.skills) || m.skills.length !== 3) return null;
+      const skills = m.skills.filter(s => typeof s === 'string');
+      if (new Set(skills).size !== 3 || !skills.every(s => master.skillPool.indexOf(s) >= 0)) return null;
+      if (![1, 2, 3].includes(m.area)) return null;
+      party.push({ charId: m.charId, skills: skills, area: m.area });
+    }
+    return party;
+  }
+
+  /** 勝率は 0〜100 か null（未対戦）。不正なら undefined */
+  function winRate(v) {
+    if (v === null) return null;
+    if (typeof v !== 'number' || !isFinite(v) || v < 0 || v > 100) return undefined;
+    return Math.round(v * 10) / 10;
+  }
+
   return {
     hello(p) {
       if (!isObj(p)) return { ok: false, error: P.ERR.INVALID_PAYLOAD };
@@ -32,25 +57,32 @@ function makeValidator(core) {
       return { ok: true, userId: p.userId.toLowerCase(), name: name };
     },
 
-    /** 4体ちょうど／存在するキャラで重複なし／スキルが候補6種の中の重複なし3種／area 1〜3 */
+    /** 4体ちょうど（メンバーの条件は members） */
     party(p) {
       if (!isObj(p) || !Array.isArray(p.party) || p.party.length !== 4) return { ok: false, error: P.ERR.INVALID_PARTY };
-      const seen = new Set();
-      const party = [];
-      for (const m of p.party) {
-        if (!isObj(m) || !Number.isInteger(m.charId)) return { ok: false, error: P.ERR.INVALID_PARTY };
-        const master = getCharacter(m.charId);
-        if (!master || master.id !== m.charId || seen.has(m.charId)) return { ok: false, error: P.ERR.INVALID_PARTY };
-        seen.add(m.charId);
-        if (!Array.isArray(m.skills) || m.skills.length !== 3) return { ok: false, error: P.ERR.INVALID_PARTY };
-        const skills = m.skills.filter(s => typeof s === 'string');
-        if (new Set(skills).size !== 3 || !skills.every(s => master.skillPool.indexOf(s) >= 0)) {
-          return { ok: false, error: P.ERR.INVALID_PARTY };
-        }
-        if (![1, 2, 3].includes(m.area)) return { ok: false, error: P.ERR.INVALID_PARTY };
-        party.push({ charId: m.charId, skills: skills, area: m.area });
-      }
-      return { ok: true, party: party };
+      const party = members(p.party);
+      return party ? { ok: true, party: party } : { ok: false, error: P.ERR.INVALID_PARTY };
+    },
+
+    /**
+     * 防衛パーティの登録。メンバーの条件は party と同じだが、所持キャラが少ない人のため1〜4体を許す。
+     * winRate は 0〜100 か null（未対戦）
+     */
+    defense(p) {
+      if (!isObj(p) || !Array.isArray(p.party) || p.party.length < 1 || p.party.length > 4) return { ok: false, error: P.ERR.INVALID_PARTY };
+      const party = members(p.party);
+      if (!party) return { ok: false, error: P.ERR.INVALID_PARTY };
+      const rate = winRate(p.winRate);
+      if (rate === undefined) return { ok: false, error: P.ERR.INVALID_PAYLOAD };
+      return { ok: true, party: party, winRate: rate };
+    },
+
+    /** 対戦相手の検索（自分の勝率） */
+    findOpponents(p) {
+      if (!isObj(p)) return { ok: false, error: P.ERR.INVALID_PAYLOAD };
+      const rate = winRate(p.winRate);
+      if (rate === undefined) return { ok: false, error: P.ERR.INVALID_PAYLOAD };
+      return { ok: true, winRate: rate };
     },
 
     /** 自分のユニット全員の配置（1〜3） */

@@ -92,11 +92,32 @@ const PvpClient = {
   },
 
   /** 要求を送り、ack（応答）を待つ */
-  req(ev, data) {
+  req(ev, data, timeoutMs) {
     return new Promise((resolve) => {
       if (!this.socket) { resolve({ ok: false, error: 'NOT_CONNECTED' }); return; }
-      this.socket.timeout(8000).emit(ev, data, (err, res) => resolve(err ? { ok: false, error: 'TIMEOUT' } : (res || { ok: false })));
+      this.socket.timeout(timeoutMs || 8000).emit(ev, data, (err, res) => resolve(err ? { ok: false, error: 'TIMEOUT' } : (res || { ok: false })));
     });
+  },
+
+  // ---------------- 非同期対戦（ゴースト対戦） ----------------
+  /** 自分の防衛パーティをサーバーへ登録する（未設定なら何もしない） */
+  async uploadDefense() {
+    if (!Save.data.defenseParty.length) return { ok: false, error: 'NO_DEFENSE' };
+    const c = await this.connect();
+    if (!c.ok) return c;
+    return this.req(PVP_PROTOCOL.EV.SET_DEFENSE, { party: Ghost.myDefense().members, winRate: Save.winRate() }, 4000);
+  },
+
+  /**
+   * 防衛パーティを登録し直してから、勝率の近い他プレイヤーの防衛パーティを最大3件取得する。
+   * サーバーに繋がらない・応答がない（古いサーバー）場合は空配列（呼び出し側で疑似ゴーストを補う）。
+   */
+  async findOpponents() {
+    const c = await this.connect();
+    if (!c.ok) return [];
+    await this.uploadDefense();
+    const r = await this.req(PVP_PROTOCOL.EV.FIND_OPPONENTS, { winRate: Save.winRate() }, 4000);
+    return r.ok && Array.isArray(r.opponents) ? r.opponents : [];
   },
 
   /** 試合への復帰 */

@@ -17,6 +17,10 @@ const PVP_PROTOCOL = {
     ACTION_COMPLETE: 'action_complete',
     SURRENDER: 'surrender',
     RESUME: 'resume',
+    // 非同期対戦（ゴースト対戦）: 防衛パーティの登録と、対戦相手（他プレイヤーの防衛パーティ）の取得
+    // 追加のイベントなので版数は上げない（古いサーバーは応答しないため、クライアントは疑似ゴーストで代用する）
+    SET_DEFENSE: 'set_defense',
+    FIND_OPPONENTS: 'find_opponents',
     // サーバー → クライアント
     QUEUE_TIMER: 'queue_timer',
     MATCH_FOUND: 'match_found',

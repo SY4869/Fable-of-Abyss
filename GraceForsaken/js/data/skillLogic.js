@@ -313,12 +313,12 @@ const SKILL_LOGIC = {
   // ---------------- アレクトロス ----------------
   '歌う筋肉': {
     act: 'passive',
-    // 攻撃を受けた場合、相手の物攻・魔攻を -3（2ラウンド・重複可）
-    passive: { onAttackedDebuff: { dur: 2, stats: { atkPhys: -3, atkMag: -3 } } },
+    // ダメージを受けた場合、2ラウンドの間、自身が受ける貫通ダメージを無効化する
+    passive: { onDamagedBuff: { dur: 2, flags: { pierceImmune: true } } },
   },
   '愉快な合唱団': {
     act: 'buff', tgt: 'SELF',
-    buff: { dur: 6, regen: { hp: 2, mp: 2 } },
+    buff: { dur: 6, regen: { hp: 3, mp: 3 } },
   },
   '踊り狂う酔っ払い': {
     act: 'buff', tgt: 'SELF',
@@ -991,5 +991,90 @@ const SKILL_LOGIC = {
   },
   '亡兵の行軍': {
     act: 'special', tgt: 'NONE', custom: 'summon', summonName: '灰より立つ亡兵',
+  },
+
+  // ---------------- アステル 第3話 ボス: 陣より這い出る魔神 ----------------
+  '供物喰らい': {
+    act: 'passive',
+    passive: { regen: { hp: 3 } },
+  },
+  '深淵の呼び声': {
+    act: 'special', tgt: 'NONE', custom: 'summon', summonName: '陣より湧く魔人',
+  },
+  '喰らう顎': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkPhys', mod: 3, dmg: 'PHYS' },
+  },
+  '深淵の瘴気': {
+    act: 'attack', tgt: 'ENEMY_AREA',
+    atk: { base: 'atkMag', mod: -2, dmg: 'MAG' },
+  },
+  '供物の要求': {
+    act: 'buff', tgt: 'ENEMY_ONE',
+    buff: { dur: 3, stats: { atkPhys: -2, atkMag: -2 } },
+    then: [{ act: 'buff', tgt: 'SELF', buff: { dur: 3, stats: { atkPhys: 2, atkMag: 2 } } }],
+  },
+  '支配の囁き': {
+    act: 'special', tgt: 'ENEMY_ONE', custom: 'charm',
+  },
+  '未完の咆哮': {
+    act: 'attack', tgt: 'ENEMY_AREA',
+    atk: { base: 'atkMag', mod: 3, dmg: 'MAG', pierce: true },
+  },
+
+  // ---------------- アレクトロス 第3話 ボス: 星の果ての狂奏者 ----------------
+  // 毎ラウンド開始時に、敵が一番多いエリアの敵全体の速度を そのラウンドだけ -2。自身のHP+2
+  '終わらない狂奏': {
+    act: 'passive',
+    passive: { regen: { hp: 2 }, roundStartAreaDebuff: { dur: 1, stats: { speed: -2 } } },
+  },
+  '死の舞踏': {
+    act: 'attack', tgt: 'ENEMY_AREA',
+    atk: { base: 'atkMag', mod: -2, dmg: 'MAG', hits: 2 },
+  },
+  '狂気の旋律': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkMag', mod: 2, dmg: 'MAG' },
+  },
+  '不協和音': {
+    act: 'buff', tgt: 'ENEMY_AREA', quick: true,
+    buff: { dur: 3, stats: { defPhys: -3, defMag: -3 } },
+  },
+  '踊り狂え': {
+    act: 'special', tgt: 'ENEMY_ONE', custom: 'charm',
+  },
+  '星の調べの帳': {
+    act: 'buff', tgt: 'SELF', quick: true,
+    buff: { dur: 99, shield: { base: 'atkMag', div: 2 } },
+  },
+
+  // ---------------- イレイナ 第3話 ボス: 魂を喰らうもの ----------------
+  // 味方が倒れるたびに HP+5、2ラウンドの間 隠密（イレイナの魂転は隠密を無視して必中）
+  '魂の捕食者': {
+    act: 'passive',
+    passive: { onAllyDeath: { heal: 5, buff: { dur: 2, flags: { stealth: true } } } },
+  },
+  '喰らいつく口': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkPhys', mod: 3, dmg: 'PHYS' },
+  },
+  '魂の簒奪': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkMag', mod: 0, dmg: 'MAG' },
+    then: [{ act: 'special', custom: 'drainHeal', ratio: 1 }],
+  },
+  '飢餓の咆哮': {
+    act: 'attack', tgt: 'ENEMY_AREA',
+    atk: { base: 'atkMag', mod: -2, dmg: 'MAG' },
+  },
+  '偽りの口上': {
+    act: 'special', tgt: 'ENEMY_ONE', custom: 'charm',
+  },
+  '触手の殻': {
+    act: 'buff', tgt: 'SELF', quick: true,
+    buff: { dur: 99, shield: { base: 'defPhys', div: 1 } },
+  },
+  '獣の招集': {
+    act: 'special', tgt: 'NONE', custom: 'summon', summonName: '魂を喰われた魔獣',
   },
 };

@@ -279,12 +279,32 @@ const Ghost = {
     };
   },
 
-  /** 自分の防衛パーティ（対戦相手からはこう見える） */
+  /** 自分の防衛パーティ（対戦相手からはこう見える。サーバーへはこの members を登録する） */
   myDefense() {
     const list = Save.data.defenseParty.length ? Save.data.defenseParty : Save.data.party;
     return {
       name: 'あなたの防衛隊',
-      members: list.map(id => ({ charId: id, skills: Save.skillsOf(id) })),
+      members: list.map(id => ({ charId: id, skills: Save.skillsOf(id).slice(), area: Save.placementOf(id) })),
+    };
+  },
+
+  /**
+   * サーバーから受け取った他プレイヤーの防衛パーティを、generate() と同じ形にする。
+   * このバージョンに無いキャラ・スキルが含まれる場合は null（対戦相手に使わない）
+   */
+  fromPlayer(op, seed) {
+    if (!op || !Array.isArray(op.party) || !op.party.length) return null;
+    const ok = op.party.every(m => {
+      const master = getCharacter(m.charId);
+      return master && Array.isArray(m.skills) && m.skills.every(s => master.skillPool.indexOf(s) >= 0);
+    });
+    if (!ok) return null;
+    return {
+      name: String(op.name || 'Player'),
+      winRate: typeof op.winRate === 'number' ? op.winRate : 0,
+      members: op.party.map(m => ({ charId: m.charId, skills: m.skills.slice(), area: m.area })),
+      seed: seed,
+      player: true,
     };
   },
 };

@@ -9,6 +9,8 @@ const SUFFIX = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 const STORY_PLACEMENT = {
   // 切裂劣子 第3話: 劣子を前衛、黒きヤギの仔を前衛と中衛に1体ずつ
   '切裂劣子': { '切裂劣子': [1], '黒きヤギの仔': [1, 2] },
+  // ロナ 第3話: ロナを中衛、アレクトロスを前衛
+  'ロナ': { 'ロナ': [2], 'アレクトロス': [1] },
 };
 
 function hashString(s) {
@@ -146,7 +148,9 @@ const StoryBattle = {
       guests.push(g);
     });
 
-    const winCondition = bossUnit
+    // ボスが複数いる戦闘（ロナ第3話のロナとアレクトロス）は、全員の撃破が勝利条件
+    const bossCount = spec.enemies.filter(e => e.boss).length;
+    const winCondition = bossUnit && bossCount === 1
       ? { type: 'DEFEAT_TARGET', targetUid: bossUnit.uid }
       : { type: 'ANNIHILATE' };
 
