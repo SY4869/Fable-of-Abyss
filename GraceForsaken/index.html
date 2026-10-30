@@ -6,17 +6,43 @@
 <meta name="theme-color" content="#07070d">
 <title>GraceForsaken</title>
 <meta name="description" content="4vs4 マス目・間合い配置型のターン制コマンドバトルRPG。キャラクターごとのシナリオ、ゴースト対戦、リアルタイム対戦を遊べます。">
+<link rel="canonical" href="https://sygames.net/GraceForsaken/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="SY GAMES">
+<meta property="og:title" content="GraceForsaken｜SY GAMES">
+<meta property="og:description" content="4vs4 マス目・間合い配置型のターン制コマンドバトルRPG。キャラクターごとのシナリオ、ゴースト対戦、リアルタイム対戦を遊べます。">
+<meta property="og:url" content="https://sygames.net/GraceForsaken/">
+<meta property="og:image" content="https://sygames.net/assets/images/grace/thumb.webp">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Shippori+Mincho:wght@500;700&display=swap">
 <!-- ?v= は公開後の更新時のキャッシュ対策。ファイルを更新したらこの版数をまとめて上げる -->
-<link rel="stylesheet" href="css/style.css?v=1.2.20">
+<link rel="stylesheet" href="css/style.css?v=1.2.21">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#128302;</text></svg>">
 </head>
 <body>
 
 <div id="bg" class="bg-title"></div>
 <div id="app"></div>
+<!-- JavaScript が動かない環境（と検索エンジン）向けの説明とサイト内リンク。ゲーム画面は JavaScript で組み立てる -->
+<noscript>
+  <div class="noscript-box">
+    <h1>GraceForsaken</h1>
+    <p>4人と4人が横一列6マスの戦場で向かい合う、ターン制コマンドバトルRPGです。31人のキャラクターの物語を進めて仲間を増やし、ゴースト対戦やリアルタイム対戦で遊べます。</p>
+    <p>このゲームを遊ぶには JavaScript を有効にしてください。</p>
+    <nav class="sitenav" aria-label="サイト内リンク">
+      <a href="../index.html">SY GAMES</a>
+      <a href="../grace-about.html">作品紹介</a>
+      <a href="../grace-howto.html">遊び方</a>
+      <a href="../devlog.html">制作記録</a>
+      <a href="../about.html">このサイトについて</a>
+      <a href="../credits.html">クレジット</a>
+      <a href="../privacy.html">プライバシーポリシー</a>
+      <a href="../contact.html">お問い合わせ</a>
+    </nav>
+  </div>
+</noscript>
 <!-- スマホを縦に持っているときの案内（CSS の @media で表示） -->
 <div id="rotate-hint" aria-live="polite">
   <div class="rotate-box">
@@ -28,42 +54,42 @@
 </div>
 
 <!-- 調整用パラメータ -->
-<script src="js/core/config.js?v=1.2.20"></script>
+<script src="js/core/config.js?v=1.2.21"></script>
 
 <!-- 自動生成データ（データ一覧.xlsx / ストーリー*.md / 立ち絵 より） -->
-<script src="js/data/skills.js?v=1.2.20"></script>
-<script src="js/data/characters.js?v=1.2.20"></script>
-<script src="js/data/stories.js?v=1.2.20"></script>
-<script src="js/data/portraits.js?v=1.2.20"></script>
-<script src="js/art/faces.js?v=1.2.20"></script>
+<script src="js/data/skills.js?v=1.2.21"></script>
+<script src="js/data/characters.js?v=1.2.21"></script>
+<script src="js/data/stories.js?v=1.2.21"></script>
+<script src="js/data/portraits.js?v=1.2.21"></script>
+<script src="js/art/faces.js?v=1.2.21"></script>
 
 <!-- スキル効果ロジック（手書き） -->
-<script src="js/data/skillLogic.js?v=1.2.20"></script>
+<script src="js/data/skillLogic.js?v=1.2.21"></script>
 
 <!-- コア -->
-<script src="js/core/util.js?v=1.2.20"></script>
-<script src="js/core/unit.js?v=1.2.20"></script>
-<script src="js/core/battle.js?v=1.2.20"></script>
-<script src="js/core/ai.js?v=1.2.20"></script>
-<script src="js/core/actions.js?v=1.2.20"></script>
-<script src="js/core/storyBattle.js?v=1.2.20"></script>
-<script src="js/core/save.js?v=1.2.20"></script>
-<script src="js/core/audio.js?v=1.2.20"></script>
+<script src="js/core/util.js?v=1.2.21"></script>
+<script src="js/core/unit.js?v=1.2.21"></script>
+<script src="js/core/battle.js?v=1.2.21"></script>
+<script src="js/core/ai.js?v=1.2.21"></script>
+<script src="js/core/actions.js?v=1.2.21"></script>
+<script src="js/core/storyBattle.js?v=1.2.21"></script>
+<script src="js/core/save.js?v=1.2.21"></script>
+<script src="js/core/audio.js?v=1.2.21"></script>
 
 <!-- リアルタイム対戦の通信（socket.io はサーバーと同じ 4.8.4 を同梱） -->
 <script src="js/lib/socket.io.min.js?v=4.8.4"></script>
-<script src="js/net/protocol.js?v=1.2.20"></script>
-<script src="js/net/pvpClient.js?v=1.2.20"></script>
+<script src="js/net/protocol.js?v=1.2.21"></script>
+<script src="js/net/pvpClient.js?v=1.2.21"></script>
 
 <!-- UI -->
-<script src="js/ui/common.js?v=1.2.20"></script>
-<script src="js/ui/battleUi.js?v=1.2.20"></script>
-<script src="js/ui/battleHelp.js?v=1.2.20"></script>
-<script src="js/ui/screens.js?v=1.2.20"></script>
-<script src="js/ui/pvpScreens.js?v=1.2.20"></script>
+<script src="js/ui/common.js?v=1.2.21"></script>
+<script src="js/ui/battleUi.js?v=1.2.21"></script>
+<script src="js/ui/battleHelp.js?v=1.2.21"></script>
+<script src="js/ui/screens.js?v=1.2.21"></script>
+<script src="js/ui/pvpScreens.js?v=1.2.21"></script>
 
 <!-- 起動 -->
-<script src="js/main.js?v=1.2.20"></script>
+<script src="js/main.js?v=1.2.21"></script>
 
 </body>
 </html>
