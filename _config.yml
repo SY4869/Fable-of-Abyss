@@ -1,0 +1,5 @@
+# GitHub Pages（Jekyll）の設定。
+# サイトは素の HTML なので Jekyll の変換は使わないが、Markdown がページとして公開されないよう配信から外す。
+exclude:
+  - README.md
+  - GraceForsaken/server
