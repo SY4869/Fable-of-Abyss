@@ -11,7 +11,7 @@ GitHub Pages で配信しています。`main` に push すると反映されま
 | `/` | `index.html` | トップ（ゲーム一覧） |
 | `/fable.html` | `fable.html` | 弾幕シューティング『フェイブル・オブ・アビス』 |
 | `/chaos.html` | `chaos.html` | 剣戟バトル『カオスソードガーデン』 |
-| `/GraceForsaken/` | `GraceForsaken/` | ターン制コマンドバトルRPG『GraceForsaken』（作品紹介 `grace-about.html`・遊び方 `grace-howto.html`） |
+| `/GraceForsaken/index.html` | `GraceForsaken/` | ターン制コマンドバトルRPG『GraceForsaken』（作品紹介 `grace-about.html`・遊び方 `grace-howto.html`） |
 | `/howto.html` | `howto.html` | 遊び方と物語 |
 | `/about.html` | `about.html` | このサイトについて |
 | `/credits.html` | `credits.html` | 素材提供元のクレジット |
