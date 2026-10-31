@@ -223,7 +223,7 @@ const Screens = {
         el('button', { class: 'btn small ghost', 'data-se': 'cancel', text: 'タイトルへ', onclick: () => { App.stack = []; App.show(Screens.title, []); } }),
         el('a', { class: 'site-home', href: SITE_LINKS[0][1], text: 'ゲーム選択へ（SY GAMES）' }),
         el('div', { class: 'spacer' }),
-        el('span', { class: 'faint', text: 'Ver. 1.2.22' }),
+        el('span', { class: 'faint', text: 'Ver. 1.2.23' }),
       ]),
     ]);
   },
@@ -347,6 +347,7 @@ const Screens = {
         guests: setup.guests,
         winCondition: setup.winCondition,
         winText: ep.battle.winText,
+        events: ep.battle.events,
         // 沖田雫・レイア・切裂劣子の最終話は専用BGM
         bgm: epNo !== lastEp ? 'battle' : ({ '沖田雫': 'battleOkita', 'レイア': 'battleLeia', '切裂劣子': 'battleKirisaki' })[charName] || 'battle',
         onEnd: finish,

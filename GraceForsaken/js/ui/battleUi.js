@@ -545,6 +545,36 @@ function createBattleView(cfg) {
     setTimeout(end, CONFIG.CUTIN_MS);
   };
 
+  /**
+   * 戦闘中イベントの会話（ストーリーの「#### 戦闘中イベント」）。タップで1行ずつ送り、終わったら done()。
+   * speaker: 話者の立ち絵に使うユニット
+   */
+  const talk = (lines, speaker, done) => {
+    busy = true;
+    render();
+    const nameNode = el('div', { class: 'novel-name' });
+    const textNode = el('div', { class: 'novel-text' });
+    const art = speaker && portraitKey(speaker) ? standImg(speaker, 'talk-art') : null;
+    const node = el('div', { class: 'battle-talk' }, [art, el('div', { class: 'novel-box' }, [nameNode, textNode])]);
+    root.appendChild(node);
+    let i = -1;
+    const next = () => {
+      if (!root.isConnected) return;
+      if (++i >= lines.length) { node.remove(); busy = false; done(); return; }
+      const m = /^@([^「『(（]+)(?:[(（][^)）]+[)）])?(?=[「『])/.exec(lines[i]);
+      const who = m ? m[1].trim() : '';
+      nameNode.textContent = who;
+      nameNode.style.visibility = who ? 'visible' : 'hidden';
+      textNode.textContent = m ? lines[i].slice(m[0].length) : lines[i];
+      textNode.classList.remove('in');
+      void textNode.offsetWidth;
+      textNode.classList.add('in');
+      if (art) art.classList.toggle('dim', !who);
+    };
+    node.addEventListener('click', next);
+    next();
+  };
+
   const view = {
     root: root,
     state: state,
@@ -552,6 +582,7 @@ function createBattleView(cfg) {
     unitOf: unitOf,
     appendLog: appendLog,
     play: play,
+    talk: talk,
     isBusy: () => busy,
     /** 状態を差し替えて描画する */
     setState(patch) {
@@ -753,9 +784,16 @@ const BattleFlow = {
       if (battle.allUnits().some(u => u.alive && (u.buffs.length || u.shield > 0 || u.brainwashed || u.doom))) keys.push('status');
       return keys;
     };
+    // 戦闘中イベント: 敵がそのスキルを使った時に、行動の演出の前に会話を挟む（1回だけ）
+    const talks = (opts.events || []).slice();
     const playResult = (res) => {
-      view.play(res.events, () => Object.assign(view.state, snapshot()),
+      const go = () => view.play(res.events, () => Object.assign(view.state, snapshot()),
         () => guide ? guide.run(tutorialAfter(res.events), step) : step());
+      const cut = res.events.find(e => e.t === 'cutin');
+      const who = cut ? view.unitOf(cut.unitId) : null;
+      const ti = who && who.side === 'ENEMY' ? talks.findIndex(t => t.skill === cut.name) : -1;
+      if (ti < 0) { go(); return; }
+      view.talk(talks.splice(ti, 1)[0].lines, who, go);
     };
 
     // ---------- 進行 ----------

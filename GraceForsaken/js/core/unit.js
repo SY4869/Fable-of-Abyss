@@ -95,6 +95,7 @@ function unitFromMaster(master, skills, side, area, opt) {
 const PORTRAIT_ALIAS = {
   '神の器となった大司教': '怪しい神父',
   '深淵のヤギ仔': '黒きヤギの仔',
+  '黒山羊の仔': '黒きヤギの仔',
 };
 function enemyPortrait(name, opt) {
   const list = typeof PORTRAIT_LIST !== 'undefined' ? PORTRAIT_LIST : [];

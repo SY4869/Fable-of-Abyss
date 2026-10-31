@@ -1030,6 +1030,18 @@ img.art-loading { visibility: hidden; }
    戦闘カットイン
    =================================================================== */
 .cutin-layer { position: fixed; inset: 0; z-index: 300; pointer-events: none; }
+/* 戦闘中イベントの会話（盤面を暗くして、ノベルと同じ文章枠で見せる） */
+.battle-talk {
+  position: fixed; inset: 0; z-index: 310; cursor: pointer; user-select: none; overflow: hidden;
+  background: rgba(4, 4, 12, .62); animation: fade .35s ease;
+}
+.talk-art {
+  position: absolute; left: 58%; bottom: 0; translate: calc(-100% * var(--fx, .5)) 0;
+  height: 86vh; width: auto; max-width: none;
+  filter: drop-shadow(0 0 30px rgba(0, 0, 0, .8)); transition: filter .3s;
+}
+.talk-art.dim { filter: drop-shadow(0 0 30px rgba(0, 0, 0, .8)) brightness(.55); }
+@media (max-width: 720px) { .talk-art { left: 50%; height: 74vh; bottom: 12vh; } }
 .cutin {
   position: absolute; left: 0; right: 0; top: 50%; height: 190px; margin-top: -95px;
   pointer-events: auto; cursor: pointer; overflow: hidden;

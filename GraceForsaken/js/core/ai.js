@@ -7,12 +7,19 @@
 //   3. 射程内に誰もいなければ前進する
 // ===================================================================
 
+/** ストーリー戦闘の敵ボスか（ボス固有の行動ルールの対象） */
+function isStoryBoss(battle, unit) {
+  return unit.isBoss && unit.side === 'ENEMY' && battle.mode === 'STORY';
+}
+
 const AI = {
   /**
    * 1手ぶんの行動を返す。クイックスキルを返した場合は行動権を消費しないので、
    * 呼び出し側は「行動権を消費する手が返るまで」繰り返し呼ぶ。
    */
   decide(battle, unit) {
+    const opening = this.pickScriptedQuick(battle, unit);
+    if (opening) return opening;
     const quick = this.pickQuick(battle, unit);
     if (quick) return quick;
     const scripted = this.pickScripted(battle, unit);
@@ -26,11 +33,19 @@ const AI = {
    * 該当しなければ null を返し、通常のスコア評価に任せる。
    */
   pickScripted(battle, unit) {
-    if (!unit.isBoss || unit.side !== 'ENEMY' || battle.mode !== 'STORY') return null;
+    if (!isStoryBoss(battle, unit)) return null;
+    const can = id => unit.skills.indexOf(id) >= 0 && battle.skillUsability(unit, id).ok;
+    // 花渕なずな 第3話: HPが半分以下になった最初の手番で流れ星の奇跡（以後は使わない）
+    if (unit.storyName === '花渕なずな') {
+      if (!unit._shootingStarUsed && unit.hp <= unit.maxHp / 2 && can('流れ星の奇跡')) {
+        unit._shootingStarUsed = true;
+        return this.buildAction(battle, unit, '流れ星の奇跡');
+      }
+      return null;
+    }
     // ロナ 第3話: 1ラウンド目はリーサルカウント。以後、アレクのHPが8以上減っていればヒール、
     // まだリーサルカウントがかかっていない敵だけのエリアがあればリーサルカウント
     if (unit.storyName !== 'ロナ') return null;
-    const can = id => unit.skills.indexOf(id) >= 0 && battle.skillUsability(unit, id).ok;
     const lethalArea = freshOnly => {
       let best = null;
       for (let a = 1; a <= CONFIG.AREA_COUNT; a++) {
@@ -54,6 +69,16 @@ const AI = {
       if (a) return { type: 'skill', skillId: 'リーサルカウント', area: a.area };
     }
     return null;
+  },
+
+  /** ストーリーのボスが最初に撃つクイックスキル（花渕なずな 第3話: 戦闘開始時に黒きヤギの祝福） */
+  pickScriptedQuick(battle, unit) {
+    if (!isStoryBoss(battle, unit) || unit.storyName !== '花渕なずな' || unit._openingDone) return null;
+    unit._openingDone = true;
+    const id = '黒きヤギの祝福';
+    if (unit.skills.indexOf(id) < 0 || !battle.skillUsability(unit, id).ok) return null;
+    unit._usedQuick = Object.assign(unit._usedQuick || {}, { [id]: true });
+    return this.buildAction(battle, unit, id);
   },
 
   // -----------------------------------------------------------------
@@ -226,6 +251,8 @@ const AI = {
             return dead >= 2 ? 90 : 0;
           }
           case 'shootingStar': {
+            // 花渕なずな 第3話のボスは、使う時機を pickScripted で決める
+            if (isStoryBoss(battle, unit) && unit.storyName === '花渕なずな') return 0;
             // HPが減っている時、または花畑でなければ花畑にして強化を得る
             const missing = 1 - hpRatio(unit);
             const toCosmos = battle.field.location !== 'COSMOS' || battle.field.time !== 'NIGHT';
