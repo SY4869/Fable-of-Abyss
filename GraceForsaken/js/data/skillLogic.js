@@ -15,6 +15,7 @@
 //   buff   : { dur, stats:{speed,atkPhys,atkMag,defPhys,defMag},
 //              acc, eva, regen:{hp,mp}, shield:{base,div}, flags:{...} }
 //   onKill : { perm:{...}, restore:{hp,mp} }  … この攻撃で敵を倒した時
+//   healTarget : 'ALLY_ONE' なら、対象とは別に回復する味方1体も選ぶ（反魂）
 //   then   : [ 追加効果 ... ]
 //   passive: { ... }  … 常時効果
 //   custom : 特殊処理の識別子（battle.js の runCustom で実装）
@@ -256,7 +257,7 @@ const SKILL_LOGIC = {
   },
   'ブラッドランス': {
     act: 'attack', tgt: 'ENEMY_ONE', costHp: 2, blood: true,
-    atk: { base: 'atkMag', mod: 2, dmg: 'PHYS' },
+    atk: { base: 'atkMag', mod: 4, dmg: 'PHYS' },
   },
   'ブレインイーター': {
     act: 'buff', tgt: 'SELF', quick: true,
@@ -364,8 +365,9 @@ const SKILL_LOGIC = {
     act: 'passive',
     passive: { healAsDamage: 2 },
   },
+  // 敵1体にダメージを与え、選んだ味方1体（healTarget）のHPを与えたダメージ分回復する
   '反魂': {
-    act: 'special', tgt: 'ENEMY_ONE', custom: 'hangon',
+    act: 'special', tgt: 'ENEMY_ONE', custom: 'hangon', healTarget: 'ALLY_ONE',
     atk: { base: 'atkMag', mod: -4, dmg: 'MAG' },
   },
 
@@ -455,7 +457,7 @@ const SKILL_LOGIC = {
   },
   'ブラッドレイン': {
     act: 'attack', tgt: 'ENEMY_AREA', costHp: 3, blood: true,
-    atk: { base: 'atkMag', mod: -3, dmg: 'PHYS' },
+    atk: { base: 'atkMag', mod: -1, dmg: 'PHYS' },
   },
 
   // ---------------- No.27 フレア ----------------
@@ -1076,5 +1078,54 @@ const SKILL_LOGIC = {
   },
   '獣の招集': {
     act: 'special', tgt: 'NONE', custom: 'summon', summonName: '魂を喰われた魔獣',
+  },
+
+  // ---------------- アネシア 第3話 ボス: 星より来たる菌糸の苗床 ----------------
+  '終わらぬ増殖': {
+    act: 'passive',
+    passive: { regen: { hp: 5 } },
+  },
+  '胞子の嵐': {
+    act: 'attack', tgt: 'ENEMY_AREA',
+    atk: { base: 'atkMag', mod: -2, dmg: 'MAG' },
+  },
+  '菌糸の鞭': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkPhys', mod: 4, dmg: 'PHYS' },
+  },
+  '吸収': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkMag', mod: 0, dmg: 'MAG' },
+    then: [{ act: 'special', custom: 'drainHeal', ratio: 1 }],
+  },
+  '寄生': {
+    act: 'special', tgt: 'ENEMY_ONE', custom: 'charm', quick: true,
+  },
+  '菌の殻': {
+    act: 'buff', tgt: 'SELF', quick: true,
+    buff: { dur: 99, shield: { base: 'defMag', div: 1 } },
+  },
+  '苗床の呼び声': {
+    act: 'special', tgt: 'NONE', custom: 'summon', summonName: '菌に巣食われた木こり',
+  },
+
+  // ---------------- カオス 第3話: 亡国の聖騎士・亡国の魔導師 ----------------
+  // 物理／魔法ダメージを無効化する（絶対領域と同じく、貫通攻撃は無効化されない）
+  '不壊の聖鎧': {
+    act: 'passive',
+    passive: { immune: 'PHYS' },
+  },
+  '虚ろなる魔障': {
+    act: 'passive',
+    passive: { immune: 'MAG' },
+  },
+  '聖剣の一閃': {
+    act: 'attack', tgt: 'ENEMY_ONE',
+    atk: { base: 'atkPhys', mod: 8, dmg: 'PHYS' },
+  },
+  // 1ラウンドの間、物理防御と魔法防御の値を入れ替える（unit.js stats）
+  'アンチノミー': {
+    act: 'buff', tgt: 'SELF', quick: true,
+    buff: { dur: 1, flags: { swapDef: true } },
   },
 };

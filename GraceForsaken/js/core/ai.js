@@ -194,6 +194,14 @@ const AI = {
           if (b.flags.nextAtkBonus) score += 12;
           if (b.flags.nextDefReduce) score += 8;
           if (b.flags.noHeal) score += 6;
+          if (b.flags.swapDef) {
+            // アンチノミー: 無効化できない側の防御が上がる時だけ使う（物理無効なら魔法防御を上げたい）
+            const p = passiveOf(unit);
+            const gain = p && p.immune === 'PHYS' ? s.defPhys - s.defMag
+              : p && p.immune === 'MAG' ? s.defMag - s.defPhys : 0;
+            if (gain <= 0) return 0;
+            score += gain * 1.2;
+          }
         }
         if (b.regen) score += ((b.regen.hp || 0) + (b.regen.mp || 0)) * (b.dur || 1) * 0.8;
         // デバフは対象がいるときだけ
@@ -225,12 +233,14 @@ const AI = {
             return missing * 60 + (toCosmos ? 14 : 0) - cost.mp;
           }
           case 'hangon': {
+            // ダメージに加えて、減っている味方のHPを同じだけ回復できる
             const amount = Math.max(0, s.atkMag - 4);
-            return amount - cost.mp;
+            const missing = Math.max(0, ...battle.alliesOf(unit).map(a => a.maxHp - a.hp));
+            return amount + Math.min(amount, missing) - cost.mp;
           }
           case 'shuen':
-            // 1ラウンド目は威力が1しかないので使わない
-            if (battle.round < 2) return 0;
+            // 1ラウンド目は威力が1しかないので使わない。ストーリーのボス（カオス第3話）は3ラウンド目から
+            if (battle.round < (unit.isBoss && battle.mode === 'STORY' ? 3 : 2)) return 0;
             return battle.round * battle.enemiesOf(unit).length - cost.mp;
           case 'frontBlast': {
             const front = battle.enemiesOf(unit).filter(e => e.alive && e.area === 1).length;
@@ -352,6 +362,12 @@ const AI = {
       default:
         action.targetUid = unit.uid;
         action.area = unit.area;
+    }
+    // 反魂: 回復するのは、減っているHPが一番多い味方
+    if (lg.healTarget === 'ALLY_ONE') {
+      const wounded = battle.alliesOf(unit).slice()
+        .sort((a, b) => (b.maxHp - b.hp) - (a.maxHp - a.hp) || hpRatio(a) - hpRatio(b))[0];
+      action.healUid = (wounded || unit).uid;
     }
     return action;
   },

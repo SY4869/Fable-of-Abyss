@@ -218,6 +218,8 @@ function stats(unit, field) {
 
   // --- 加算系パッシブ（他ステータス参照） ---
   if (p && p.magicBow) s.atkPhys += Math.floor(s.atkMag / 2);
+  // アンチノミー: 物理防御と魔法防御の値を入れ替える
+  if (flags.swapDef) { const d = s.defPhys; s.defPhys = s.defMag; s.defMag = d; }
 
   // --- 下限1（HP/MPを除く） ---
   STAT_KEYS.forEach(k => { if (s[k] < 1) s[k] = 1; });

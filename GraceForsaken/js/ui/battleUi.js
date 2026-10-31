@@ -137,6 +137,7 @@ function createBattleView(cfg) {
     mode: 'IDLE',          // 'IDLE' | 'TARGET_UNIT' | 'TARGET_AREA' | 'CONFIRM'
     entry: null,           // 選択中の行動（legal の項目）
     units: [], areas: [], targetSide: null,
+    healFor: null,         // 反魂: 選んだ攻撃対象の uid（この後、回復する味方を選ぶ）
     inspect: null,         // タップで確認中のユニット uid
   };
 
@@ -335,6 +336,7 @@ function createBattleView(cfg) {
       const e = ui.entry;
       const guide = ui.mode === 'CONFIRM' ? '効果範囲を確認して「決定」してください'
         : ui.mode === 'TARGET_AREA' ? (e.type === 'move' ? '移動先のマスを選んでください' : '対象のマスを選んでください')
+        : ui.healFor ? '回復する味方を選んでください'
         : '対象を選んでください';
       targetBar.classList.add('on');
       targetBar.appendChild(el('div', { class: 'tb-text' }, [
@@ -348,7 +350,7 @@ function createBattleView(cfg) {
       }
       targetBar.appendChild(el('button', {
         class: 'btn ghost', 'data-se': 'cancel', text: 'キャンセル',
-        onclick: () => { ui.mode = 'IDLE'; render(); },
+        onclick: () => { ui.mode = 'IDLE'; ui.healFor = null; render(); },
       }));
     }
 
@@ -431,6 +433,7 @@ function createBattleView(cfg) {
     ui.inspect = null;
     ui.units = [];
     ui.areas = [];
+    ui.healFor = null;
     if (e.type === 'move') {
       ui.mode = 'TARGET_AREA';
       ui.targetSide = 'ALLY';
@@ -453,12 +456,21 @@ function createBattleView(cfg) {
   const commit = (payload) => {
     if (busy || !ui.entry) return;
     const e = ui.entry;
+    // 反魂: 攻撃対象を選んだら、続けて回復する味方を選ぶ
+    if (e.healTargets && !ui.healFor) {
+      ui.healFor = payload.targetId;
+      ui.units = e.healTargets.slice();
+      render();
+      return;
+    }
     ui.mode = 'IDLE';
     ui.entry = null;
     let action;
     if (e.type === 'attack') action = { type: 'attack', targetId: payload.targetId };
     else if (e.type === 'move') action = { type: 'move', to: payload.area };
+    else if (ui.healFor) action = { type: e.type, skillId: e.skillId, targetId: ui.healFor, healId: payload.targetId };
     else action = { type: e.type, skillId: e.skillId, targetId: payload.targetId, area: payload.area };
+    ui.healFor = null;
     send(action);
   };
 

@@ -6,7 +6,7 @@
 //
 // 行動（アクション）の形式:
 //   { type:'attack', targetId }
-//   { type:'skill' | 'quick', skillId, targetId? , area? }
+//   { type:'skill' | 'quick', skillId, targetId? , area?, healId? }   … healId: 反魂で回復する味方
 //   { type:'move', to }
 //   { type:'wait' }            … 待機（ストーリー・ゴースト対戦と、PVPの時間切れのみ）
 // ===================================================================
@@ -103,6 +103,8 @@ const BattleActions = {
         areaSide: lg.tgt === 'ALLY_AREA' ? 'ALLY' : 'ENEMY',
         disabled: use.ok ? null : use.reason,
       };
+      // 反魂: 対象を選んだ後に、回復する味方も選ぶ
+      if (lg.healTarget === 'ALLY_ONE') e.healTargets = ids(battle.alliesOf(actor));
       if (t.kind === 'NONE') {
         // 対象指定のいらないスキルは、効果が及ぶユニットを示す（決定前の確認表示用）
         e.affect = lg.custom === 'fableOfAbyss'
@@ -131,6 +133,7 @@ const BattleActions = {
     if (e.type === 'attack') return e.targets.indexOf(action.targetId) >= 0 ? e : null;
     if (e.type === 'move') return e.to.indexOf(action.to) >= 0 ? e : null;
     if (e.type === 'wait') return e;
+    if (e.healTargets && action.healId !== undefined && e.healTargets.indexOf(action.healId) < 0) return null;
     if (e.targetKind === 'UNIT') return e.targets.indexOf(action.targetId) >= 0 ? e : null;
     if (e.targetKind === 'AREA') return e.areas.indexOf(action.area) >= 0 ? e : null;
     return e;
@@ -142,7 +145,7 @@ const BattleActions = {
       case 'attack': return { type: 'attack', targetUid: action.targetId };
       case 'move': return { type: 'move', area: action.to };
       case 'wait': return { type: 'wait' };
-      default: return { type: 'skill', skillId: action.skillId, targetUid: action.targetId, area: action.area };
+      default: return { type: 'skill', skillId: action.skillId, targetUid: action.targetId, area: action.area, healUid: action.healId };
     }
   },
 
@@ -154,7 +157,7 @@ const BattleActions = {
       case 'wait': return { type: 'wait' };
       default: {
         const lg = getLogic(ea.skillId);
-        return { type: lg && lg.quick ? 'quick' : 'skill', skillId: ea.skillId, targetId: ea.targetUid, area: ea.area };
+        return { type: lg && lg.quick ? 'quick' : 'skill', skillId: ea.skillId, targetId: ea.targetUid, area: ea.area, healId: ea.healUid };
       }
     }
   },

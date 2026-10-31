@@ -1117,9 +1117,14 @@ class Battle {
         const t = this.findUnit(action.targetUid);
         if (!t || !t.alive) break;
         const dealt = this.resolveAttack(actor, t, lg.atk, { name: sk ? sk.name : '反魂', element: 'NONE' });
-        const wounded = this.alliesOf(actor)
-          .slice().sort((a, b) => hpRatio(a) - hpRatio(b))[0];
-        if (wounded && dealt > 0) this.heal(wounded, Math.floor(dealt / 2), '反魂');
+        // 回復するのは選んだ味方（healUid）。指定がない・倒れている場合は、HPの割合が一番低い味方
+        const allies = this.alliesOf(actor);
+        const healed = allies.find(a => a.uid === action.healUid) ||
+          allies.slice().sort((a, b) => hpRatio(a) - hpRatio(b))[0];
+        if (healed && dealt > 0) {
+          this.emit('healCast', {});   // 回復のSE
+          this.heal(healed, dealt, '反魂');
+        }
         break;
       }
 

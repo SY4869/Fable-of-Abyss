@@ -125,6 +125,10 @@ const StoryBattle = {
 
     AI.autoPlace(enemies);
     if (bossUnit) bossUnit.area = 2;   // ボスは中衛に据える
+    // 敵編成にエリアが書かれている敵（「前衛：亡国の聖騎士 × 1体」）は、そのエリアに置く
+    spec.enemies.forEach(entry => {
+      if (entry.area) enemies.filter(u => u.storyName === entry.name).forEach(u => { u.area = entry.area; });
+    });
     // 配置の指定がある敵は、指定どおりのエリアに置く
     const placement = STORY_PLACEMENT[charName];
     if (placement) {
@@ -148,10 +152,15 @@ const StoryBattle = {
       guests.push(g);
     });
 
-    // ボスが複数いる戦闘（ロナ第3話のロナとアレクトロス）は、全員の撃破が勝利条件
+    // ボスが複数いる戦闘は、勝利条件に1体の名前だけが書かれていればその敵の撃破（カオス第3話の「カオスの撃破」）、
+    // そうでなければ全員の撃破（ロナ第3話の「ロナとアレクトロスの撃破」）
     const bossCount = spec.enemies.filter(e => e.boss).length;
-    const winCondition = bossUnit && bossCount === 1
-      ? { type: 'DEFEAT_TARGET', targetUid: bossUnit.uid }
+    const named = (spec.winText || '').match(/^(.+?)の(?:撃破|討伐)$/);
+    const namedBoss = bossCount > 1 && named
+      ? enemies.filter(u => u.isBoss && u.storyName === named[1]) : [];
+    const target = bossCount === 1 ? bossUnit : (namedBoss.length === 1 ? namedBoss[0] : null);
+    const winCondition = target
+      ? { type: 'DEFEAT_TARGET', targetUid: target.uid }
       : { type: 'ANNIHILATE' };
 
     return { field: field, enemies: enemies, guests: guests, winCondition: winCondition };
