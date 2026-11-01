@@ -617,7 +617,9 @@ body { background: transparent; }
   background: rgba(60, 40, 150, .35); border: 1px dashed #9d86ff; padding: 5px;
 }
 
-.draggable { touch-action: none; }
+.draggable { touch-action: none; user-select: none; -webkit-user-select: none; }
+/* ドラッグ中は画面のどこの文章も選択しない */
+html.drag-active, html.drag-active * { user-select: none !important; -webkit-user-select: none !important; cursor: grabbing; }
 /* 立ち絵データの読み込み中は表示しない */
 img.art-loading { visibility: hidden; }
 
@@ -662,7 +664,7 @@ img.art-loading { visibility: hidden; }
 
 /* 初期パーティ編成: 選択ボタンを画像の上に */
 .pick-top { margin: 0 0 10px; }
-.draggable-hold { -webkit-touch-callout: none; user-select: none; }
+.draggable-hold { -webkit-touch-callout: none; user-select: none; -webkit-user-select: none; }
 .hold-ready { box-shadow: 0 0 0 2px #c8b8ff, 0 0 18px var(--glow); }
 .party-list-drop.drop-hover { box-shadow: inset 0 0 0 2px #ff9fae, 0 0 18px rgba(255, 120, 140, .35); }
 .drop-note { font-size: 11.5px; color: var(--ink-faint); }
@@ -1377,4 +1379,182 @@ img.art-loading { visibility: hidden; }
   .cmd-label { margin: 0 0 3px; }
   .cmd-label.quick { margin-top: 5px; }
   .actor-head .face.medium { width: 56px; height: 56px; }
+}
+
+/* ---------- スマホの戦闘画面: スクロールせずに1画面に収める ----------
+   盤面・手番キャラ・コマンドを画面の高さに合わせて並べ、はみ出す分は各パネルの中でスクロールする。
+   ログは画面下に重ねて表示（初期は閉じる。battleUi.js の COMPACT_BATTLE_QUERY と合わせる） */
+@media (max-height: 500px), (max-width: 720px) {
+  #app:has(> .screen.battle) { padding: 0 8px; }
+  html:has(.screen.battle), body:has(.screen.battle),
+  html:has(.screen.battle-prep), body:has(.screen.battle-prep) { overflow: hidden; }
+  .screen.battle {
+    height: 100vh; height: 100dvh; overflow: hidden; box-sizing: border-box;
+    gap: 4px; padding-bottom: 10px;
+  }
+  .screen.battle .topbar { padding: 3px 0; gap: 6px; }
+  .screen.battle .topbar h1 { font-size: 15px; }
+  .screen.battle .topbar .en { display: none; }
+  .screen.battle .topbar .btn.small { padding: 3px 8px; font-size: 11.5px; }
+  .battle-hud { gap: 4px; }
+  .turn-box { padding: 2px 8px; }
+  .turn-box small { font-size: 8.5px; letter-spacing: .15em; }
+  .turn-box b { font-size: 18px; }
+  .order-box { padding: 2px 6px; }
+  .order-box small { display: none; }
+  .order-unit .face.mini { width: 24px; height: 24px; }
+  .order-unit + .order-unit::before { top: 4px; }
+  .field-info { padding: 2px 8px; min-width: 0; }
+  .fi-label { display: none; }
+  .fi-name b { font-size: 13px; }
+  .fi-desc { font-size: 10.5px; line-height: 1.35; }
+  .screen.battle .battle-field { min-height: 0; }
+  .screen.battle .field-row { gap: 2px; padding: 2px; height: 100%; box-sizing: border-box; }
+  .screen.battle .cell { min-height: 0; padding: 2px; }
+  .screen.battle .cell-label { margin-bottom: 1px; }
+  .screen.battle .cell-label b { font-size: 11px; }
+  .screen.battle .cell-label small { display: none; }
+  .target-bar { padding: 4px 10px; gap: 8px; }
+  .tb-text b { font-size: 14px; }
+  .tb-text span, .tb-text small { font-size: 11px; }
+  .battle-banner.on { padding: 4px; font-size: 13px; }
+  .screen.battle .battle-bottom { display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-height: 0; }
+  .screen.battle .actor-panel { flex: none; max-height: 38%; overflow-y: auto; padding: 5px 10px; }
+  .actor-head { gap: 8px; margin-bottom: 2px; }
+  .actor-head .face.medium { width: 40px; height: 40px; }
+  .actor-title b { font-size: 15px; }
+  .actor-title small { font-size: 9px; }
+  .gauge { margin: 1px 0; }
+  .actor-panel .stat-list { margin-top: 3px; }
+  .screen.battle .cmd-col { flex: 1 1 auto; min-height: 0; gap: 2px; }
+  .screen.battle .cmd-panel { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 4px 8px; order: 0; }
+  .cmd-row, .cmd-row.sub { gap: 4px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cmd-row.sub { margin-top: 4px; }
+  .cmd-btn { padding: 4px 8px 3px 10px; }
+  .cmd-btn .cb-name { font-size: 12.5px; }
+  .cmd-btn .cb-sub { font-size: 10px; }
+  .cmd-label { margin: 0 0 2px; font-size: 9.5px; }
+  .cmd-label.quick { margin-top: 4px; }
+  .cmd-desc { margin-top: 4px; font-size: 11.5px; }
+  .cmd-wait { padding: 6px 4px; }
+  .turn-timer.on { padding: 0 6px; }
+  .turn-timer b { font-size: 18px; }
+  .screen.battle .log-wrap {
+    position: fixed; left: 8px; right: 8px; bottom: 8px; z-index: 250;
+    box-shadow: 0 0 24px rgba(0, 0, 0, .85);
+  }
+  .screen.battle .log { height: min(45vh, 220px); }
+}
+/* 縦持ち: 上から 情報 → 盤面 → 手番キャラ → コマンド */
+@media (max-width: 720px) and (min-height: 501px) {
+  .screen.battle .battle-field { flex: 0 1 34%; }
+  .screen.battle .battle-bottom { flex: 1 1 0; }
+  .screen.battle .actor-panel { order: 0; }
+}
+/* 横持ち: 左に盤面、右に手番キャラとコマンド */
+@media (max-height: 500px) {
+  .screen.battle {
+    display: grid; column-gap: 6px; row-gap: 4px;
+    grid-template-columns: minmax(0, 1.55fr) minmax(210px, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas: "top top" "hud side" "field side" "tgt side";
+  }
+  .screen.battle .topbar { grid-area: top; }
+  .screen.battle .battle-hud { grid-area: hud; grid-template-columns: auto minmax(0, 1fr) auto; }
+  .screen.battle .battle-hud .field-info { grid-column: auto; max-width: 190px; }
+  .screen.battle .fi-desc { display: none; }
+  .screen.battle .battle-field { grid-area: field; }
+  .screen.battle .target-bar, .screen.battle .battle-banner { grid-area: tgt; }
+  .screen.battle .battle-bottom { grid-area: side; }
+  .screen.battle .actor-panel { max-height: 46%; }
+}
+
+/* ---------- スマホ横持ち（高さの低い横長画面）の一覧画面 ----------
+   ページ全体をスクロールさせず、左右の欄をそれぞれの中でスクロールさせる。 */
+@media (max-height: 500px) and (min-width: 600px) {
+  #app { padding-bottom: 6px; }
+  .topbar { padding: 4px 0; margin-bottom: 6px; gap: 8px; }
+  .topbar h1 { font-size: 17px; }
+  .topbar .en { display: none; }
+  .wallet { padding: 2px 10px; }
+  .wallet .lbl { display: none; }
+  .icon-btn .gear { transform: scale(.85); }
+  /* 2つの欄を左右に並べ、それぞれ画面の高さに収めてスクロール */
+  .story-layout, .party-layout, .split { gap: 8px; align-items: stretch; }
+  .story-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .party-layout { grid-template-columns: minmax(0, .9fr) minmax(0, 1.5fr); }
+  .split { grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); }
+  .story-stage, .story-side, .party-focus, .party-main, .split > * {
+    max-height: calc(100vh - 60px); max-height: calc(100dvh - 60px); overflow-y: auto; min-height: 0;
+  }
+  .party-focus, .detail-panel { position: static; }
+  .detail-panel { order: 0; }
+  .story-stage { display: block; }
+  .story-art { position: relative; display: block; left: 50%; height: 44vh; margin: 0 0 -24px; }
+  .story-info { margin-left: 0; width: 100%; }
+  .party-main { gap: 8px; }
+  .party-focus .detail-art, .detail-art { height: 52vh; min-height: 0; }
+  .char-detail { grid-template-columns: 1fr; gap: 8px; }
+  .party-focus .char-detail { grid-template-columns: 1fr; }
+  .story-stage, .story-side, .party-focus, .party-main, .split > * { overflow-x: hidden; }
+  .formation { gap: 6px; }
+  .form-col { min-height: 110px; padding: 5px; gap: 4px; }
+  .form-label b { font-size: 14px; }
+  .form-label small { display: none; }
+  .form-members { grid-template-columns: repeat(auto-fill, minmax(54px, 1fr)); gap: 4px; }
+  .tile-grid { grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; margin-top: 6px; }
+  /* メインメニュー: 4つのタイルを1列に並べて1画面に収める */
+  .main-menu { min-height: calc(100vh - 6px); min-height: calc(100dvh - 6px); }
+  .menu-top { padding: 4px 0; gap: 10px; }
+  .menu-body { padding-top: 6px; width: min(720px, 100%); }
+  .logo { margin: 0 0 8px 6px; }
+  .logo-main { font-size: 28px; }
+  .logo-sub { font-size: 10px; margin-top: 0; }
+  .menu-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .menu-tile { min-height: 72px; padding: 8px 8px 6px 12px; gap: 3px; }
+  .menu-tile.story { min-height: 72px; padding-left: 58px; }
+  .menu-emblem { display: none; }
+  .menu-tile.story .menu-emblem { display: block; left: 16px; width: 26px; height: 26px; margin-top: -13px; }
+  .menu-label .en { font-size: 16px; }
+  .menu-tile.story .menu-label .en { font-size: 24px; }
+  .menu-label .jp { font-size: 11px; }
+  .menu-extra { font-size: 10.5px; gap: 6px; }
+  .menu-foot { padding: 6px 0 2px; }
+  /* ガチャ・対戦モード選択 */
+  .gacha-panel { margin-top: 4px; }
+  .gacha-gem { transform: scale(.7); margin: -16px auto; }
+  .mode-grid { margin-top: 8px; gap: 12px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mode-card { padding: 16px 14px; gap: 4px; }
+  .mode-emblem { margin-bottom: 6px; width: 32px; height: 32px; }
+}
+
+/* ---------- スマホの戦闘準備（配置）画面: 「戦闘開始」まで1画面に収める ---------- */
+@media (max-height: 500px), (max-width: 720px) {
+  #app:has(> .screen.battle-prep) { padding-bottom: 0; }
+  .screen.battle-prep {
+    display: flex; flex-direction: column; box-sizing: border-box; padding-bottom: 6px;
+    height: 100vh; height: 100dvh; overflow: hidden;
+  }
+  .screen.battle-prep .topbar { margin-bottom: 4px; }
+  .screen.battle-prep .prep-head { gap: 6px; margin-bottom: 4px; flex: none; }
+  .screen.battle-prep .side-tag { font-size: 11px; padding: 2px 8px; }
+  .screen.battle-prep .win-cond small { font-size: 9.5px; }
+  .screen.battle-prep .win-cond b { font-size: 13px; }
+  .screen.battle-prep .field-info { padding: 2px 8px; min-width: 0; }
+  .screen.battle-prep .fi-label { display: none; }
+  .screen.battle-prep .fi-name b { font-size: 13px; }
+  .screen.battle-prep .fi-desc { font-size: 10.5px; line-height: 1.35; }
+  .screen.battle-prep > div:has(> .field-row) { flex: 1 1 auto; min-height: 0; }
+  .screen.battle-prep .field-row { height: 100%; box-sizing: border-box; gap: 2px; padding: 2px; }
+  .screen.battle-prep .cell { min-height: 0; padding: 2px; }
+  .screen.battle-prep .cell-label small { display: none; }
+  .screen.battle-prep .prep-info { flex: none; max-height: 22%; overflow-y: auto; margin-top: 4px; padding: 4px 10px; font-size: 11.5px; }
+  .screen.battle-prep > .row.end { flex: none; margin-top: 4px !important; }
+  .screen.battle-prep .btn.big { padding: 6px 22px; font-size: 15px; }
+}
+/* さらに低い画面（小さいスマホの横持ち） */
+@media (max-height: 360px) and (min-width: 600px) {
+  .logo { display: none; }
+  .gacha-gem { transform: scale(.55); margin: -26px auto; }
+  .mode-desc { display: none; }
 }

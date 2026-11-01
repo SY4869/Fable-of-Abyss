@@ -552,6 +552,10 @@ function makeDraggable(node, opt) {
           window.removeEventListener('pointercancel', up);
           return;
         }
+        // ドラッグ中は文章を選択しない（ドラッグを始める前に選ばれた分も解除する）
+        document.documentElement.classList.add('drag-active');
+        const sel = window.getSelection && window.getSelection();
+        if (sel) sel.removeAllRanges();
         const r = node.getBoundingClientRect();
         ghost = node.cloneNode(true);
         ghost.classList.add('drag-ghost');
@@ -577,6 +581,7 @@ function makeDraggable(node, opt) {
       window.removeEventListener('pointercancel', up);
       cleanupHold();
       if (!ghost) return;
+      document.documentElement.classList.remove('drag-active');
       ghost.remove();
       node.classList.remove('dragging');
       if (hover) hover.classList.remove('drop-hover');

@@ -131,7 +131,10 @@ function createBattleView(cfg) {
   const cmdBox = el('div', { class: 'cmd-panel panel frame' });
   const timerBox = el('div', { class: 'turn-timer' });
   const logBox = el('div', { class: 'log' });
-  const logWrap = el('div', { class: 'log-wrap' }, [logBox]);
+  // スマホ（css の「スマホの戦闘画面」と同じ条件）では、ログは盤面に重ねて出すので最初は閉じておく
+  const COMPACT_BATTLE_QUERY = '(max-height: 500px), (max-width: 720px)';
+  const compact = window.matchMedia && window.matchMedia(COMPACT_BATTLE_QUERY).matches;
+  const logWrap = el('div', { class: 'log-wrap' + (compact ? ' closed' : '') }, [logBox]);
 
   const ui = {
     mode: 'IDLE',          // 'IDLE' | 'TARGET_UNIT' | 'TARGET_AREA' | 'CONFIRM'
