@@ -46,8 +46,18 @@
 <div id="ad-top"></div>
 
 <div id="layout">
-  <!-- PC：左の広告枠 -->
-  <aside id="ad-left" class="adrail"></aside>
+  <!-- PC：左の広告枠（忍者AdMax 160x600）。
+       配信タグが document.write で広告を書き出すため、後から差し込めずここに直接書く。
+       画面が広くて高いときだけ読み込む（隠れた枠に広告を出さないため）。条件は game.css と揃える -->
+  <aside id="ad-left" class="adrail">
+    <div class="adlabel">広告</div>
+    <script>
+    if (window.matchMedia && matchMedia('(min-width:1280px) and (min-height:660px)').matches) {
+      document.documentElement.className += ' admax-on';
+      document.write('<script src="https://adm.shinobi.jp/s/3c342136fa0b0781c71ad7dd896645b3"><\/script>');
+    }
+    </script>
+  </aside>
 
 <div id="wrap">
   <div id="plate"><canvas id="cv" width="480" height="640"></canvas></div>

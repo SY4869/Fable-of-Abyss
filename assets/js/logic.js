@@ -2726,7 +2726,7 @@ function fit(){
     var sc=Math.min(aw/W,ah/H);
     var cw=Math.max(1,Math.floor(W*sc)), ch=Math.max(1,Math.floor(H*sc));
     body.style.height=Math.round(vh)+'px';
-    wrap.style.transform='none';
+    wrap.style.transform='none'; wrap.style.margin='';
     wrap.style.width=cw+'px'; wrap.style.height=ch+'px';
     plate.style.width=cw+'px'; plate.style.height=ch+'px'; plate.style.margin='0';
     cv.style.width=cw+'px'; cv.style.height=ch+'px';
@@ -2736,12 +2736,18 @@ function fit(){
     plate.style.width=''; plate.style.height=''; plate.style.margin='';
     cv.style.width=''; cv.style.height='';
     var ww=wrap.offsetWidth||900, wh=wrap.offsetHeight||650;
-    var rails=elW('ad-left')+elW('ad-right');   /* 左右に置いた広告枠 */
-    var gaps=rails?AD_GAP*2:0;
+    var rl=elW('ad-left'), rr=elW('ad-right');   /* 左右に置いた広告枠 */
+    var rails=rl+rr;
+    var gaps=((rl?1:0)+(rr?1:0))*AD_GAP;
     var availW=Math.max(320,vw-rails-gaps);
     var s=Math.min(availW/ww,(vh-elH('ad-top')-4)/wh);
     if(!(s>0)) s=1;
-    wrap.style.transform='scale('+Math.min(s,1.35)+')';
+    s=Math.min(s,1.35);
+    wrap.style.transform='scale('+s+')';
+    /* transform で拡大しても並びの上の幅は元のままなので、拡大で増えたぶんを左右の余白で取っておく。
+       これがないと、広告枠の上に拡大したゲーム画面がかぶる */
+    var grow=rails?Math.max(0,(ww*s-ww)/2):0;
+    wrap.style.margin=grow?('0 '+Math.floor(grow)+'px'):'';
   }
 }
 window.addEventListener('resize',fit);

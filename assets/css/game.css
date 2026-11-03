@@ -278,7 +278,8 @@ body.compact{padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px)
 /* =============================================================================
    広告枠
    -----------------------------------------------------------------------------
-   ・PC   … ゲーム画面の左右の空きに縦長の枠を置く（画面が広いときだけ現れる）
+   ・PC   … ゲーム画面の左右の空きに縦長の枠を置く（画面が広いときだけ現れる）。
+             左は忍者AdMax、右は AdSense
    ・スマホ… 画面のいちばん上に横長の枠を置く
    どちらもゲーム盤面とは別に場所を確保する作りなので、絵や操作に重ならない。
    広告を出していないあいだ（body に ads-on が付いていないあいだ）は枠ごと消え、
@@ -298,7 +299,12 @@ body.compact{padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px)
   border:1px solid rgba(201,162,74,.14); background:rgba(10,7,18,.34);
 }
 .adrail .adslot{width:160px; height:600px;}
-@media (min-width:1280px){ body.ads-on .adrail{display:block;} }
+/* 左は忍者AdMax（160x600 固定）。fable.html の読み込み条件と同じ条件で出す */
+#ad-left{line-height:0;}
+#ad-left .adlabel{line-height:normal;}
+@media (min-width:1280px) and (min-height:660px){ html.admax-on #ad-left{display:block;} }
+/* 右は AdSense（ads.js の enabled が true のとき） */
+@media (min-width:1280px){ body.ads-on #ad-right{display:block;} }
 @media (min-width:1680px){ body.ads-on .adrail .adslot{width:300px;} }
 @media (max-height:760px){ body.ads-on .adrail .adslot{height:480px;} }
 @media (max-height:640px){ body.ads-on .adrail .adslot{height:250px; width:300px;} }

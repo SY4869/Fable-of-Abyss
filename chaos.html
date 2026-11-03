@@ -42,6 +42,19 @@
 </head>
 <body>
 
+<!-- PC：左の余白の広告枠（忍者AdMax 160x600）。
+     配信タグが document.write で広告を書き出すため、後から差し込めずここに直接書く。
+     画面が広くて高いときだけ読み込む（隠れた枠に広告を出さないため）。条件は style.css と揃える -->
+<aside id="admax-left" class="admax-rail">
+  <div class="admax-label">広告</div>
+  <script>
+  if (window.matchMedia && matchMedia('(min-width:1280px) and (min-height:660px)').matches) {
+    document.documentElement.className += ' admax-on';
+    document.write('<script src="https://adm.shinobi.jp/s/3c342136fa0b0781c71ad7dd896645b3"><\/script>');
+  }
+  </script>
+</aside>
+
 <h1 id="app-header">
   <span class="game-title"><span class="t-chaos">Chaos</span><span class="t-sword">Sword</span><span class="t-garden">Garden</span></span>
   <button id="mute-button" type="button" title="BGM/SEのON・OFF">♪ ON</button>

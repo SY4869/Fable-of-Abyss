@@ -36,7 +36,7 @@ var ADS = {
   document.head.appendChild(loader);
 
   var units = [
-    { box: 'ad-left', slot: ADS.slotSide, format: 'vertical' },
+    /* フェイブルの左の枠（ad-left）は忍者AdMax が使うので、ここには入れない */
     { box: 'ad-right', slot: ADS.slotSide, format: 'vertical' },
     { box: 'ad-top', slot: ADS.slotTop, format: 'horizontal' },
     /* 遊び方・プライバシーポリシー・お問い合わせの各ページ、本文の下 */

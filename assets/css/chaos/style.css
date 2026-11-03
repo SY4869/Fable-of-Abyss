@@ -1249,3 +1249,30 @@ button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.6); }
   text-shadow: 0 1px 4px #000;
   animation: storyHintBlink 1.6s ease-in-out infinite alternate;
 }
+
+/* ---- 広告枠（忍者AdMax 160x600） ----
+   本文（最大幅 880px）の左の余白のまんなかに固定する。
+   chaos.html の読み込み条件と同じ条件のときだけ出す。 */
+.admax-rail { display: none; }
+@media (min-width: 1280px) and (min-height: 660px) {
+  html.admax-on .admax-rail {
+    display: block;
+    position: fixed;
+    top: 50%;
+    left: max(8px, calc((100vw - 880px) / 4 - 86px));
+    transform: translateY(-50%);
+    padding: 5px;
+    line-height: 0;
+    border: 1px solid rgba(212, 175, 55, 0.14);
+    background: rgba(0, 0, 0, 0.3);
+  }
+}
+.admax-label {
+  font-size: 9px;
+  line-height: normal;
+  letter-spacing: 0.36em;
+  color: rgba(255, 255, 255, 0.3);
+  text-align: center;
+  padding: 2px 0 4px;
+  user-select: none;
+}
