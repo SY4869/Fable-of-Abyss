@@ -18,12 +18,24 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Shippori+Mincho:wght@500;700&display=swap">
 <!-- ?v= は公開後の更新時のキャッシュ対策。ファイルを更新したらこの版数をまとめて上げる -->
-<link rel="stylesheet" href="css/style.css?v=1.2.24">
+<link rel="stylesheet" href="css/style.css?v=1.2.25">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><text y='26' font-size='26'>&#128302;</text></svg>">
 </head>
 <body>
 
 <div id="bg" class="bg-title"></div>
+<!-- PC：左の余白の広告枠（忍者AdMax 160x600）。
+     配信タグが document.write で広告を書き出すため、後から差し込めずここに直接書く。
+     ゲーム画面（最大幅 1440px）の左に広告が収まるだけの余白があるときだけ読み込む。条件は style.css と揃える -->
+<aside id="admax-left" class="admax-rail">
+  <div class="admax-label">広告</div>
+  <script>
+  if (window.matchMedia && matchMedia('(min-width:1820px) and (min-height:660px)').matches) {
+    document.documentElement.className += ' admax-on';
+    document.write('<script src="https://adm.shinobi.jp/s/3c342136fa0b0781c71ad7dd896645b3"><\/script>');
+  }
+  </script>
+</aside>
 <div id="app"></div>
 <!-- JavaScript が動かない環境（と検索エンジン）向けの説明とサイト内リンク。ゲーム画面は JavaScript で組み立てる -->
 <noscript>
@@ -54,42 +66,42 @@
 </div>
 
 <!-- 調整用パラメータ -->
-<script src="js/core/config.js?v=1.2.24"></script>
+<script src="js/core/config.js?v=1.2.25"></script>
 
 <!-- 自動生成データ（データ一覧.xlsx / ストーリー*.md / 立ち絵 より） -->
-<script src="js/data/skills.js?v=1.2.24"></script>
-<script src="js/data/characters.js?v=1.2.24"></script>
-<script src="js/data/stories.js?v=1.2.24"></script>
-<script src="js/data/portraits.js?v=1.2.24"></script>
-<script src="js/art/faces.js?v=1.2.24"></script>
+<script src="js/data/skills.js?v=1.2.25"></script>
+<script src="js/data/characters.js?v=1.2.25"></script>
+<script src="js/data/stories.js?v=1.2.25"></script>
+<script src="js/data/portraits.js?v=1.2.25"></script>
+<script src="js/art/faces.js?v=1.2.25"></script>
 
 <!-- スキル効果ロジック（手書き） -->
-<script src="js/data/skillLogic.js?v=1.2.24"></script>
+<script src="js/data/skillLogic.js?v=1.2.25"></script>
 
 <!-- コア -->
-<script src="js/core/util.js?v=1.2.24"></script>
-<script src="js/core/unit.js?v=1.2.24"></script>
-<script src="js/core/battle.js?v=1.2.24"></script>
-<script src="js/core/ai.js?v=1.2.24"></script>
-<script src="js/core/actions.js?v=1.2.24"></script>
-<script src="js/core/storyBattle.js?v=1.2.24"></script>
-<script src="js/core/save.js?v=1.2.24"></script>
-<script src="js/core/audio.js?v=1.2.24"></script>
+<script src="js/core/util.js?v=1.2.25"></script>
+<script src="js/core/unit.js?v=1.2.25"></script>
+<script src="js/core/battle.js?v=1.2.25"></script>
+<script src="js/core/ai.js?v=1.2.25"></script>
+<script src="js/core/actions.js?v=1.2.25"></script>
+<script src="js/core/storyBattle.js?v=1.2.25"></script>
+<script src="js/core/save.js?v=1.2.25"></script>
+<script src="js/core/audio.js?v=1.2.25"></script>
 
 <!-- リアルタイム対戦の通信（socket.io はサーバーと同じ 4.8.4 を同梱） -->
 <script src="js/lib/socket.io.min.js?v=4.8.4"></script>
-<script src="js/net/protocol.js?v=1.2.24"></script>
-<script src="js/net/pvpClient.js?v=1.2.24"></script>
+<script src="js/net/protocol.js?v=1.2.25"></script>
+<script src="js/net/pvpClient.js?v=1.2.25"></script>
 
 <!-- UI -->
-<script src="js/ui/common.js?v=1.2.24"></script>
-<script src="js/ui/battleUi.js?v=1.2.24"></script>
-<script src="js/ui/battleHelp.js?v=1.2.24"></script>
-<script src="js/ui/screens.js?v=1.2.24"></script>
-<script src="js/ui/pvpScreens.js?v=1.2.24"></script>
+<script src="js/ui/common.js?v=1.2.25"></script>
+<script src="js/ui/battleUi.js?v=1.2.25"></script>
+<script src="js/ui/battleHelp.js?v=1.2.25"></script>
+<script src="js/ui/screens.js?v=1.2.25"></script>
+<script src="js/ui/pvpScreens.js?v=1.2.25"></script>
 
 <!-- 起動 -->
-<script src="js/main.js?v=1.2.24"></script>
+<script src="js/main.js?v=1.2.25"></script>
 
 </body>
 </html>

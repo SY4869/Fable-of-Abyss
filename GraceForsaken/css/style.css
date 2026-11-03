@@ -1558,3 +1558,17 @@ img.art-loading { visibility: hidden; }
   .gacha-gem { transform: scale(.55); margin: -26px auto; }
   .mode-desc { display: none; }
 }
+
+/* ---------- 広告枠（忍者AdMax 160x600） ----------
+   #app（最大幅 1440px）の左の余白のまんなかに固定する。右の余白はメニューの立ち絵が使う。
+   index.html の読み込み条件と同じ条件のときだけ出す。モーダルや演出（z-index 100 以上）の下になる。 */
+.admax-rail { display: none; }
+@media (min-width: 1820px) and (min-height: 660px) {
+  html.admax-on .admax-rail {
+    display: block; position: fixed; top: 50%; z-index: 0;
+    left: max(8px, calc((100vw - 1440px) / 4 - 86px)); transform: translateY(-50%);
+    padding: 5px; line-height: 0;
+    border: 1px solid var(--line-soft); background: rgba(6, 6, 12, .45);
+  }
+}
+.admax-label { font-size: 9px; line-height: normal; letter-spacing: .36em; color: var(--silver-dim); text-align: center; padding: 2px 0 4px; user-select: none; }
