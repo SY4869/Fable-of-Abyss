@@ -29,6 +29,20 @@
 </head>
 <body>
 
+<!-- 楽天の縦長バナー（A8.net、120x500）。画面に左の余白があるときだけ中身を入れる。
+     条件は site.css の .a8-rail と同じ値にしてある。画像は https で読む -->
+<aside id="a8-left" class="a8-rail" aria-label="広告"></aside>
+<script>
+if (window.matchMedia && matchMedia('(min-width:1000px) and (min-height:560px)').matches) {
+  document.documentElement.className += ' a8-on';
+  document.getElementById('a8-left').innerHTML =
+    '<div class="adlabel">広告</div>' +
+    '<a href="https://rpx.a8.net/svt/ejp?a8mat=4BGFJA+10WWAA+2HOM+65ME9&rakuten=y&a8ejpredirect=http%3A%2F%2Fhb.afl.rakuten.co.jp%2Fhgc%2F0ea62065.34400275.0ea62066.204f04c0%2Fa26110779261_4BGFJA_10WWAA_2HOM_65ME9%3Fpc%3Dhttp%253A%252F%252Fwww.rakuten.co.jp%252F%26m%3Dhttp%253A%252F%252Fm.rakuten.co.jp%252F" rel="nofollow">' +
+    '<img src="https://hbb.afl.rakuten.co.jp/hsb/0ec09ba5.4d3660f9.0eb4bbaa.95151395/" border="0" width="120" height="500" alt="楽天市場"></a>' +
+    '<img border="0" width="1" height="1" src="https://www19.a8.net/0.gif?a8mat=4BGFJA+10WWAA+2HOM+65ME9" alt="">';
+}
+</script>
+
 <header class="masthead">
   <div class="inner">
     <a class="mark" href="index.html"><strong>SY GAMES</strong><span>SYGAMES.NET</span></a>
@@ -164,9 +178,10 @@
       <a href="credits.html">クレジット</a>
       <a href="privacy.html">プライバシーポリシー</a>
       <a href="contact.html">お問い合わせ</a>
+      <a href="https://www.youtube.com/channel/UCOjPHnRtI4hOoKLSfOC8QvA" target="_blank" rel="noopener">YouTube</a>
+      <a href="https://x.com/712Conan" target="_blank" rel="noopener">X</a>
     </nav>
-    <p class="sig">SY4869 &middot; SYGAMES.NET</p>
-    <p class="sns"><a href="https://www.youtube.com/channel/UCOjPHnRtI4hOoKLSfOC8QvA" target="_blank" rel="noopener">YouTube</a><a href="https://x.com/712Conan" target="_blank" rel="noopener">X</a></p>
+    <p class="sig">SY4869 &middot; SYGAMES.NET</p>
   </div>
 </footer>
 
