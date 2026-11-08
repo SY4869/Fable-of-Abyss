@@ -23,6 +23,8 @@ const PVP_PROTOCOL = {
     FIND_OPPONENTS: 'find_opponents',
     // サーバー → クライアント
     QUEUE_TIMER: 'queue_timer',
+    // 待ち時間内に相手が見つからなかった（キューから外れる）。追加のイベントなので版数は上げない
+    QUEUE_TIMEOUT: 'queue_timeout',
     MATCH_FOUND: 'match_found',
     PLACEMENT_STATUS: 'placement_status',
     BATTLE_START: 'battle_start',

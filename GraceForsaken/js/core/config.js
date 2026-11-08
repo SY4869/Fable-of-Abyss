@@ -88,7 +88,7 @@ const CONFIG = {
   PVP: {
     SERVER_URL: 'https://pvp.sygames.net',   // 本番の対戦サーバー（wss で接続される）
     DEV_SERVER_URL: 'http://localhost:3000', // localhost・ファイルで開いたときの接続先
-    MATCH_TIMEOUT_SEC: 15,        // この秒数で相手が見つからなければ BOT と対戦
+    MATCH_TIMEOUT_SEC: 15,        // この秒数で相手が見つからなければ、戻るか探しなおすかを選ぶ
     PLACEMENT_TIMEOUT_SEC: 60,    // 配置フェーズの制限時間
     TURN_TIMEOUT_SEC: 30,         // 手番（キャラ1体の行動）ごとの制限時間
     AFK_LIMIT: 3,                 // 連続でこの回数時間切れになると放置で敗北

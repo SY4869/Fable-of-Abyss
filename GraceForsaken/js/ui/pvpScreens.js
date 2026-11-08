@@ -181,7 +181,7 @@ const PvpScreens = {
         pvpFatal(r.error);
         return;
       }
-      App.show(PvpScreens.matching, [], { replace: true });
+      App.show(PvpScreens.matching, [payload], { replace: true });
     };
 
     const canStart = party.length === CONFIG.PARTY_SIZE;
@@ -204,7 +204,7 @@ const PvpScreens = {
           el('span', { text: '勝利 ' + R.win + ' ／ 引き分け ' + R.draw + ' ／ 敗北 ' + R.lose + ' Soul' }),
         ]),
         el('p', { class: 'faint', text:
-          '（BOT戦はゴースト対戦と同じ報酬）' + CONFIG.PVP.MATCH_TIMEOUT_SEC + '秒待っても相手が見つからない場合は BOT と対戦します。' +
+          CONFIG.PVP.MATCH_TIMEOUT_SEC + '秒待っても相手が見つからない場合は、ロビーに戻るか探しなおすかを選べます。' +
           '手番ごとの制限時間は' + CONFIG.PVP.TURN_TIMEOUT_SEC + '秒で、' + CONFIG.PVP.AFK_LIMIT + '回連続で時間切れになると敗北です。' }),
       ]),
       canStart ? null : el('p', { class: 'warn center', text: 'リアルタイム対戦には4体のパーティが必要です。' }),
@@ -222,34 +222,73 @@ const PvpScreens = {
   // =================================================================
   // マッチング中
   // =================================================================
-  matching() {
+  matching(payload) {
     App.setBackground('menu');
     const countNode = el('b', { class: 'match-count', text: String(CONFIG.PVP.MATCH_TIMEOUT_SEC) });
     let left = CONFIG.PVP.MATCH_TIMEOUT_SEC;
-    const tick = setInterval(() => {
-      if (!root.isConnected) { clearInterval(tick); return; }
-      left = Math.max(0, left - 1);
-      countNode.textContent = String(left);
-    }, 1000);
-    PvpGame.screen = {
-      queue_timer: (d) => { left = d.timeoutSec; countNode.textContent = String(left); },
-      connection: (c) => { if (!c.connected) { clearInterval(tick); pvpFatal('CONNECT_FAILED'); } },
+    let tick = null;
+    const startCount = () => {
+      clearInterval(tick);
+      tick = setInterval(() => {
+        if (!root.isConnected) { clearInterval(tick); return; }
+        left = Math.max(0, left - 1);
+        countNode.textContent = String(left);
+      }, 1000);
     };
+    const backToLobby = () => { clearInterval(tick); App.show(PvpScreens.lobby, [], { replace: true }); };
     const cancel = async () => {
       const r = await PvpClient.req(PVP_PROTOCOL.EV.CANCEL_QUEUE, {});
       if (!r.ok && r.error === PVP_PROTOCOL.ERR.ALREADY_IN_ROOM) return;   // もう成立していれば配置画面へ進む
-      clearInterval(tick);
-      App.show(PvpScreens.lobby, [], { replace: true });
+      backToLobby();
     };
-    const root = el('div', { class: 'screen matching' }, [
-      el('div', { class: 'match-box' }, [
-        el('div', { class: 'choose-en', text: 'SEARCHING OPPONENT' }),
-        el('div', { class: 'choose-jp', text: '対戦相手を探しています' }),
-        el('div', { class: 'match-dots' }, [el('i'), el('i'), el('i')]),
-        el('p', { class: 'muted' }, [el('span', { text: '見つからない場合は BOT と対戦します　' }), countNode]),
-        el('button', { class: 'btn ghost', 'data-se': 'cancel', text: 'キャンセル', onclick: cancel }),
+
+    const searching = el('div', { class: 'match-box' }, [
+      el('div', { class: 'choose-en', text: 'SEARCHING OPPONENT' }),
+      el('div', { class: 'choose-jp', text: '対戦相手を探しています' }),
+      el('div', { class: 'match-dots' }, [el('i'), el('i'), el('i')]),
+      el('p', { class: 'muted' }, [el('span', { text: '残り　' }), countNode]),
+      el('button', { class: 'btn ghost', 'data-se': 'cancel', text: 'キャンセル', onclick: cancel }),
+    ]);
+    const retryBtn = el('button', { class: 'btn primary big', text: '探しなおす' });
+    const notFound = el('div', { class: 'match-box', style: 'display:none' }, [
+      el('div', { class: 'choose-en', text: 'NO OPPONENT' }),
+      el('div', { class: 'choose-jp', text: '対戦相手が見つかりませんでした' }),
+      el('p', { class: 'muted', text: 'もう一度探すか、ロビーに戻るかを選んでください。' }),
+      el('div', { class: 'row center-row' }, [
+        retryBtn,
+        el('button', { class: 'btn', 'data-se': 'cancel', text: 'ロビーに戻る', onclick: backToLobby }),
       ]),
     ]);
+    const showSearching = (on) => {
+      searching.style.display = on ? '' : 'none';
+      notFound.style.display = on ? 'none' : '';
+    };
+    // もう一度キューに並ぶ（前回と同じパーティで）
+    const retry = async () => {
+      retryBtn.disabled = true;
+      const c = await PvpClient.connect();
+      if (!c.ok) { retryBtn.disabled = false; pvpFatal(c.error); return; }
+      const r = await PvpClient.req(PVP_PROTOCOL.EV.JOIN_QUEUE, payload);
+      retryBtn.disabled = false;
+      if (!r.ok && r.error !== PVP_PROTOCOL.ERR.ALREADY_IN_QUEUE) {
+        if (r.error === PVP_PROTOCOL.ERR.ALREADY_IN_ROOM && Save.pvp().session) { PvpClient.resume(Save.pvp().session); return; }
+        pvpFatal(r.error);
+        return;
+      }
+      left = CONFIG.PVP.MATCH_TIMEOUT_SEC;
+      countNode.textContent = String(left);
+      showSearching(true);
+      startCount();
+    };
+    retryBtn.addEventListener('click', retry);
+
+    PvpGame.screen = {
+      queue_timer: (d) => { left = d.timeoutSec; countNode.textContent = String(left); },
+      queue_timeout: () => { clearInterval(tick); showSearching(false); },
+      connection: (c) => { if (!c.connected) { clearInterval(tick); pvpFatal('CONNECT_FAILED'); } },
+    };
+    const root = el('div', { class: 'screen matching' }, [searching, notFound]);
+    startCount();
     return root;
   },
 
