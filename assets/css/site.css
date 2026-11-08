@@ -119,6 +119,20 @@ kbd{font-family:var(--mono); font-size:11px; border:1px solid var(--line);
 .colophon a{color:rgba(232,220,200,.5); text-decoration:none;}
 .colophon a:hover{color:var(--gold);}
 .colophon .sig{font-family:var(--mono); letter-spacing:.2em;}
+/* 作者の YouTube と X。署名の下に1行で */
+.colophon .sns{flex-basis:100%; display:flex; gap:17px; margin:0;}
+
+/* ---------- 楽天の縦長バナー（A8.net）。トップのゲーム一覧の左の余白に固定 ----------
+   index.html のインラインのスクリプトが、同じ条件で中身を書き入れる */
+.a8-rail{display:none;}
+@media (min-width:1000px) and (min-height:560px){
+  html.a8-on .a8-rail{display:block; position:fixed; z-index:5; top:50%;
+    left:max(8px, calc((100vw - 680px)/4 - 66px)); transform:translateY(-50%);
+    padding:5px; line-height:0; border:1px solid rgba(201,162,74,.14); background:rgba(10,7,18,.34);}
+  .a8-rail .adlabel{line-height:normal;}
+  .a8-rail img{display:block;}
+  .a8-rail img[width="1"]{position:absolute; left:0; bottom:0;}
+}
 
 /* ---------- 広告枠（ads.js が有効なときだけ現れる） ---------- */
 #ad-inline{display:none; width:var(--col); margin:34px auto 0;
