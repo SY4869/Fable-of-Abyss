@@ -120,8 +120,8 @@ kbd{font-family:var(--mono); font-size:11px; border:1px solid var(--line);
 .colophon a:hover{color:var(--gold);}
 .colophon .sig{font-family:var(--mono); letter-spacing:.2em;}
 
-/* ---------- 楽天の縦長バナー（A8.net）。トップ・制作記録・このサイトについての左の余白に固定 ----------
-   index.html / devlog.html / about.html のインラインのスクリプトが、同じ条件で中身を書き入れる */
+/* ---------- 楽天の縦長バナー（A8.net）。トップ・制作記録（一覧と各記事）・このサイトについての左の余白に固定 ----------
+   index.html / devlog.html / devlog-*.html / about.html のインラインのスクリプトが、同じ条件で中身を書き入れる */
 .a8-rail{display:none;}
 @media (min-width:1000px) and (min-height:560px){
   html.a8-on .a8-rail{display:block; position:fixed; z-index:5; top:50%;
