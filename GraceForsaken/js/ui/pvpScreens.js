@@ -116,11 +116,17 @@ function pvpFatal(error) {
   pvpAlert(msg, () => { App.stack = []; App.show(PvpScreens.lobby, []); });
 }
 
-/** 相手の名前（BOT バッジ付き）。名前は必ず textContent で表示する */
-function opponentTag(name, isBot) {
+/**
+ * 相手の名前（アイコン・称号・BOT バッジ付き）。名前は必ず textContent で表示する。
+ * p: { name, title, icon, isBot }（古いサーバーは title・icon を送らない）
+ */
+function opponentTag(p) {
+  const icon = Number.isInteger(p.icon) ? getCharacter(p.icon) : null;
   return el('span', { class: 'opp-tag' }, [
-    el('span', { class: 'opp-name', text: name }),
-    isBot ? el('span', { class: 'bot-badge', text: 'BOT' }) : null,
+    icon ? faceIcon(icon, { class: 'mini round' }) : null,
+    p.title ? el('span', { class: 'player-label' }, [el('span', { class: 'p-title', text: p.title })]) : null,
+    el('span', { class: 'opp-name', text: p.name || '' }),
+    p.isBot ? el('span', { class: 'bot-badge', text: 'BOT' }) : null,
   ]);
 }
 
@@ -297,7 +303,7 @@ const PvpScreens = {
     const close = App.modal(() => el('div', { class: 'match-found center' }, [
       el('div', { class: 'result-banner win', text: 'MATCH FOUND' }),
       el('p', { class: 'muted', text: '対戦相手' }),
-      el('div', { class: 'row center-row' }, [opponentTag(m.opponent.name, m.opponent.isBot)]),
+      el('div', { class: 'row center-row' }, [opponentTag(m.opponent)]),
     ]), { persistent: true });
     setTimeout(() => { close(); next(); }, 1200);
   },
@@ -382,7 +388,7 @@ const PvpScreens = {
     const root = el('div', { class: 'screen battle-prep' }, [
       topbar('戦闘準備', {
         en: 'REALTIME BATTLE', wallet: false, back: false, option: false,
-        extra: [el('span', { class: 'my-name', text: m.myName || Save.playerName() }), timerNode, opponentTag(m.opponent.name, m.opponent.isBot)],
+        extra: [el('span', { class: 'my-name', text: m.myName || Save.playerName() }), timerNode, opponentTag(m.opponent)],
       }),
       el('div', { class: 'prep-head' }, [
         el('div', { class: 'side-tag ally', text: '自陣 — 配置変更可' }),
@@ -430,7 +436,7 @@ const PvpScreens = {
       en: 'REALTIME BATTLE',
       bgm: 'battle',
       field: start.field,
-      headRight: opponentTag(m.opponent.name, m.opponent.isBot),
+      headRight: opponentTag(m.opponent),
       extra: [connNode],
       onBack: () => confirmSurrender(m.roomId),
       onAction: async (action) => {
@@ -550,7 +556,7 @@ const PvpScreens = {
         el('div', { class: 'result-banner ' + head[2], text: head[0] }),
         el('div', { class: 'result-jp', text: head[1] }),
         el('div', { class: 'row center-row' }, [
-          el('span', { class: 'muted', text: 'vs' }), opponentTag(res.opponentName || '', res.isBot),
+          el('span', { class: 'muted', text: 'vs' }), opponentTag({ name: res.opponentName, title: res.opponentTitle, icon: res.opponentIcon, isBot: res.isBot }),
           res.summary && res.summary.rounds ? el('span', { class: 'muted', text: res.summary.rounds + 'ラウンド' }) : null,
         ]),
         el('p', { class: 'muted', text: '決着：' + (PVP_PROTOCOL.REASON_LABEL[res.reason] || res.reason) }),

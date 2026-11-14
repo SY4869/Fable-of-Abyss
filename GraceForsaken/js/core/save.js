@@ -34,6 +34,13 @@ const Save = {
       // リアルタイム対戦（ゴースト対戦の勝率には含めない）
       pvp: { userId: '', stats: { win: 0, lose: 0, draw: 0 }, grantedMatchIds: [], session: null },
       gachaCount: 0,
+      // プロフィール: 称号（TITLE_MASTER の name）とアイコン（キャラID。null なら編成の先頭）
+      playerTitle: '',
+      playerIcon: null,
+      titles: [],              // 獲得済みの称号名
+      obtainCount: {},         // { charId: 入手回数（ガチャの重複・ストーリーでの獲得を含む） }
+      partyPresets: [null, null, null],   // { party:[charId], placement:{ charId: area } }
+      redeemedCodes: [],       // 使用した認証コード（大文字。Soul の二重付与を防ぐ）
     };
   },
 
@@ -47,6 +54,11 @@ const Save = {
     }
     if (this.data && this.data.version === 1) this.data = this.migrateV1(this.data);
     if (!this.data || this.data.version !== SAVE_VERSION) this.data = this.newGame();
+    // 入手回数を数える前のセーブは、所持しているキャラを1回入手済みとして数え始める
+    if (this.data.obtainCount === undefined) {
+      this.data.obtainCount = {};
+      Object.keys(this.data.owned || {}).forEach(id => { this.data.obtainCount[id] = 1; });
+    }
     // 後から追加した項目の補完
     const fresh = this.newGame();
     Object.keys(fresh).forEach(k => { if (this.data[k] === undefined) this.data[k] = fresh[k]; });
@@ -104,10 +116,12 @@ const Save = {
   acquire(charId, rng) {
     const master = getCharacter(charId);
     if (!master) return { ok: false };
+    this.data.obtainCount[charId] = (this.data.obtainCount[charId] || 0) + 1;
     if (this.isOwned(charId)) {
       const refund = Math.floor(CONFIG.GACHA_COST / 3);
       this.data.currency += refund;
       this.save();
+      Titles.check();
       return { ok: true, duplicate: true, refund: refund, master: master };
     }
     const r = rng || makeRng(Date.now());
@@ -116,6 +130,7 @@ const Save = {
     this.data.owned[charId] = { skills: skills, placement: master.range >= 3 ? 3 : (master.range === 2 ? 2 : 1) };
     if (this.data.party.length < CONFIG.PARTY_SIZE) this.data.party.push(charId);
     this.save();
+    Titles.check();
     return { ok: true, duplicate: false, skills: skills, master: master };
   },
 
@@ -156,6 +171,23 @@ const Save = {
     const o = this.data.owned[charId];
     return o ? (o.placement || 1) : 1;
   },
+  /** 編成プリセット（3枠）。今の編成と配置を i 番目に保存する */
+  savePreset(i) {
+    const placement = {};
+    this.data.party.forEach(id => { placement[id] = this.placementOf(id); });
+    this.data.partyPresets[i] = { party: this.data.party.slice(), placement: placement, savedAt: Date.now() };
+    this.save();
+  },
+  /** i 番目のプリセットを今の編成にする。手放したキャラは除く。戻り値: 読み込んだか */
+  loadPreset(i) {
+    const p = this.data.partyPresets[i];
+    if (!p) return false;
+    const party = p.party.filter(id => this.isOwned(id)).slice(0, CONFIG.PARTY_SIZE);
+    party.forEach(id => { if (p.placement[id]) this.data.owned[id].placement = p.placement[id]; });
+    this.data.party = party;
+    this.save();
+    return true;
+  },
   skillsOf(charId) {
     const o = this.data.owned[charId];
     if (o && o.skills && o.skills.length) return o.skills;
@@ -183,6 +215,30 @@ const Save = {
     this.save();
   },
   playerName() { return this.data.playerName || 'Player'; },
+  /** 表示中の称号（未獲得のものは付けない） */
+  playerTitle() {
+    const t = this.data.playerTitle;
+    return t && this.data.titles.indexOf(t) >= 0 && getTitle(t) ? t : '';
+  },
+  setPlayerTitle(name) {
+    this.data.playerTitle = name && this.data.titles.indexOf(name) >= 0 ? name : '';
+    this.save();
+  },
+  /** アイコンのキャラ（選んだキャラ → 編成の先頭 → なし） */
+  playerIconMaster() {
+    const id = this.data.playerIcon;
+    if (id !== null && this.isOwned(id) && getCharacter(id)) return getCharacter(id);
+    return this.partyMasters()[0] || null;
+  },
+  setPlayerIcon(charId) {
+    this.data.playerIcon = charId !== null && this.isOwned(charId) ? charId : null;
+    this.save();
+  },
+  /** 対戦サーバーへ送るプロフィール */
+  profile() {
+    const icon = this.playerIconMaster();
+    return { name: this.playerName(), title: this.playerTitle(), icon: icon ? icon.id : null };
+  },
   setVolume(kind, v) {
     this.data.settings[kind] = Math.max(0, Math.min(1, v));
     this.save();
@@ -212,7 +268,22 @@ const Save = {
     if (pvp.stats[res.result] !== undefined) pvp.stats[res.result]++;
     this.data.currency += (res.reward && res.reward.soul) || 0;
     this.save();
+    Titles.check();
     return true;
+  },
+  /**
+   * 認証コードの報酬を受け取る（サーバーの redeem_code の応答）。
+   * 同じコードの Soul は1回だけ（称号は何度受け取っても同じ）。戻り値: { titles: 新しく得た称号, soul }
+   */
+  applyCodeReward(code, res) {
+    const key = String(code).trim().toUpperCase();
+    const first = this.data.redeemedCodes.indexOf(key) < 0;
+    if (first) this.data.redeemedCodes.push(key);
+    const soul = first ? (res.soul || 0) : 0;
+    this.data.currency += soul;
+    const titles = (res.titles || []).filter(t => Titles.unlock(t, true));
+    this.save();
+    return { titles: titles, soul: soul };
   },
   setPvpSession(sess) {
     this.pvp().session = sess ? Object.assign({ savedAt: Date.now() }, sess) : null;
@@ -252,6 +323,71 @@ const Gacha = {
     for (let i = 0; i < count; i++) results.push(this.draw(rng));
     Save.save();
     return { ok: true, results: results, cost: cost };
+  },
+};
+
+// ===================================================================
+// 称号（js/data/titles.js。条件の書式はそのファイルの冒頭を参照）
+// ===================================================================
+function getTitle(name) {
+  return (typeof TITLE_MASTER !== 'undefined' ? TITLE_MASTER : []).find(t => t.name === name) || null;
+}
+
+const Titles = {
+  list() { return typeof TITLE_MASTER !== 'undefined' ? TITLE_MASTER : []; },
+  has(name) { return Save.data.titles.indexOf(name) >= 0; },
+
+  /** 条件の進み具合 { cur, max }（認証コード・1試合の条件は null） */
+  progress(t) {
+    const c = t.cond || {};
+    const d = Save.data;
+    switch (c.type) {
+      case 'allChars': return { cur: Save.ownedCount(), max: CHARACTER_MASTER.length };
+      case 'obtain': {
+        const m = getCharacter(c.char);
+        return { cur: m ? (d.obtainCount[m.id] || 0) : 0, max: c.count };
+      }
+      case 'pvpWin': return { cur: Save.pvp().stats.win || 0, max: c.count };
+      case 'pvpLose': return { cur: Save.pvp().stats.lose || 0, max: c.count };
+      default: return null;
+    }
+  },
+
+  /** 称号を得る。新しく得たら true。silent でなければ通知する */
+  unlock(name, silent) {
+    if (!getTitle(name) || this.has(name)) return false;
+    Save.data.titles.push(name);
+    Save.save();
+    if (!silent) { this.pending.push(name); if (!this.holding) this.flush(); }
+    return true;
+  },
+
+  // 通知の保留（ガチャの演出中に結果が分かってしまわないよう、演出の後に出す）
+  pending: [],
+  holding: false,
+  hold() { this.holding = true; },
+  flush() {
+    this.holding = false;
+    const list = this.pending.splice(0);
+    if (typeof App === 'undefined' || !App.toast) return;
+    list.forEach((name, i) => setTimeout(() => App.toast('称号「' + name + '」を獲得しました', 3200), i * 600));
+  },
+
+  /** 回数で決まる称号をまとめて判定する（入手・対戦の後と起動時に呼ぶ） */
+  check() {
+    if (!Save.data) return [];
+    return this.list().filter(t => {
+      const p = this.progress(t);
+      return p && p.cur >= p.max && this.unlock(t.name);
+    }).map(t => t.name);
+  },
+
+  /** 戦闘中、自分のキャラが同じスキルを count 回使った（1試合の回数の条件） */
+  skillUsed(skill, count) {
+    this.list().forEach(t => {
+      const c = t.cond || {};
+      if (c.type === 'skillUse' && c.skill === skill && count >= c.count) this.unlock(t.name);
+    });
   },
 };
 
@@ -299,8 +435,11 @@ const Ghost = {
       return master && Array.isArray(m.skills) && m.skills.every(s => master.skillPool.indexOf(s) >= 0);
     });
     if (!ok) return null;
+    const icon = Number.isInteger(op.icon) ? getCharacter(op.icon) : null;
     return {
       name: String(op.name || 'Player'),
+      title: typeof op.title === 'string' && getTitle(op.title) ? op.title : '',
+      icon: icon ? icon.id : null,
       winRate: typeof op.winRate === 'number' ? op.winRate : 0,
       members: op.party.map(m => ({ charId: m.charId, skills: m.skills.slice(), area: m.area })),
       seed: seed,

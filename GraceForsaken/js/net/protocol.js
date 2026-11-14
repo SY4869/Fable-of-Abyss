@@ -21,6 +21,8 @@ const PVP_PROTOCOL = {
     // 追加のイベントなので版数は上げない（古いサーバーは応答しないため、クライアントは疑似ゴーストで代用する）
     SET_DEFENSE: 'set_defense',
     FIND_OPPONENTS: 'find_opponents',
+    // 認証コードの入力（称号・Soul の配布）。追加のイベントなので版数は上げない
+    REDEEM_CODE: 'redeem_code',
     // サーバー → クライアント
     QUEUE_TIMER: 'queue_timer',
     // 待ち時間内に相手が見つからなかった（キューから外れる）。追加のイベントなので版数は上げない
@@ -55,6 +57,10 @@ const PVP_PROTOCOL = {
     DUPLICATE_SESSION: 'DUPLICATE_SESSION',
     NOT_HELLO: 'NOT_HELLO',
     SERVER_ERROR: 'SERVER_ERROR',
+    // 認証コード
+    INVALID_CODE: 'INVALID_CODE',
+    CODE_EXPIRED: 'CODE_EXPIRED',
+    CODE_LIMIT: 'CODE_LIMIT',
   },
 
   // 試合の決着理由 → 表示名

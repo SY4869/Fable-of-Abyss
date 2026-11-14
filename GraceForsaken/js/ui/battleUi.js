@@ -489,9 +489,15 @@ function createBattleView(cfg) {
    * カットイン → 盤面更新（ダメージ数値・効果音・ログ）→ done() の順に進む。
    */
   const dying = {};          // 戦闘不能の演出中のユニット uid → 開始時刻
+  const skillUses = {};      // この戦闘で自分のキャラが使ったスキル → 回数（称号「1試合で○○を3回使う」）
   const play = (events, apply, done) => {
     busy = true;
     const cutin = events.find(e => e.t === 'cutin');
+    const user = cutin ? unitOf(cutin.unitId) : null;
+    if (user && user.side === 'ALLY' && cutin.name) {
+      skillUses[cutin.name] = (skillUses[cutin.name] || 0) + 1;
+      Titles.skillUsed(cutin.name, skillUses[cutin.name]);
+    }
     const finish = () => {
       if (!root.isConnected) return;
       events.forEach(e => {

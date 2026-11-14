@@ -163,6 +163,7 @@ const Screens = {
   mainMenu() {
     App.setBackground('menu');
     Sound.playBgm('menu');
+    Titles.flush();      // ガチャの演出の途中で離れたときなどに残った称号の通知
     const party = Save.partyMasters();
     // 編成中の4人からランダムに1人を背景に立たせる
     const hero = party.length ? party[Math.floor(Math.random() * party.length)] : null;
@@ -183,10 +184,13 @@ const Screens = {
         standImg(hero),
       ]) : null,
       el('div', { class: 'menu-top' }, [
-        el('button', { class: 'player-plate', title: '名前を変更', onclick: () => askPlayerName(() => App.refresh()) }, [
-          hero ? faceIcon(hero, { class: 'small round' }) : el('div', { class: 'face small round empty' }),
-          el('span', { class: 'player-name', text: Save.playerName() }),
-        ]),
+        (() => {
+          const icon = Save.playerIconMaster();
+          return el('button', { class: 'player-plate', title: 'プロフィール（名前・アイコン・称号）', onclick: () => openProfile() }, [
+            icon ? faceIcon(icon, { class: 'small round' }) : el('div', { class: 'face small round empty' }),
+            playerLabel(Save.playerTitle(), Save.playerName()),
+          ]);
+        })(),
         el('div', { class: 'spacer' }),
         walletNode(),
         el('button', { class: 'icon-btn', title: 'オプション', onclick: () => openOptions() }, [el('span', { class: 'gear' })]),
@@ -223,7 +227,7 @@ const Screens = {
         el('button', { class: 'btn small ghost', 'data-se': 'cancel', text: 'タイトルへ', onclick: () => { App.stack = []; App.show(Screens.title, []); } }),
         el('a', { class: 'site-home', href: SITE_LINKS[0][1], text: 'ゲーム選択へ（SY GAMES）' }),
         el('div', { class: 'spacer' }),
-        el('span', { class: 'faint', text: 'Ver. 1.2.26' }),
+        el('span', { class: 'faint', text: 'Ver. 1.2.27' }),
       ]),
     ]);
   },
@@ -415,11 +419,12 @@ const Screens = {
 
     const card = (g, i) => {
       const members = g.members.map(m => getCharacter(m.charId)).filter(Boolean);
-      const lead = members[0];
+      // アイコン: プレイヤーが選んだキャラ（無ければ防衛パーティの先頭）
+      const lead = (Number.isInteger(g.icon) && getCharacter(g.icon)) || members[0];
       return el('div', { class: 'opp-card frame' + (i === 1 ? ' featured' : '') }, [
         el('div', { class: 'opp-head' }, [
           el('span', { class: 'opp-emblem' }),
-          el('b', { text: g.name }),
+          playerLabel(g.title, g.name),
         ]),
         el('div', { class: 'opp-main' }, [
           el('div', { class: 'opp-art', style: 'background-image:url("' + faceUrl(lead) + '")' }),
@@ -497,7 +502,7 @@ const Screens = {
     else AI.autoPlace(enemies);
 
     BattleFlow.begin({
-      title: ghost.name,
+      title: (ghost.title ? ghost.title + ' ' : '') + ghost.name,
       field: field,
       mode: 'PVP',
       enemies: enemies,
@@ -530,6 +535,7 @@ const Screens = {
     const tabsBox = el('div');
 
     const commit = () => { Save.setParty(party); };
+    const presetBox = el('div', { class: 'party-presets' });
 
     /**
      * ドラッグ＆ドロップの落とし先を解釈して編成を変える。
@@ -589,6 +595,35 @@ const Screens = {
           ],
         }));
       }
+
+      // --- 編成プリセット（3枠） ---
+      clear(presetBox);
+      Save.data.partyPresets.forEach((p, i) => {
+        const members = p ? p.party.map(id => getCharacter(id)).filter(m => m && Save.isOwned(m.id)) : [];
+        presetBox.appendChild(el('div', { class: 'preset-slot' }, [
+          el('span', { class: 'preset-no', text: 'SLOT ' + (i + 1) }),
+          el('span', { class: 'mini-faces' }, p
+            ? members.map(m => faceIcon(m, { class: 'mini' }))
+            : [el('span', { class: 'faint', text: '未保存' })]),
+          el('span', { class: 'preset-btns' }, [el('button', {
+            class: 'btn small', text: '保存', disabled: party.length ? null : 'disabled',
+            onclick: () => {
+              const save = () => { Save.savePreset(i); App.toast('SLOT ' + (i + 1) + ' に保存しました'); render(); };
+              if (p) App.confirm('編成の保存', 'SLOT ' + (i + 1) + ' を今のパーティで上書きしますか？', save); else save();
+            },
+          }),
+          el('button', {
+            class: 'btn small primary', text: '呼び出し', disabled: p && members.length ? null : 'disabled',
+            onclick: () => {
+              Save.loadPreset(i);
+              party = Save.data.party.slice();
+              focus = getCharacter(party[0]) || focus;
+              App.toast('SLOT ' + (i + 1) + ' の編成を呼び出しました');
+              render();
+            },
+          })]),
+        ]));
+      });
 
       // --- CURRENT PARTY（左: 後衛 / 中央: 中衛 / 右: 前衛） ---
       clear(formation);
@@ -661,6 +696,7 @@ const Screens = {
             formation,
             el('p', { class: 'faint', style: 'margin:8px 0 0', text:
               '距離 = 自陣マス番号 + 敵陣マス番号 − 1。射程以内の敵にしか攻撃が届きません（射程1なら前衛から敵の前衛のみ）。' }),
+            presetBox,
           ]),
           el('div', { class: 'panel frame party-list-drop', 'data-drop': 'list' }, [
             el('div', { class: 'panel-head' }, [
@@ -809,11 +845,12 @@ const Screens = {
     updateCount();
 
     const pull = (count) => {
+      Titles.hold();
       const r = Gacha.pull(count);
-      if (!r.ok) { App.toast(r.msg); return; }
+      if (!r.ok) { Titles.flush(); App.toast(r.msg); return; }
       updateWallet();
       updateCount();
-      GachaShow.play(r.results, () => showResults(r));
+      GachaShow.play(r.results, () => { showResults(r); Titles.flush(); });
     };
 
     const showResults = (r) => {

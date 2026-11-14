@@ -44,9 +44,25 @@ const PvpClient = {
 
   get connected() { return !!(this.socket && this.socket.connected && this.helloed); },
 
+  /** hello で送る内容（名前・称号・アイコン） */
+  helloPayload() {
+    return Object.assign({ protocol: PVP_PROTOCOL.VERSION, userId: this.userId() }, Save.profile());
+  },
+  sentProfile: '',
+
+  /** 接続中に名前・称号・アイコンが変わっていたら hello を送り直す（対戦相手に見える内容を最新にする） */
+  async syncProfile() {
+    const payload = this.helloPayload();
+    const key = JSON.stringify(payload);
+    if (key === this.sentProfile) return { ok: true };
+    const r = await this.req(PVP_PROTOCOL.EV.HELLO, payload);
+    if (r.ok) this.sentProfile = key;
+    return { ok: true };
+  },
+
   /** 接続して hello まで済ませる。失敗時は { ok:false, error } */
   connect() {
-    if (this.connected) return Promise.resolve({ ok: true });
+    if (this.connected) return this.syncProfile();
     if (this.connecting) return this.connecting;
     if (typeof io === 'undefined') return Promise.resolve({ ok: false, error: 'NO_CLIENT' });
     const P = PVP_PROTOCOL;
@@ -69,13 +85,15 @@ const PvpClient = {
         });
       }
       const hello = async () => {
-        const r = await this.req(P.EV.HELLO, { protocol: P.VERSION, userId: this.userId(), name: Save.playerName() });
+        const payload = this.helloPayload();
+        const r = await this.req(P.EV.HELLO, payload);
         if (!r.ok) {
           if (first) { first = false; resolve(r); }
           this.dispatch('fatal', r);
           return;
         }
         this.helloed = true;
+        this.sentProfile = JSON.stringify(payload);
         this.dispatch('connection', { connected: true });
         // 通信が切れて戻ってきた場合は試合へ復帰する
         const sess = Save.pvp().session;
@@ -118,6 +136,16 @@ const PvpClient = {
     await this.uploadDefense();
     const r = await this.req(PVP_PROTOCOL.EV.FIND_OPPONENTS, { winRate: Save.winRate() }, 4000);
     return r.ok && Array.isArray(r.opponents) ? r.opponents : [];
+  },
+
+  /**
+   * 認証コードを送る。戻り値はサーバーの応答
+   *   { ok:true, titles, soul, again } / { ok:false, error }（繋がらないときは CONNECT_FAILED など）
+   */
+  async redeemCode(code) {
+    const c = await this.connect();
+    if (!c.ok) return c;
+    return this.req(PVP_PROTOCOL.EV.REDEEM_CODE, { code: code }, 6000);
   },
 
   /** 試合への復帰 */

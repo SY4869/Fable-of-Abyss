@@ -298,13 +298,18 @@ function openOptions() {
         return el('label', { class: 'check opt-check' }, [c, el('span', { text: '戦闘のカットイン演出を表示する' })]);
       })(),
       el('div', { class: 'row', style: 'margin-top:18px' }, [
-        el('span', { class: 'muted', text: 'プレイヤー名: ' + Save.playerName() }),
+        el('span', { class: 'muted' }, [el('span', { text: 'プレイヤー: ' }), playerLabel(Save.playerTitle(), Save.playerName())]),
         el('div', { class: 'spacer' }),
         el('button', {
           class: 'btn small', text: '名前を変更',
           onclick: () => { close(); askPlayerName(() => App.refresh()); },
         }),
+        el('button', {
+          class: 'btn small', text: 'アイコン・称号',
+          onclick: () => { close(); openProfile(); },
+        }),
       ]),
+      codeInputRow(),
       el('div', { class: 'row', style: 'margin-top:12px' }, [
         el('span', { class: 'muted', text: '属性相性・状態の説明' }),
         el('div', { class: 'spacer' }),
@@ -318,6 +323,138 @@ function openOptions() {
       ]),
     ]);
   });
+}
+
+/** 「称号 名前」の表示。名前・称号は必ず textContent で出す */
+function playerLabel(title, name, opt) {
+  opt = opt || {};
+  return el('span', { class: 'player-label' + (opt.class ? ' ' + opt.class : '') }, [
+    title ? el('span', { class: 'p-title', text: title }) : null,
+    el('span', { class: 'p-name', text: name }),
+  ]);
+}
+
+/** 対戦相手などのアイコン（キャラID）。無ければ fallback（キャラ）、それも無ければシルエット */
+function playerFace(iconId, fallback, opt) {
+  const m = (Number.isInteger(iconId) && getCharacter(iconId)) || fallback || null;
+  return faceIcon(m, Object.assign({ glyph: '?' }, opt || {}));
+}
+
+// -------------------------------------------------------------------
+// 認証コード（オプション画面）
+// -------------------------------------------------------------------
+const CODE_ERRORS = {
+  INVALID_CODE: '認証コードが正しくありません。',
+  CODE_EXPIRED: 'この認証コードは有効期限が切れています。',
+  CODE_LIMIT: 'この認証コードは受付人数の上限に達しました。',
+  RATE_LIMITED: '入力の回数が多すぎます。しばらく待ってからお試しください。',
+  MAINTENANCE: '現在メンテナンス中です。時間をおいてお試しください。',
+};
+
+function codeInputRow() {
+  const input = el('input', {
+    class: 'text-input code-input', type: 'text', maxlength: '32', autocomplete: 'off',
+    spellcheck: 'false', placeholder: '認証コード',
+  });
+  const msg = el('div', { class: 'code-msg faint' });
+  let busy = false;
+  const submit = async () => {
+    const code = input.value.trim();
+    if (!code || busy) return;
+    busy = true;
+    btn.disabled = true;
+    msg.className = 'code-msg faint';
+    msg.textContent = '確認しています…';
+    const r = await PvpClient.redeemCode(code);
+    busy = false;
+    btn.disabled = false;
+    if (!r.ok) {
+      msg.className = 'code-msg warn';
+      msg.textContent = CODE_ERRORS[r.error] || 'サーバーに接続できませんでした。時間をおいてお試しください。';
+      return;
+    }
+    const got = Save.applyCodeReward(code, r);
+    const parts = [];
+    if (got.titles.length) parts.push('称号「' + got.titles.join('」「') + '」');
+    if (got.soul) parts.push(got.soul.toLocaleString() + ' Soul');
+    msg.className = 'code-msg ok';
+    msg.textContent = parts.length ? parts.join('・') + 'を受け取りました。' : 'この認証コードは受け取り済みです。';
+    input.value = '';
+    updateWallet();
+  };
+  const btn = el('button', { class: 'btn small', text: '送信', onclick: submit });
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') submit(); });
+  return el('div', { class: 'code-box' }, [
+    el('div', { class: 'row' }, [
+      el('span', { class: 'muted', text: '認証コード' }),
+      input,
+      btn,
+    ]),
+    msg,
+  ]);
+}
+
+// -------------------------------------------------------------------
+// プロフィール（アイコン・称号）
+// -------------------------------------------------------------------
+function openProfile(onDone) {
+  App.modal(close => {
+    const box = el('div', { class: 'profile' });
+    let tab = 'icon';
+    const render = () => {
+      clear(box);
+      const icon = Save.playerIconMaster();
+      box.appendChild(el('div', { class: 'profile-head' }, [
+        faceIcon(icon, { class: 'round', glyph: '?' }),
+        playerLabel(Save.playerTitle(), Save.playerName(), { class: 'big' }),
+        el('div', { class: 'spacer' }),
+        el('button', { class: 'btn small', text: '名前を変更', onclick: () => { close(); askPlayerName(() => { App.refresh(); openProfile(onDone); }); } }),
+      ]));
+      box.appendChild(el('div', { class: 'el-tabs profile-tabs' }, [
+        ['icon', 'アイコン'], ['title', '称号'],
+      ].map(([k, label]) => el('button', {
+        class: 'el-tab' + (tab === k ? ' on' : ''), text: label, onclick: () => { tab = k; render(); },
+      }))));
+
+      if (tab === 'icon') {
+        const auto = Save.data.playerIcon === null || !Save.isOwned(Save.data.playerIcon);
+        const grid = el('div', { class: 'icon-grid' }, [
+          el('button', {
+            class: 'icon-pick auto' + (auto ? ' selected' : ''), title: '編成の先頭のキャラ',
+            onclick: () => { Save.setPlayerIcon(null); render(); },
+          }, [el('span', { text: '自動' })]),
+        ].concat(Save.ownedList().map(m => el('button', {
+          class: 'icon-pick' + (!auto && Save.data.playerIcon === m.id ? ' selected' : ''), title: m.name,
+          onclick: () => { Save.setPlayerIcon(m.id); render(); },
+        }, [faceIcon(m)]))));
+        box.appendChild(el('p', { class: 'faint', text: '所持しているキャラクターから選べます。「自動」はパーティ編成の先頭のキャラクターです。対戦相手の画面にも表示されます。' }));
+        box.appendChild(grid);
+      } else {
+        const cur = Save.playerTitle();
+        const rows = [el('button', {
+          class: 'title-row' + (!cur ? ' selected' : ''), onclick: () => { Save.setPlayerTitle(''); render(); },
+        }, [el('b', { text: '称号なし' })])];
+        // 獲得した称号だけを並べる（未獲得の称号・獲得条件は見せない）
+        Titles.list().filter(t => Titles.has(t.name)).forEach(t => {
+          rows.push(el('button', {
+            class: 'title-row' + (cur === t.name ? ' selected' : ''),
+            onclick: () => { Save.setPlayerTitle(t.name); render(); },
+          }, [el('b', { text: t.name })]));
+        });
+        box.appendChild(el('p', { class: 'faint', text: 'プレイヤー名の前に表示する称号を選べます。対戦相手の画面にも表示されます。' }));
+        box.appendChild(el('div', { class: 'title-list' }, rows));
+      }
+      box.appendChild(el('div', { class: 'row end', style: 'margin-top:16px' }, [
+        el('button', { class: 'btn', 'data-se': 'cancel', text: '閉じる', onclick: () => { close(); App.refresh(); if (onDone) onDone(); } }),
+      ]));
+    };
+    render();
+    return el('div', {}, [
+      el('h2', { text: 'プロフィール' }),
+      el('div', { class: 'sub-en', text: 'PROFILE' }),
+      box,
+    ]);
+  }, { wide: true });
 }
 
 /** プレイヤー名の入力。done() は決定後に呼ばれる */

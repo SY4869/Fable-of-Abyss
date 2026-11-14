@@ -14,6 +14,7 @@
     Save.data.party = Save.data.party.filter(id => Save.isOwned(id));
     Save.data.defenseParty = Save.data.defenseParty.filter(id => Save.isOwned(id));
     Save.save();
+    Titles.check();      // 既に条件を満たしている称号（全キャラ所持など）
 
     App.show(Screens.title, []);
     // リアルタイム対戦の途中でページを閉じた・再読み込みした場合は試合へ復帰する
