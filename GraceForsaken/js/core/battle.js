@@ -183,7 +183,8 @@ class Battle {
       if (hasFlag(flare, 'noHeal')) { this.say('→ ' + flare.displayName + 'は蘇生できない（アンチヒール）', 'bad'); return; }
       flare.alive = true;
       flare.hp = Math.min(flare.maxHp, amount.hp);
-      flare.mp = Math.min(flare.maxMp, amount.mp);
+      // MPは倒れる前の残りに回復量を足す（上書きしない）
+      flare.mp = Math.min(flare.maxMp, (flare.mp || 0) + amount.mp);
       flare.buffs = [];
       flare.shield = 0;
       this.say('→ 【' + owner.passiveId + '】— ' + flare.displayName + 'が復活した！（HP ' + flare.hp + '）', 'good');
