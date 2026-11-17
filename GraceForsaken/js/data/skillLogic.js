@@ -191,7 +191,7 @@ const SKILL_LOGIC = {
   // ---------------- 双海隆二 ----------------
   '朧': {
     act: 'passive',
-    passive: { eva: 25 },
+    passive: { eva: 25, firstRoundBuff: { dur: 1, stats: { speed: 3 } } },   // 1ラウンド目だけ速度+3
   },
   '二刀流': {
     act: 'buff', tgt: 'SELF', quick: true,

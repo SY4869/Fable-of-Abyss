@@ -139,7 +139,7 @@ class Battle {
         if (p.roundStartPerm) {
           this.gainPerm(u, p.roundStartPerm, u.passiveId);
         }
-        // 心頭滅却（1ラウンド目だけ）
+        // 心頭滅却・朧（1ラウンド目だけ）
         if (p.firstRoundBuff && this.round === 1) this.applyBuff(u, p.firstRoundBuff, u.passiveId, u);
       }
       u.buffs.forEach(b => applyRegen(b.regen, b.name));

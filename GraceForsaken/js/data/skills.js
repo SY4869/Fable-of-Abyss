@@ -39,7 +39,7 @@ const SKILL_MASTER = [
   { id: "桜花一閃", name: "桜花一閃", typeRaw: "光", category: "ATTACK", element: "LIGHT", costMp: 3, desc: "物理攻撃力+5点の物理ダメージを1体に与える。" },
   { id: "瞑想", name: "瞑想", typeRaw: "バフ・デバフ", category: "BUFF_DEBUFF", element: null, costMp: 1, desc: "1ラウンドの間、物理攻撃力を+3する。(クイックスキル)" },
   { id: "雷刃", name: "雷刃", typeRaw: "雷", category: "ATTACK", element: "THUNDER", costMp: 5, desc: "物理攻撃力+12点の物理ダメージを1体に与える。" },
-  { id: "朧", name: "朧", typeRaw: "パッシブ", category: "PASSIVE", element: null, costMp: 0, desc: "回避率が25%上昇する。" },
+  { id: "朧", name: "朧", typeRaw: "パッシブ", category: "PASSIVE", element: null, costMp: 0, desc: "回避率が25%上昇する。更に1ラウンド目の速度が+3される。" },
   { id: "二刀流", name: "二刀流", typeRaw: "バフ・デバフ", category: "BUFF_DEBUFF", element: null, costMp: 1, desc: "2ラウンドの間、物理攻撃力が半減するが2回行動できるようになる。(クイックスキル)" },
   { id: "神速", name: "神速", typeRaw: "バフ・デバフ", category: "BUFF_DEBUFF", element: null, costMp: 1, desc: "5ラウンドの間、速度を+3する。(クイックスキル)" },
   { id: "ツインスラッシュ", name: "ツインスラッシュ", typeRaw: "水", category: "ATTACK", element: "WATER", costMp: 1, desc: "二刀流の物理攻撃力半減を無くした上で、物理攻撃力+2点の物理ダメージを1体に与える。" },
